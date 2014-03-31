@@ -1,0 +1,1372 @@
+@(name:String)
+@main("piManagement"){
+<!-- 妞ょ敻娼伴崷鏉挎絻 -->
+<div ng-controller="OrderCtrl">
+<div class="breadcrumb">
+	<li style="">Current Location: PI Management</li>
+<!-- 	<li style="margin-right: 0px">Plant:XXXXXXX System Date,Time</li> -->
+</div>
+<div alert ng-repeat="alert in alerts" type="alert.type" close="closeAlert($index)" template-url="/template/alert/alert.html">{{alert.msg}}</div>
+<!-- 閺屻儴顕楅弶鈥叉 -->
+	<form novalidate  name="form" >
+	<table>
+			<tr>
+				<td class="column0">
+					<label>PI No:</label>
+				</td>
+				<td>
+					<input class="input-medium" type="text" name="piNo" ng-model="searchVo.piNo">
+				</td>
+				<td class="column1">
+					<label>Contract No:</label>
+				</td>
+				<td class="column2">
+					<input class="input-medium"  type="text" ng-model="searchVo.contractNo" class="span2">
+				</td>
+				<td class="column1">
+					<label>PI Status:</label>
+				</td>
+				<td class="column2">
+					<select ng-model="searchVo.piStatus" class="span2" ng-options="os.code_key as os.code_name for os in orderStatuses|orderBy:'code_key'">
+						<option value="">ALL</option>
+					</select>
+				</td>
+			</tr>
+			<tr>
+				<td class="column1">
+					<label>PI Date(From):</label>
+				</td>
+				<td class="column2">
+					<input type="date" class="input-medium" ng-model="searchVo.piDateFrom">
+				</td>
+				<td class="column1">
+					<label>PI Date(To): </label>
+				</td>
+				<td class="column2">
+					<input type="date" class="input-medium" ng-model="searchVo.piDateTo" >
+				</td>
+				<td class="column1">
+					<label>Req. Shipment Date: </label>
+				</td>
+				<td class="column2">
+					<input type="date" class="input-medium" ng-model="searchVo.reqShipmentDate" >
+				</td>
+			</tr>
+			<tr>
+				<td colspan="6"  style="text-align: right;">
+					<input type="submit" id="submit" value="Search" class="btn btn-primary btn-small" ng-click="searchList(searchVo)" >
+				</td>
+			</tr>
+		</table>
+	</form>
+	<div modal="saveOrderDlg" close="closeSaveOrderDlg()" options="dlgOpts">
+	@piDetails("")
+	</div>
+	<div modal="updateOrderDlg" close="closeUpdateOrderDlg()" options="dlgOpts" >
+	@piUpdate("")
+	</div>
+<!-- 	<div modal="sapDownloadDlg" close="closeSapDownloadDlg()" options="dlgOpts"> -->
+<!-- 	@sapDownload("") -->
+<!-- 	</div> -->
+	<div modal="saveSplitDlg" close="closeSplitDlg()" options="dlgOpts">
+	@productionDetails("")
+	</div>
+	<div modal="saveTimingDlg" close="closeTimingDlg()" options="dlgOpts">
+	@maintainTimePlan("")
+	</div>
+	
+	<!-- 鍒犻櫎瀵硅瘽妗哾etail Dialog -->
+	<div modal="deletePIDlg" close="closeDeleteDlg()" options="dlgOpts">
+		<div class="modal-header">
+			<h4>Delete PI</h4>
+		</div>
+		<div class="modal-body">
+			<form novalidate class="form-horizontal">
+				<table>
+					<tbody>
+						Are you sure to delete ?
+					</tbody>
+				</table>
+			</form>
+		</div>
+		<div class="modal-footer">
+			<button class="btn btn-primary btn-small ok" ng-click="deleteOrder(deleteOrderVo,orderIndex)">YES</button>
+			<button class="btn btn-warning btn-small cancel" ng-click="closeDeleteDlg()">NO</button>
+		</div>
+	</div>
+	<!-- table -->
+	<table cellpadding="0" cellspacing="0" border="0"
+		class="table table-striped table-bordered table-hover table-condensed" id="example" width="100%">
+		<thead>
+			<tr>
+				<th>PI Status</th>
+				<th>PI Source</th>
+				<th>PI Type</th>
+				<th class="noNewLine">PI Date</th>
+				<th class="noNewLine">PI No</th>
+				<th>Contract No</th><!-- Sales Contract No  (RefNo) -->
+				<th class="noNewLine">Material Code</th>
+				<th>Material Description</th>
+				<th>Req.Shipment Date</th>
+				<th>Marking</th>
+				<th>Operation<input type="submit" id="submit" class="btn btn-primary btn-small" value="Add" ng-click="setSaveOrder(addVo)">
+						<input type="submit" id="submit" class="btn btn-primary btn-small" value="SAP Download" ng-click="downloadOrder()" ></th>
+			</tr>
+		</thead>
+
+		<tbody>
+			<tr ng-repeat="order in orders|orderBy:getDate:true" >
+				<td>{{order.piStatus}}</td>
+				<td>{{order.piSource}}</td>
+				<td>{{order.piType}}</td>
+				<td class="noNewLine">{{order.piDate|date:'dd/MM/yyyy'}}</td>
+				<td class="noNewLine">{{order.piNo}}</td>
+				<td>{{order.contractNo}}</td>
+				<td class="noNewLine">{{order.materialVo.materialCode}}</td>
+				<td>{{order.materialVo.materialName}}</td>
+				<td>{{order.reqShipmentDate|date:'dd/MM/yyyy'}}</td>
+				<td>{{order.marking}}</td>
+				<th class="center">
+					<a href=""  class="btn btn-primary btn-small" data-toggle="modal" ng-click="setUpdateOrder(order)">Edit</a>
+					<a href=""  class="btn btn-primary btn-small" data-toggle="model" ng-click="showTimingDlg(order)">TimePlan</a>
+					<a href=""  class="btn btn-primary btn-small" data-toggle="modal" ng-click="showSplitDlg(order)">Schedule</a>
+					<a href=""  class="btn btn-danger btn-small" data-toggle="modal" ng-click="openDeletDlg(order,$index)">Delete</a>
+				</th>
+			</tr>
+		</tbody>
+		<tfoot>
+	</table>
+</div>
+
+<style type="text/css">
+.red{background: red;}
+.column0 {text-align: right;width: 125px;}
+.column1 {text-align: right;width: 165px;}
+.column2 {text-align: left;width: 9px;}
+</style>
+
+}{
+<script type="text/javascript" charset="utf-8">
+    //var CloudWMS = angular.module('CloudWMS', ['ui.bootstrap']);
+    var DATE_REGEXP =/((^((1[8-9]\d{2})|([2-9]\d{3}))([-\/\._])(10|12|0?[13578])([-\/\._])(3[01]|[12][0-9]|0?[1-9])$)|(^((1[8-9]\d{2})|([2-9]\d{3}))([-\/\._])(11|0?[469])([-\/\._])(30|[12][0-9]|0?[1-9])$)|(^((1[8-9]\d{2})|([2-9]\d{3}))([-\/\._])(0?2)([-\/\._])(2[0-8]|1[0-9]|0?[1-9])$)|(^([2468][048]00)([-\/\._])(0?2)([-\/\._])(29)$)|(^([3579][26]00)([-\/\._])(0?2)([-\/\._])(29)$)|(^([1][89][0][48])([-\/\._])(0?2)([-\/\._])(29)$)|(^([2-9][0-9][0][48])([-\/\._])(0?2)([-\/\._])(29)$)|(^([1][89][2468][048])([-\/\._])(0?2)([-\/\._])(29)$)|(^([2-9][0-9][2468][048])([-\/\._])(0?2)([-\/\._])(29)$)|(^([1][89][13579][26])([-\/\._])(0?2)([-\/\._])(29)$)|(^([2-9][0-9][13579][26])([-\/\._])(0?2)([-\/\._])(29)$))/;
+    var FLOAT_REGEXP =/^(0*[1-9][0-9]{0,13}|0*[1-9][0-9]{0,13}\.[0-9]{1,2})$/;
+    var FLOAT2_REGEXP =/^(0*[1-9][0-9]{0,13}|0+\.0[1-9]{1}|0+\.[1-9][0-9]{0,1}|0*[1-9][0-9]{0,13}\.[0-9]{1,2})$/;//涓嶅彲浠ヤ负0鐨刦loat
+    var INT_REGEXP=/^[1-9]{1}[0-9]{0,13}$/;//灏忎簬绛変簬14浣嶇殑姝ｆ暣鏁�
+   	var ISNULL_REGEXP =/^$/;
+   	var NULL_REGEXP=/^\s*$/;
+   	var LENGTH_REGEXP=/^[\s\S]{0,40}\s*$/;//鏍￠獙闀垮害涓嶈兘瓒呰繃40
+    CloudWMS.directive('date', function() {
+          return {
+            require: 'ngModel',
+            link: function(scope, elm, attrs, ctrl) {
+              ctrl.$parsers.unshift(function(viewValue) {
+                if (DATE_REGEXP.test(viewValue)||viewValue=='') {
+                  ctrl.$setValidity('date', true);
+                  return viewValue;
+                } else {
+                  ctrl.$setValidity('date', false);
+                  return undefined;
+                }
+              });
+            }
+          };
+    }).directive('float', function() {
+          return {
+            require: 'ngModel',
+            link: function(scope, elm, attrs, ctrl) {
+              ctrl.$parsers.unshift(function(viewValue) {
+                if (FLOAT_REGEXP.test(viewValue)||viewValue=='') {
+                  ctrl.$setValidity('date', true);
+                  return viewValue;
+                } else {
+                  ctrl.$setValidity('date', false);
+                  return undefined;
+                }
+              });
+            }
+          };
+    }).directive('float2', function() {
+        return {
+          require: 'ngModel',
+          link: function(scope, elm, attrs, ctrl) {
+            ctrl.$parsers.unshift(function(viewValue) {
+              if (FLOAT2_REGEXP.test(viewValue)||viewValue=='') {
+                ctrl.$setValidity('date', true);
+                return viewValue;
+              } else {
+                ctrl.$setValidity('date', false);
+                return undefined;
+              }
+            });
+          }
+        };
+    }).directive('isnull', function() {
+          return {
+            require: 'ngModel',
+            link: function(scope, elm, attrs, ctrl) {
+              ctrl.$parsers.unshift(function(viewValue) {
+                if (ISNULL_REGEXP.test(viewValue)) {
+                  ctrl.$setValidity('date', true);
+                  return viewValue;
+                } else {
+                  ctrl.$setValidity('date', false);
+                  return viewValue;
+                }
+              });
+            }
+          };
+    }).directive('int', function() {
+          return {
+            require: 'ngModel',
+            link: function(scope, elm, attrs, ctrl) {
+              ctrl.$parsers.unshift(function(viewValue) {
+                if (INT_REGEXP.test(viewValue)||viewValue=='') {
+                  ctrl.$setValidity('date', true);
+                  return viewValue;
+                } else {
+                  ctrl.$setValidity('date', false);
+                  return undefined;
+                }
+              });
+            }
+          };
+    }).directive('dateornull', function() {
+    	 return {
+             require: 'ngModel',
+             link: function(scope, elm, attrs, ctrl) {
+               ctrl.$parsers.unshift(function(viewValue) {
+                 if (!NULL_REGEXP.test(viewValue)) {
+                   ctrl.$setValidity('date1', true);
+                   return viewValue;
+                 } else {
+                   ctrl.$setValidity('date1', false);
+                   return viewValue;
+                 }
+               });
+             }
+           };
+    }).directive('null', function() {
+          return {
+            require: 'ngModel',
+            link: function(scope, elm, attrs, ctrl) {
+              ctrl.$parsers.unshift(function(viewValue) {
+                if (!(NULL_REGEXP.test(viewValue))) {
+                  ctrl.$setValidity('date', true);
+                  return viewValue;
+                } else {
+                  ctrl.$setValidity('date', false);
+                  return viewValue;
+                }
+              });
+            }
+          };
+    }).directive('floatnull', function() {
+        return {
+          require: 'ngModel',
+          link: function(scope, elm, attrs, ctrl) {
+            ctrl.$parsers.unshift(function(viewValue) {
+              if (!NULL_REGEXP.test(viewValue)) {
+                ctrl.$setValidity('datef', true);
+                return viewValue;
+              } else {
+                ctrl.$setValidity('datef', false);
+                return viewValue;
+              }
+            });
+          }
+        };
+    });
+
+    CloudWMS.controller('OrderCtrl', function($scope, $http, $dialog,$timeout,$filter) {
+    	$scope.currentOrder;
+        $scope.orders;
+        $scope.prods=[];
+        $scope.show=true;
+        $scope.updateOrderDlg = false;
+        $scope.saveOrderDlg = false;
+       // $scope.sapDownloadDlg = false;
+        $scope.saveTimingDlg = false;
+        $scope.saveSplitDlg = false;
+        $scope.saveProductionDlg = false;
+        $scope.editProductionDlg = false;
+       /*  $scope.editOrNot = true; */
+        $scope.onlyView = true;
+        $scope.addTimingDlg = false;
+        $scope.deleteOrderVo;//閸掔娀娅庨惃鍕亝閺夘摉
+        $scope.deleteTimingVo;//鍒犻櫎Timing
+        $scope.deletePIDlg = false;//鍒犻櫎PI瀵硅瘽妗�
+        $scope.deleteTimingDlg = false;//鍒犻櫎Timing瀵硅瘽妗�
+        $scope.deletePlanDlg = false;//鍒犻櫎plan瀵硅瘽妗�
+        $scope.editDetailCopyVo;//缂傛牞绶玠etail妞ょ敻娼伴弳鍌氱摠閺佺増宓�
+        $scope.editPIDetailVo;//缂傛牞绶玠etail妞ょ敻娼伴弳鍌氱摠閺佺増宓�
+        $scope.editTimingDlg = false;
+        $scope.productionshow=true;
+        $scope.alerts = [ ];
+        $scope.orderIndex;
+        $scope.addOrNot = false;
+        $scope.materialCheck=false;
+        $scope.materialCheckUp=false;
+
+        $scope.currentAllQty = 0;//褰撳墠PI鐨凷KU
+		$scope.currentUsedQty = 0;//宸茬粡澶勭悊鐨凷KU
+		$scope.totalReceivedQty = 0;
+
+		 $scope.getDate=function(order){
+		    	return  new Date(order.reqShipmentDate);
+		    }
+		$scope.LengthTest=function(value){
+			    if (LENGTH_REGEXP.test(value)) {
+			    	return false;
+			    }else{
+			    	return true;
+			    }
+			}
+		 $scope.NullTest=function(value){
+		    	//alert(value)
+		    	  if(value== null)return true;
+		    	  if (NULL_REGEXP.test(value)) {
+		    		 return false;
+		    	  }else{
+		    		  return true;
+		    	  }
+		    }
+		    
+        var addAlert = function(types,msgs) {
+           $scope.alerts.push({type:types,msg: msgs});
+           $timeout($scope.clearAlerts, 5000);
+        };
+        
+        $scope.closeAlert = function(index) {
+        	$scope.alerts.splice(index, 1);
+        };
+        $scope.clearAlerts = function() {
+        	$scope.alerts = [];
+        }
+        $timeout($scope.clearAlerts, 5000);
+
+        $scope.dlgOpts = {
+		    backdropFade: true,
+		    dialogFade:false,
+		    backdropClick:false
+		   // dialogClass: [width:'1200px'];
+  		};
+
+        $http.get('/inbound/pi/listPiStatus').success(
+           function(data, status, headers, config) {
+        	  if(data.Type=='success'){
+        	  $scope.orderStatuses=data.Data;
+        	  }
+        	  $scope.status=status;
+         }).error(
+           function(data, status, headers, config) {
+             $scope.status = status
+         });
+            
+         $http({method: 'GET', url: '/inbound/pi/initLine'}).success(
+           function(data, status, headers, config) {
+        	 if(data.Type=='success'){
+             $scope.lines = data.Data;
+        	 }
+         }).error(
+           function(data, status, headers, config) {
+             $scope.status = status
+         });
+      		
+   		$http.get('/inbound/pi/initStorageType').success(
+			function(data, status, headers, config){
+				if(data.Type=='success'){
+				$scope.storageTypes = data.Data;
+				}
+		}).error(
+			function(data, status, headers, config){
+				$scope.status = status;
+		}); 
+   		$scope.AlertTip=function(msg){
+     	   $dialog.messageBox('Tip', msg,  [ {result:'ok', label: 'Yes', cssClass: 'btn-primary'}]).open();
+        }
+            $scope.setCurrentOrder = function(PiVo) {      //鐐瑰嚮save鎸夐挳鏃讹紝淇濆瓨Pi
+            	if(typeof $scope.piNolength=='undefined'){
+                	if(PiVo.piNo!=null&&PiVo.piNo!=''){
+            		    $scope.piNolength = $scope.LengthTest(PiVo.piNo);
+                	}else{
+                		$scope.piNolength =false;
+                    }
+                }else{
+                    if(PiVo.piNo!=null&&PiVo.piNo!=''){
+                	    $scope.piNolength = $scope.LengthTest(PiVo.piNo);
+                    }else{
+                		$scope.piNolength =false;
+                    }
+                }
+                
+            	if(typeof $scope.add.piNo.$error.date=='undefined'){
+            		$scope.add.piNo.$error.date=true;
+                }
+                if(typeof $scope.materialCheck =='undefined'){
+               	 $scope.materialCheck = false;
+                }else{
+          		   if(PiVo.materialVo!=null && PiVo.materialVo!=''){
+              		  if(typeof PiVo.materialVo.materialId == 'undefined'){
+              			$scope.materialCheck=true;
+              		}else{
+          		    	 $scope.materialCheck=$scope.NullTest(PiVo.materialVo.materialId);
+              		  }
+          		   }else{
+          			   $scope.materialCheck=true;
+          	  	   }
+                }
+
+                if(typeof $scope.add.piQty.$error.datef=='undefined'){
+                	 $scope.add.piQty.$error.datef=true;
+                }
+                if(typeof $scope.add.piQtyUom.$error.date=='undefined'){
+            		$scope.add.piQtyUom.$error.date=true;
+                }
+                if(typeof $scope.add.qtyPerPallet.$error.datef=='undefined'){
+                    $scope.add.qtyPerPallet.$error.datef=true;
+                }
+                /* if(typeof $scope.add.contractNo.$error.date=='undefined'){
+            		$scope.add.contractNo.$error.date=true;
+                } */
+
+                if(typeof $scope.contractNolength=='undefined'){
+                	if(PiVo.contractNo!=null&&PiVo.contractNo!=''){
+            		    $scope.contractNolength = $scope.LengthTest(PiVo.contractNo);
+                	}else{
+                		$scope.contractNolength =false;
+                    }
+                }else{
+                    if(PiVo.contractNo!=null&&PiVo.contractNo!=''){
+                	    $scope.contractNolength = $scope.LengthTest(PiVo.contractNo);
+                    }else{
+                		$scope.contractNolength =false;
+                    }
+                }
+                <!--||$scope.add.contractNo.$error.date -->
+          		var vilate=$scope.add.piNo.$error.date||$scope.materialCheck||$scope.piNolength||$scope.contractNolength||$scope.add.piQty.$error.datef|| $scope.add.qtyPerPallet.$error.datef||$scope.add.qtyToBeShip.$error.date||$scope.add.salesContractQty.$error.date||$scope.add.piQty.$error.date||$scope.add.extraQty.$error.date||$scope.add.qtyPerPallet.$error.date||$scope.add.reqShipmentDate.$error.date||$scope.add.minPercent.$error.date||$scope.add.maxPercent.$error.date||$scope.add.netWeight.$error.date;
+            	if(vilate!=true){
+          		    $scope.currentOrder = PiVo;
+          		  document.getElementById("submitDiv").style.display = "inline";
+          	        $http.post('/inbound/pi/save', JSON.stringify(PiVo)).success(
+       	                function(data, status, headers, config) {
+       	                	if(data.Type=='success'){
+       	                	  $scope.searchList($scope.searchVo);
+	       	                  $scope.status = status;
+	       	                  addAlert('success',data.Message)
+	       	                  $scope.saveOrderDlg = false;
+       	                	}else{
+       	                	   document.getElementById("submitDiv").style.display = "none";
+       	                		alert(data.Message)
+       	                	}
+	       	            }).error(
+	       	                function(data, status, headers, config) {
+	       	                 document.getElementById("submitDiv").style.display = "none";
+	       	                  $scope.status = status
+	       	           	});
+         		}
+          };
+            
+             $scope.updateOrder = function(currentOrder) {
+            	 //alert(111)
+            	 if(typeof $scope.update.piNo.$error.date=='undefined'){
+                      $scope.update.piNo.$error.date=false;
+                 }
+            		if(typeof $scope.piNolengthUp=='undefined'){
+                    	if(currentOrder.piNo!=null&&currentOrder.piNo!=''){
+                		    $scope.piNolengthUp = $scope.LengthTest(currentOrder.piNo);
+                    	}else{
+                    		$scope.piNolengthUp =false;
+                        }
+                    }else{
+                        if(currentOrder.piNo!=null&&currentOrder.piNo!=''){
+                    	    $scope.piNolengthUp = $scope.LengthTest(currentOrder.piNo);
+                        }else{
+                    		$scope.piNolengthUp =false;
+                        }
+                    }
+            		//alert(222)
+                  if(typeof $scope.materialCheckUp =='undefined'){
+                 	 $scope.materialCheckUp = false;
+                  }else{
+                	  //alert(232)
+            		   if(typeof currentOrder.materialVo!='undefined'&&currentOrder.materialVo!=null && currentOrder.materialVo!=''){
+            			  // alert(234)
+                		  if(typeof currentOrder.materialVo.materialId == 'undefined'){
+                			$scope.materialCheckUp=true;
+            		      }else{
+            		    	//  alert(233)
+            		    	 $scope.materialCheckUp=$scope.NullTest(currentOrder.materialVo.materialId);
+                		  }
+            		   }else{
+            			   $scope.materialCheckUp=true;
+            	  	   }
+                  }
+            		//alert(333)
+                  if(typeof $scope.update.piQty.$error.datef=='undefined'){
+                	  $scope.update.piQty.$error.datef=false;
+                  }
+                  if(typeof $scope.update.qtyPerPallet.$error.datef=='undefined'){
+                	  $scope.update.qtyPerPallet.$error.datef=false;
+                  }
+                  if(typeof $scope.update.piQtyUom.$error.date=='undefined'){
+                	  $scope.update.piQtyUom.$error.date=false;
+                  }
+                 /*  if(typeof $scope.update.contractNo.$error.date=='undefined'){
+                	  $scope.update.contractNo.$error.date=false;
+                   } */
+                  //alert(444)
+                  if(typeof $scope.contractNolengthUp=='undefined'){
+                  	if(currentOrder.contractNo!=null&&currentOrder.contractNo!=''){
+              		    $scope.contractNolengthUp = $scope.LengthTest(currentOrder.contractNo);
+                  	}else{
+                  		$scope.contractNolengthUp =false;
+                      }
+                  }else{
+                      if(currentOrder.contractNo!=null&&currentOrder.contractNo!=''){
+                  	    $scope.contractNolengthUp = $scope.LengthTest(currentOrder.contractNo);
+                      }else{
+                  		$scope.contractNolengthUp =false;
+                      }
+                  }
+                   <!--||$scope.update.contractNo.$error.date -->
+              	var vilate=$scope.update.piNo.$error.date||$scope.update.piQtyUom.$error.date||$scope.materialCheckUp||$scope.piNolengthUp||$scope.contractNolengthUp||$scope.update.piQty.$error.datef||$scope.update.qtyPerPallet.$error.datef||$scope.update.qtyToBeShip.$error.date||$scope.update.salesContractQty.$error.date||$scope.update.piQty.$error.date||$scope.update.extraQty.$error.date||$scope.update.qtyPerPallet.$error.date||$scope.update.reqShipmentDate.$error.date||$scope.update.minPercent.$error.date||$scope.update.maxPercent.$error.date||$scope.update.netWeight.$error.date;
+              //	alert(vilate)
+              	if(vilate!=true){
+              		 document.getElementById("submitDiv").style.display = "inline";
+                  $http.post('/inbound/pi/update', JSON.stringify(currentOrder)).success(
+                          function(data, status, headers, config) {
+                        if(data.Type=='success'){
+                            $scope.status = status;
+                            $scope.searchList($scope.searchVo);
+                        	$scope.updateOrderDlg = false;
+                        }else{
+                        	document.getElementById("submitDiv").style.display = "none";
+                        	alert(data.Message)
+                        }
+                        }).error(
+                          function(data, status, headers, config) {
+                        	  document.getElementById("submitDiv").style.display = "none";
+                        	//alert(data)
+                            $scope.status = status
+                        });
+              	}else{
+              		alert("Please fill in all mandatory fields!")
+              	}
+             };
+            
+            $scope.searchList=function(searchVo){ //濡紕纭﹂弻銉嚄PI
+            	$scope.searchVo = searchVo;
+            	 document.getElementById("submitDiv").style.display = "inline";
+                $http.post('/inbound/pi/list', JSON.stringify(searchVo)).success(
+                  function(data, status, headers, config) {
+                	  document.getElementById("submitDiv").style.display = "none";
+                	 if(data.Type=='success'){
+                    $scope.orders = data.Data;
+               	    $scope.status=status;
+                	 }else{
+            	    	 addAlert(data.Type,data.Message)
+                	 }
+                }).error(
+                  function(data, status, headers, config) {
+                	  document.getElementById("submitDiv").style.display = "none";
+                	//addAlert('error',data)
+                    $scope.status = status
+                });
+           };
+
+           $scope.deleteOrder=function(deleteVo,orderIndex){   //閸掔娀娅庨敍甯級
+          	 $scope.currentOrder = deleteVo;
+          	 $http.get('/inbound/pi/delete/'+deleteVo.id).success(
+          	            function(data, status, headers, config) {
+          	              //$scope.orders = data;
+          	              if(data.Type=='success'){
+          	              	/* $scope.orders.splice(orderIndex,1); */
+          	              	$scope.searchList($scope.searchVo);
+          	              }
+          	              $scope.deletePIDlg = false;
+          	         	  $scope.status=status;
+              	          addAlert(data.Type,data.Message);
+          	          }).error(
+          	            function(data, status, headers, config) {
+              	           // addAlert('error',data)
+          	              $scope.status = status
+          	            $scope.deletePIDlg = false;
+          	          });
+               };
+
+                   $scope.savePlan = function(prods) {
+                	   /* debugger;
+                	   for(var i=0,len=prods.length;i<len;i++){
+                		   prods[i].prodQty = prods[i].tmpProdQty;
+    			           prods[i].piSku= prods[i].tmpPiSku;
+                	   } */
+                	   
+                       $scope.plans = prods;
+                       document.getElementById("submitDiv").style.display = "inline";
+                       $http.post('/inbound/pi/plan/save', JSON.stringify(prods)).success(
+                               function(data, status, headers, config) {
+                            	   document.getElementById("submitDiv").style.display = "none";
+                            	   if(data.Type=='success'){
+	                            	   addAlert(data.Type,data.Message)
+	                                   $scope.status = status;
+	                            	   $scope.saveSplitDlg = false;
+                            	   }else{
+                            		   alert(data.Message)
+                            	   }
+                            	   $scope.searchList($scope.searchVo);
+                             }).error(
+                               function(data, status, headers, config) {
+                            	   document.getElementById("submitDiv").style.display = "none";
+                                 $scope.status = status
+                             });
+                     };
+
+                     $scope.saveTiming = function(timings) {
+                         $scope.allTimings = timings;
+                         document.getElementById("submitDiv").style.display = "inline";
+                         $http.post('/inbound/pi/timing/save', JSON.stringify(timings)).success(
+                                 function(data, status, headers, config) {
+                                	 document.getElementById("submitDiv").style.display = "none";
+                                if(data.Type=='success'){
+                                   addAlert(data.Type,data.Message)
+                                   $scope.status = status;
+                                   $scope.saveTimingDlg = false;
+                                   $scope.searchList($scope.searchVo);	
+                                }else{
+                                	alert(data.Message)
+                                }
+                               }).error(
+                                 function(data, status, headers, config) {
+                                	 document.getElementById("submitDiv").style.display = "none";
+                                   $scope.status = status
+                               });
+                         /* $http({method: 'POST', url: '/inbound/pi/list'}).success(
+        	                       function(data, status, headers, config) {
+        	                    	   if(data.Type=='success'){
+        	                           $scope.orders = data.Data;
+        	                    	   }else{
+        	                    		   alert(data.Message);
+        	                    	   }
+        	                       }).error(
+        	                        function(data, status, headers, config) {
+        	                           $scope.status = status
+        	                      }); */
+                       };
+                     
+                   $scope.deleteProd=function(prod,planIndex){
+                  	 if(prod.haslive){
+                  		 document.getElementById("submitDiv").style.display = "inline";
+                  		 $http.get('/inbound/pi/delelePlan/'+prod.planId).success(
+                   	            function(data, status, headers, config) {
+                   	              //$scope.orders = data;
+                   	               document.getElementById("submitDiv").style.display = "none";
+                   	              if(data.Type=='success'){
+                   	              $scope.prods.splice(planIndex,1);
+                   	              $scope.sumSKU($scope.prods);
+                   	         	  $scope.status=status;
+                   	         		$scope.searchList($scope.searchVo);
+                       	          alert(data.Message)
+                   	              }else{
+                   	            	  alert(data.Message)
+                   	              }
+                   	          }).error(
+                   	            function(data, status, headers, config) {
+                   	             document.getElementById("submitDiv").style.display = "none";
+                       	         //   alert(data)
+                   	              $scope.status = status
+                   	          });
+                  	 }else{
+                  		 $scope.prods.splice(planIndex,1);
+                  		 $scope.sumSKU($scope.prods);
+                  		 alert('The Plan has been deleted successfully !')
+                  	 }
+                  	$scope.deletePlanDlg = false;
+                   };
+                   
+                   $scope.deleteTiming=function(timing,timingIndex){
+                	   if(timing.haslive){
+                		   document.getElementById("submitDiv").style.display = "inline";
+                    		 $http.get('/inbound/pi/deleteTiming/'+timing.timingId).success(
+                     	            function(data, status, headers, config) {
+                     	            	 document.getElementById("submitDiv").style.display = "none";
+                     	              //$scope.orders = data;
+                     	              if(data.Type=='success'){
+                     	              $scope.timings.splice(timingIndex,1);
+                     	         	  $scope.status=status;
+                         	          alert(data.Message);
+                     	              }else{
+                     	            	  alert(data.Message);
+                     	              }
+                     	          }).error(
+                     	            function(data, status, headers, config) {
+                     	            	 document.getElementById("submitDiv").style.display = "none";
+                         	          //  alert(data)
+                     	              $scope.status = status
+                     	          });
+                    	 }else{
+                    		 $scope.timings.splice(timingIndex,1);
+                        	 alert('The Timing has been deleted successfully !')
+                    	 }
+                    		 $scope.addOrNot = false;
+                	         $scope.deleteTimingDlg = false;
+                   };
+            $scope.setSaveOrder = function(addVo) {
+            	  $scope.materialUoms = null;
+            	  $scope.materialUomBases = null;
+            	  $http.get('/inbound/pi/listMaterial').success(
+           	           function(data, status, headers, config) {
+           	             $scope.materials = data.Data;
+           	         }).error(
+           	           function(data, status, headers, config) {
+           	             $scope.status = status
+           	         });
+                $scope.addVo = {piStatus:'New',sourceType:'T002',piType:'Local',ts:$filter('date')(new Date(), 'yyyy-MM-dd')};
+                $scope.materialCheck=false;
+                $scope.piNolength=false;
+                $scope.contractNolength =false;
+                $scope.saveOrderDlg = true;
+              };
+
+           /*   $scope.showDownloadDlg = function(downloadVo) {  //鏄剧ず涓嬭浇瀵硅瘽妗�
+                  $scope.downloadVo = null;
+                  $scope.sapDownloadDlg = true;
+              }; */
+
+             $scope.downloadOrder=function(){ //涓嬭浇绗﹀悎鏉′欢鐨凱I
+            	  document.getElementById("submitDiv").style.display = "inline";
+             	 $http.post(' /inbound/pi/download ').success(
+             	            function(data, status, headers, config) {
+             	            	document.getElementById("submitDiv").style.display = "none";
+             	            	if(data.Type=='success'){
+             	         	 $scope.status=status;
+             	         	$scope.searchList($scope.searchVo);
+             	         	 addAlert('success','The Pi has been downloaded successfully !')
+             	            	}else{
+             	            		$scope.AlertTip(data.Message);
+             	            	}
+             	          }).error(
+             	            function(data, status, headers, config) {
+             	            //	alert(data);
+             	            	document.getElementById("submitDiv").style.display = "none";
+             	              $scope.status = status
+             	          });
+                  };
+
+
+                //璁＄畻palletQty鎬绘暟
+      			$scope.sumSKU = function(prods){
+      				var amount = 0;
+      				for(i = 0, len = prods.length; i < len; i++){
+      					 amount = parseFloat(amount) + parseFloat(prods[i].prodQty);
+      				}
+      				$scope.currentUsedQty = amount;
+      				if($scope.currentUsedQty > $scope.currentAllQty){
+    					$scope.classType='text-error';
+    				} else {
+    					$scope.classType='';
+    				}
+      			};
+      			$scope.sumQty=function(){
+		              var amount = 0;
+		              var isEdit=false;
+		              //alert(111)
+		              for(i = 0, len = $scope.prods.length; i < len; i++){
+		                if($scope.prods[i].prodQty!=''){
+		                 //alert(angular.toJson($scope.prods[i]))
+		                if($scope.currentPINumber!=-1&&$scope.prods[i].Number==$scope.prod.Number){
+		                 // alert(333)
+		                  if(typeof $scope.prod.prodQty!='undefined'&&$scope.prod.prodQty!=''&&$scope.prod.prodQty!=null)
+		                  amount = parseFloat(amount) + parseFloat($scope.prod.prodQty);
+		                 // alert(444)
+		                  isEdit=true;
+		                }else{
+		                // alert(555)
+		                 amount = parseFloat(amount) + parseFloat($scope.prods[i].prodQty);
+		                 }
+		                 }
+		              }
+		              if(!isEdit){
+		                //alert(666)
+		                if(typeof $scope.prod.prodQty!='undefined'&&$scope.prod.prodQty!=''&&$scope.prod.prodQty!=null)
+		                  amount = parseFloat(amount) + parseFloat($scope.prod.prodQty);
+		              }
+		              //$scope.currentUsedQty = amount;
+		              if(amount > $scope.currentAllQty){
+		              $scope.classType='text-error';
+		            } else {
+		              $scope.classType='';
+		            }
+		            return amount;
+            }
+            var No=0;
+            $scope.showSplitDlg = function(planVo) {//鏄剧ず鎷嗗垎鎴恜lan鐨勫璇濇
+            			var vilate=false; 
+            		if(typeof planVo.piNo!='undefined'){
+            				vilate=vilate||$scope.NullTest(planVo.piNo);
+            			}else{
+            				vilate=vilate||true;
+            			} 
+            			//alert(planVo.materialVo)
+            			if(planVo.materialVo!=null&&typeof planVo.materialVo!='undefined'){
+            				vilate=vilate||$scope.NullTest(planVo.materialVo.materialId);
+            			}else{
+            				vilate=vilate||true;
+            			}
+            			//alert(222)
+            			if(planVo.piQty!=null&&typeof planVo.piQty!='undefined'){
+            				vilate=vilate||$scope.NullTest(planVo.piQty);
+            			}else{
+            				vilate=vilate||true;
+            			}
+            			//alert(333)
+            		/* 	if(typeof planVo.qtyPerPallet!='undefined'){
+            				vilate=vilate||$scope.NullTest(planVo.qtyPerPallet))
+            			}else{
+            				vilate=vilate||true;
+            			}
+            			 */
+            			 if(planVo.qtyPerPallet!=null&&typeof planVo.qtyPerPallet!='undefined'){
+             				vilate=vilate||$scope.NullTest(planVo.qtyPerPallet)
+             			}else{
+             				vilate=vilate||true;
+             			}
+            			// alert(444)
+            			 if(planVo.uomVo!=null&&typeof planVo.uomVo!='undefined'){
+            				vilate=vilate||$scope.NullTest(planVo.uomVo.id)
+            			}else{
+            				vilate=vilate||true;
+            			}
+            			 //alert(555)
+            			if(planVo.qtyPerPalletUom!=null&&typeof planVo.qtyPerPalletUom!='undefined'){
+            				vilate=vilate||$scope.NullTest(planVo.qtyPerPalletUom.id)
+            			}else{
+            				vilate=vilate||true;
+            			}  
+            if(vilate!=true){
+              $scope.skuUomTemp = planVo.qtyPerPalletUom;
+              $scope.uomTemp = planVo.uomVo;
+          	  $scope.prods=[];
+          	  $scope.id = planVo.id;
+          	  $scope.piStatus = planVo.piStatus;
+            	if (planVo.minPercent != null && planVo.maxPercent != null) {
+          		    $scope.currentAllQty = parseFloat(planVo.maxPercent)/ 100 * parseFloat(planVo.settlementQty);
+                }else {
+				    $scope.currentAllQty = parseFloat(planVo.settlementQty);
+			     }
+          	  	$http.get('/inbound/pi/planItem/list/'+planVo.id).success(
+        	            function(data, status, headers, config) {
+        	            	if(data.Type=='success'){
+        	              $scope.prods = data.Data;
+                        for(i = 0, len = $scope.prods.length; i < len; i++){
+                          $scope.prods[i].Number=No;
+                          No=No+1;
+                        };
+        	         	  $scope.status=status;
+            	          $scope.sumSKU($scope.prods);
+        	            	}
+        	          }).error(
+        	            function(data, status, headers, config) {
+        	              $scope.status = status
+        	          });
+          	  	//get Total quantity
+          	  	$http.get('/inbound/pi/receivedQty/'+planVo.id).success(
+      	            function(data, status, headers, config) {
+      	            	if(data.Type=='success'){
+      	              		$scope.totalReceivedQty = data.Data;
+      	            	}
+      	          }).error(
+      	            function(data, status, headers, config) {
+      	              	$scope.status = status
+      	            	$scope.totalReceivedQty = 0;
+      	          });
+                $scope.saveSplitDlg = true;d
+                }else{
+                	alert("Please fill in all mandatory fields!")
+                }
+              };
+
+              $scope.closeSplitDlg = function() {
+                  $scope.saveSplitDlg = false;
+                  /* $http({method: 'POST', url: '/inbound/pi/list'}).success(
+ 	                       function(data, status, headers, config) {
+ 	                    	   if(data.Type='success'){
+ 	                           $scope.orders = data.Data;
+ 	                    	   }
+ 	                       }).error(
+ 	                        function(data, status, headers, config) {
+ 	                           $scope.status = status
+ 	                      }); */
+                }
+
+              $scope.showTimingDlg = function(timingVo) {//鏄剧ず鍒嗛厤鑷冲喎搴撶殑瀵硅瘽妗�
+                  $scope.timings = [];
+                  $scope.id = timingVo.id;
+                  $http.get('/inbound/pi/timing/list/'+timingVo.id).success(
+            	            function(data, status, headers, config) {
+            	              $scope.timings = data.Data;
+            	         	  $scope.status=status;
+            	         	if($scope.timings.length>0){
+                           	   $scope.addOrNot = true;
+                             }else{
+                               $scope.addOrNot = false;
+                             }
+            	          }).error(
+            	            function(data, status, headers, config) {
+            	              $scope.status = status
+            	          });
+                   $scope.saveTimingDlg = true;
+            };
+
+            $scope.closeTimingDlg = function() {
+                $scope.saveTimingDlg = false;
+                /* $http({method: 'POST', url: '/inbound/pi/list'}).success(
+	                       function(data, status, headers, config) {
+	                    	   if(data.Type=='success'){
+	                           $scope.orders = data.Data;
+	                    	   }
+	                       }).error(
+	                        function(data, status, headers, config) {
+	                           $scope.status = status
+	                      }); */
+              }
+
+            $scope.showAddTimingDlg = function(){//
+          	     $scope.timing=null;
+          	     $scope.show=false;
+            	 $scope.addTimingDlg = true;
+               }
+             $scope.closeAddTimingDlg = function(){
+          	     $scope.show=true;
+            	 $scope.addTimingDlg = false;
+               }
+
+
+             $scope.addTiming = function(timing){
+                 if(typeof $scope.addTimingform.storageGroup.$error.date =='undefined'){
+                	 $scope.addTimingform.storageGroup.$error.date = true;
+                     }
+                 if(typeof $scope.addTimingform.timingDay.$error.datef == 'undefined'){
+                	 $scope.addTimingform.timingDay.$error.datef =true;
+                 }
+          	   var vilate=$scope.addTimingform.storageGroup.$error.date||$scope.addTimingform.timingDay.$error.date||$scope.addTimingform.timingDay.$error.datef;
+              	if(vilate==false){
+              	 timing.id = $scope.id;
+                 $scope.timings.push(timing);
+                 $scope.addTimingDlg = false;
+                 $scope.show=true;
+                 if($scope.timings.length>0){
+                 	 $scope.addOrNot = true;
+                 }else{
+                     $scope.addOrNot = false;
+                 }
+              	}
+              }
+             
+             $scope.showEditTiming = function(timing,index) {
+                 var msag = "It has been executed,can't be edited !";
+                 $scope.editTimingIndex = index;
+                 if(timing.hasExecution){
+                        alert(msag)
+                  }else{
+                        var s = JSON.stringify(timing);
+       	    	        $scope.timing = JSON.parse(s);
+       	    	        if(timing.haslive){
+       	    	        $scope.timing.timingDay = timing.timingDay.toFixed(2);
+       	    	        }
+                        $scope.show=false;
+                        $scope.editTimingDlg  = true;
+                 }
+               };
+
+               $scope.confirmTimingEdit = function(timing) {
+                 if(typeof $scope.editTimingform.timingDay.$error.datef=='undefined'){
+                    $scope.editTimingform.timingDay.$error.datef=false;
+                 }
+                 if(typeof $scope.editTimingform.timingDay.$error.date=='undefined'){
+                	 $scope.editTimingform.timingDay.$error.date=false;
+                 }
+            	 var vilate=$scope.editTimingform.timingDay.$error.datef||$scope.editTimingform.timingDay.$error.date;
+                 if(vilate==false){
+                  $scope.timings.splice($scope.editTimingIndex,1,timing);
+              	  $scope.timing=timing;
+                  $scope.editTimingDlg = false;
+                  $scope.show=true;
+            	  }
+                 }
+
+               $scope.closeEditTimingDlg = function(){
+               	 $scope.editTimingDlg = false;
+               	$scope.show=true;
+                  }
+
+             $scope.editProduction = function(prod,index) {
+                 var msag = "It has been executed,can't be edited !";
+                 $scope.currentPINumber = index;
+                 if(prod.hasPlan){
+                      alert(msag)
+                 }else{
+                      var s = JSON.stringify(prod);
+       	    	      $scope.prod = JSON.parse(s); 
+       	    	      $scope.prod.prodDate=$filter('date')($scope.prod.prodDate, 'yyyy-MM-dd');
+       	    	      /* $scope.prod.tmpProdQty = $scope.prod.prodQty;
+			    	  $scope.prod.tmpPiSku = $scope.prod.piSku; */
+			    	  $scope.prod.prodQty = parseFloat(prod.prodQty).toFixed(2);
+			    	  $scope.prod.piSku =   parseFloat(prod.piSku).toFixed(2);
+                      $scope.productionshow=false;
+                      $scope.editProductionDlg = true;
+                      $scope.batchNolengthUp =false;
+                 }
+               };
+
+               $scope.confirmEdit = function(prod) {
+            	   if(typeof $scope.productionedit.prodLine.$error.date=='undefined'){
+               		$scope.productionedit.prodLine.$error.date=false;
+                   }
+                   if(typeof $scope.productionedit.prodDate.$error.date1=='undefined'){
+                       $scope.productionedit.prodDate.$error.date1=false;
+                   }
+                   /* if(typeof $scope.productionedit.batchNo.$error.date=='undefined'){
+                   	 $scope.productionedit.batchNo.$error.date=false;
+                   } */
+                   if(typeof $scope.batchNolengthUp=='undefined'){
+                   	if(prod.batchNo!=null&&prod.batchNo!=''){
+               		    $scope.batchNolengthUp = $scope.LengthTest(prod.batchNo);
+                   	}else{
+                   		$scope.batchNolengthUp =false;
+                       }
+                   }else{
+                       if(prod.batchNo!=null&&prod.batchNo!=''){
+                   	    $scope.batchNolengthUp = $scope.LengthTest(prod.batchNo);
+                       }else{
+                   		$scope.batchNolengthUp =false;
+                       }
+                   }
+                   if(typeof $scope.productionedit.prodQty.$error.datef=='undefined'){
+               		$scope.productionedit.prodQty.$error.datef=false;
+                   }
+                   if(typeof $scope.productionedit.piSku.$error.datef=='undefined'){
+                       $scope.productionedit.piSku.$error.datef=false;
+                   }
+            	   if(($scope.productionedit.prodDate.$error.date||$scope.batchNolengthUp||$scope.productionedit.prodDate.$error.date1||$scope.productionedit.prodQty.$error.datef||$scope.productionedit.piSku.$error.datef||$scope.productionedit.prodQty.$error.date||$scope.productionedit.piSku.$error.date||$scope.productionedit.prodLine.$error.date||$scope.productionedit.batchNo.$error.date)!=true){
+                   $scope.prods.splice($scope.currentPINumber,1,prod);
+                   $scope.sumSKU($scope.prods);
+                   $scope.editProductionDlg = false;
+                   $scope.productionshow=true;
+            	   }
+                 }
+
+            $scope.saveProduction = function(prod){
+            	if(typeof $scope.addproduction.prodLine.$error.date=='undefined'){
+            		$scope.addproduction.prodLine.$error.date=true;
+                }
+                if(typeof $scope.addproduction.prodDate.$error.date1=='undefined'){
+                    $scope.addproduction.prodDate.$error.date1=true;
+                }
+               /*  if(typeof $scope.addproduction.batchNo.$error.date=='undefined'){
+                	 $scope.addproduction.batchNo.$error.date=true;
+                } */
+
+            	if(typeof $scope.batchNolength=='undefined'){
+                	if(prod.batchNo!=null&&prod.batchNo!=''){
+            		    $scope.batchNolength = $scope.LengthTest(prod.batchNo);
+                	}else{
+                		$scope.batchNolength =false;
+                    }
+                }else{
+                    if(prod.batchNo!=null&&prod.batchNo!=''){
+                	    $scope.batchNolength = $scope.LengthTest(prod.batchNo);
+                    }else{
+                		$scope.batchNolength =false;
+                    }
+                }
+                
+                if((typeof $scope.addproduction.prodQty.$error.datef=='undefined')&&(typeof $scope.addproduction.piSku.$error.datef=='undefined')){
+               		$scope.addproduction.prodQty.$error.datef=true;
+               	    $scope.addproduction.piSku.$error.datef=true;
+                }
+            	if(($scope.addproduction.prodDate.$error.date||$scope.batchNolength||$scope.addproduction.prodQty.$error.datef||$scope.addproduction.piSku.$error.datef||$scope.addproduction.prodDate.$error.date1||$scope.addproduction.prodQty.$error.date||$scope.addproduction.piSku.$error.date||$scope.addproduction.batchNo.$error.date)!=true){
+                /* $scope.prod = null; */
+                prod.id = $scope.id;
+                prod.piStatus = $scope.piStatus;
+                $scope.prods.push(prod);
+                $scope.sumSKU($scope.prods);
+                $scope.saveProductionDlg = false;
+            	}
+            };
+
+            $scope.showProductionDlg = function(){ //show PlanItem
+          	 $scope.prod = '';
+             //$scope.currentPINumber =-1;
+           	 $scope.saveProductionDlg = true;
+           	 $scope.productionshow=false;
+           	 $scope.batchNolength =false;
+           	 $scope.prod = {Number:No,skuUom:$scope.skuUomTemp.uomCode,uom:$scope.uomTemp.uomCode};
+             No=No+1;
+             }
+             $scope.closeProductionDlg = function(){
+           	 $scope.saveProductionDlg = false;
+           	 $scope.productionshow=true;
+              }
+
+            $scope.closeEditProductionDlg = function(){
+          	  $scope.editProductionDlg = false;
+           	  $scope.productionshow=true;
+              }
+            
+               $scope.closeUpdateOrderDlg = function() {
+                   $scope.updateOrderDlg = false;
+                 }
+
+               $scope.closeSaveOrderDlg = function() {
+                   $scope.saveOrderDlg = false;
+                 }
+             /*   $scope.closeSapDownloadDlg = function() {
+                   $scope.sapDownloadDlg = false;
+                 }
+ */
+      	   $scope.getPiSku = function(prod,type){  //get piSKU
+      	   prod.id=$scope.id;
+      	   if(prod.uom.id!='undefined'&&prod.uom.id!=''&&prod.skuUom.id!='undefined'&&prod.skuUom.id!=''){
+      	   if((prod.prodQty=='undefined'||prod.prodQty==''||prod.prodQty==null)&&!type){
+          	   $scope.prod.piSku = '';
+          	   return true;
+          	}
+         	if((prod.piSku=='undefined'||prod.piSku==''||prod.piSku==null)&&type){
+        	   $scope.prod.prodQty = '';
+        	  	return true;
+            }
+      	   }
+      		if(((prod.prodQty!='undefined'&&prod.prodQty!=''&&prod.prodQty!=null)||(prod.piSku!='undefined'&&prod.piSku!=''&&prod.piSku!=null))&&prod.uom.id!='undefined'&&prod.uom.id!=''&&prod.skuUom.id!='undefined'&&prod.skuUom.id!=''){
+      		  var dcd = prod;
+           	  $http.post('/inbound/pi/getPiSku',JSON.stringify(prod)).success(
+      				      function(data, status, headers, config) {
+      				    	  if(data.Type=='success'){
+	      				    	  if(type){
+	      				    		  $scope.prod.prodQty=(prod.piSku*data.Data).toFixed(2);
+	      				    		 /*  $scope.prod.tmpProdQty = (prod.piSku*data.Data).toFixed(4);
+	      				    		  $scope.prod.tmpPiSku = prod.piSku; */
+	      				        	  return false;
+	      				    	  }else{
+	      				    		  $scope.prod.piSku=(prod.prodQty/data.Data).toFixed(2);
+	      				    		  /* $scope.prod.tmpPiSku =(prod.prodQty/data.Data).toFixed(4);
+	      				    		  $scope.prod.tmpProdQty = prod.prodQty; */
+	      				    		  return false;
+	      				    	  }
+      				    	  }
+      				    }).error(
+      				      function(data, status, headers, config) {
+      				        $scope.status = status
+      				    });
+      		}
+      	 };
+
+      		 //鎵撳紑鍒犻櫎PI瀵硅瘽妗�
+      			$scope.openDeletDlg = function(order,$index){
+          			$scope.orderIndex = $index;
+      				$scope.deletePIDlg = true;
+      				$scope.deleteOrderVo = order;
+      			};
+
+      			//鍏抽棴鍒犻櫎PI鐨勫璇濇
+      			$scope.closeDeleteDlg = function(){
+      				$scope.deletePIDlg = false;
+      			};
+
+      			 //鎵撳紑鍒犻櫎Timing瀵硅瘽妗�
+      			$scope.openDeleteTimingDlg = function(timing,$index){
+          			$scope.timingIndex = $index;
+      				$scope.deleteTimingDlg = true;
+      				$scope.deleteTimingVo = timing;
+      				$scope.show=false;
+      			};
+
+      			//鍏抽棴鍒犻櫎Timing鐨勫璇濇
+      			$scope.closeDeleteTimingDlg = function(){
+      				$scope.deleteTimingDlg = false;
+      				$scope.show=true;
+      			};
+
+      			 //鎵撳紑鍒犻櫎Plan瀵硅瘽妗�
+      			$scope.openDeletePlanDlg = function(prod,$index){
+          			$scope.planIndex = $index;
+      				$scope.deletePlanDlg = true;
+      				$scope.deletePlanVo = prod;
+      				$scope.productionshow = false;
+      			};
+
+      			//鍏抽棴鍒犻櫎Plan鐨勫璇濇
+      			$scope.closeDeletePlanDlg = function(){
+      				$scope.deletePlanDlg = false;
+      				$scope.productionshow = true;
+      			};
+
+      			$scope.NullTest=function(value){
+      			    if (value.length > 0 && value.replace(/(^\s*)|(\s*$)/g,"").length != 0) {
+      			    	return false;
+      			    }else{
+      			    	return true;
+      			    }
+      			}
+		 	$scope.setMaterialCode=function(materialVo,add){   //寰幆閬嶅巻鐗╂枡
+			 	if(add){
+			 	 $scope.hasAdd = false;
+				 for(var i = 0, len = $scope.materials.length; i < len; ++i) {
+			           if($scope.materials[i].codeAndDesc==materialVo.codeAndDesc){
+			        	   materialVo.materialCode=$scope.materials[i].materialCode;
+			        	   materialVo.materialName=$scope.materials[i].materialName;
+			        	   materialVo.netWeight=$scope.materials[i].netWeight;
+			        	   materialVo.materialId=$scope.materials[i].materialId;
+			        	   $scope.hasAdd = true;
+			           }
+			         }
+				 if(!($scope.hasAdd)){
+		        	    materialVo.materialId='';
+			         }
+				$scope.getMaterialUom(materialVo,true);
+		        return $scope.NullTest(materialVo.materialId);
+			 	}else{
+				 $scope.has = false;
+				 for(var i = 0, len = $scope.materials.length; i < len; ++i) {
+			           if($scope.materials[i].codeAndDesc==materialVo.codeAndDesc){
+			        	   materialVo.materialCode=$scope.materials[i].materialCode;
+			        	   materialVo.materialName=$scope.materials[i].materialName;
+			        	   materialVo.netWeight=$scope.materials[i].netWeight;
+			        	   materialVo.materialId=$scope.materials[i].materialId;
+			        	   $scope.has = true;
+			           }
+			         }
+		         if(!($scope.has)){
+		        	    materialVo.materialId='';
+			         }
+				 $scope.getMaterialUom(materialVo,false);
+				 return $scope.NullTest(materialVo.materialId);
+			 	}
+			} 
+
+	         $scope.getMaterialUom=function(materialVo,add){
+	        	 if(materialVo.materialId){
+	        		 $http.get('/inbound/pi/listMaterialUom/'+materialVo.materialId).success(
+	            	      function(data, status, headers, config) {
+	            	    	 	 if(data.Type=='success'){
+	            	         $scope.materialUoms = data.Data;
+	            	    	 	 }
+           	          if(add){
+       	                 $scope.addVo.uomVo = JSON.parse(JSON.stringify($scope.materialUoms[0]));
+       	                 $scope.addVo.qtyPerPalletUom = JSON.parse(JSON.stringify($scope.materialUoms[0]));
+       	             }else{
+           	             $scope.currentOrder.uomVo =JSON.parse(JSON.stringify($scope.materialUoms[0]));
+           	             $scope.currentOrder.qtyPerPalletUom = JSON.parse(JSON.stringify($scope.materialUoms[0]));
+       	             }
+           	         }).error(
+           	           function(data, status, headers, config) {
+           	             $scope.status = status
+           	         });
+	        		 
+	        		 $http.get('/inbound/pi/listMaterialUomBase/'+materialVo.materialId).success(
+	           	           function(data, status, headers, config) {
+	           	        	 if(data.Type=='success'){
+	           	             $scope.materialUomBases = data.Data;
+	           	             if(add){
+	           	                 $scope.addVo.netWeightUom =  JSON.parse(JSON.stringify($scope.materialUomBases[0]));
+	           	             }else{
+	               	             $scope.currentOrder.netWeightUom = JSON.parse(JSON.stringify($scope.materialUomBases[0]));
+	           	             }
+	           	        	 }
+	           	         }).error(
+	           	           function(data, status, headers, config) {
+	           	             $scope.status = status
+	           	         });
+	        	 }
+	         }
+
+		 	$scope.setMaterialUomCode=function(uomVo){   //寰幆閬嶅巻鐗╂枡鍗曚綅
+				 for(var i = 0, len = $scope.materialUoms.length; i < len; ++i) {
+			           if($scope.materialUoms[i].id==uomVo.id){
+			        	   uomVo.uomCode=$scope.materialUoms[i].uomCode;
+			           }
+			         }
+				} 
+			$scope.setAllMaterialUomCode=function(uomVo){   //寰幆閬嶅巻鎵�湁鐗╂枡鍗曚綅
+				 for(var i = 0, len = $scope.allUoms.length; i < len; ++i) {
+			           if($scope.allUoms[i].id==uomVo.id){
+			        	   uomVo.uomCode=$scope.allUoms[i].uomCode;
+			           }
+			         }
+				} 
+
+			$scope.setStorageType=function(storageTypeVo){   //寰幆閬嶅巻storageType
+				 for(var i = 0, len = $scope.storageTypes.length; i < len; ++i) {
+			           if($scope.storageTypes[i].id==storageTypeVo.id){
+			        	   storageTypeVo.nameKey=$scope.storageTypes[i].nameKey;
+			           }
+			         }
+				} 
+
+			$scope.setProdLine=function(binVo){   //寰幆閬嶅巻prodLine
+				 for(var i = 0, len = $scope.lines.length; i < len; ++i) {
+			           if($scope.lines[i].id==binVo.id){
+			        	   binVo.nameKey=$scope.lines[i].nameKey;
+			           }
+			         }
+				}
+
+      	      $scope.setUpdateOrder = function(PiVo) {//缂栬緫PI鏂规硶鐨勭‘璁�
+      	    	 $scope.materialCheckUp = false;
+      	    	 $scope.materials=[]; 
+      	    	 $scope.materialUoms=[];
+      	    	  $scope.materialUomBases=[];
+      	    	 $scope.piNolengthUp = false;
+      	    	$scope.contractNolengthUp =false;
+          	      if(PiVo.hasPlan||PiVo.hasCargo){
+          	    	  $scope.onlyView = true;
+                  }else{
+                	  $scope.onlyView = false;
+                  }
+      	    	 $http.get('/inbound/pi/listMaterial').success(
+             	           function(data, status, headers, config) {
+             	        	 if(data.Type=='success'){
+             	             $scope.materials = data.Data;
+             	        	 }
+             	         }).error(
+             	           function(data, status, headers, config) {
+             	             $scope.status = status
+             	         });
+      	    	if(typeof PiVo.materialVo!='undefined'&&PiVo.materialVo!=''&&PiVo.materialVo!=null){
+          	    $http.get('/inbound/pi/listMaterialUom/'+PiVo.materialVo.materialId).success(
+            	           function(data, status, headers, config) {
+            	        	 	 if(data.Type=='success'){
+            	             $scope.materialUoms = data.Data;
+            	        	 	 }
+            	         }).error(
+            	           function(data, status, headers, config) {
+            	             $scope.status = status
+            	         });	
+				//alert(2222)
+           	  $http.get('/inbound/pi/listMaterialUomBase/'+PiVo.materialVo.materialId).success(
+         	           function(data, status, headers, config) {
+         	        	 	 if(data.Type=='success'){
+         	             $scope.materialUomBases = data.Data;
+         	        	 	 }
+         	         }).error(
+         	           function(data, status, headers, config) {
+         	             $scope.status = status
+         	         });	
+      	    	}else{
+      	    		 $scope.materialUoms=[];
+      	    		$scope.materialUomBases=[];
+      	    	}
+      			  var s = JSON.stringify(PiVo);
+      	    	  $scope.currentOrder = JSON.parse(s);
+      	    	  $scope.currentOrder.piDate=$filter('date')($scope.currentOrder.piDate, 'yyyy-MM-dd');
+          		  $scope.currentOrder.reqShipmentDate=$filter('date')($scope.currentOrder.reqShipmentDate, 'yyyy-MM-dd');
+      	          /* $scope.editOrNot = false; */
+      	         /*  if(PiVo.piSource=="T001"){
+      	        	  $scope.editOrNot = true;
+      	           } */
+      	          $scope.updateOrderDlg = true;
+      	        };
+      	      document.getElementById("submitDiv").style.display = "none";
+          });
+    </script>    
+ }
+

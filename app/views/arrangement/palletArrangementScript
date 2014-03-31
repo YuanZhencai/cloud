@@ -1,0 +1,413 @@
+@(name:String)
+
+<style type="text/css">
+
+.selected{color:red;background:GreenYellow;}
+
+</style>
+<script src="@routes.Assets.at("/public", "javascripts/loading.js")" type="text/javascript"></script>
+<script type="text/javascript" charset="utf-8">
+ // var CloudWMS = angular.module('CloudWMS', ['ui.bootstrap']);
+  
+  var DATE_REGEXP =/((^((1[8-9]\d{2})|([2-9]\d{3}))([-\/\._])(10|12|0?[13578])([-\/\._])(3[01]|[12][0-9]|0?[1-9])$)|(^((1[8-9]\d{2})|([2-9]\d{3}))([-\/\._])(11|0?[469])([-\/\._])(30|[12][0-9]|0?[1-9])$)|(^((1[8-9]\d{2})|([2-9]\d{3}))([-\/\._])(0?2)([-\/\._])(2[0-8]|1[0-9]|0?[1-9])$)|(^([2468][048]00)([-\/\._])(0?2)([-\/\._])(29)$)|(^([3579][26]00)([-\/\._])(0?2)([-\/\._])(29)$)|(^([1][89][0][48])([-\/\._])(0?2)([-\/\._])(29)$)|(^([2-9][0-9][0][48])([-\/\._])(0?2)([-\/\._])(29)$)|(^([1][89][2468][048])([-\/\._])(0?2)([-\/\._])(29)$)|(^([2-9][0-9][2468][048])([-\/\._])(0?2)([-\/\._])(29)$)|(^([1][89][13579][26])([-\/\._])(0?2)([-\/\._])(29)$)|(^([2-9][0-9][13579][26])([-\/\._])(0?2)([-\/\._])(29)$))/;
+  var FLOAT_REGEXP =/^[0-9]+\.{0,1}[0-9]{0,2}$/;
+  var INT_REGEXP=/^[1-9]*[1-9][0-9]*$/;
+  var ISNULL_REGEXP =/^$/;
+  var NULL_REGEXP=/^\w+$/;
+  CloudWMS.directive('integer', function() {
+        return {
+          require: 'ngModel',
+          link: function(scope, elm, attrs, ctrl) {
+            ctrl.$parsers.unshift(function(viewValue) {
+              if (INT_REGEXP.test(viewValue)||viewValue=='') {
+                ctrl.$setValidity('inte', true);
+                return viewValue;
+              } else {
+                ctrl.$setValidity('inte', false);
+                return undifined;
+              }
+            });
+          }
+        };
+  }) 
+	
+  CloudWMS.controller('PalletArrangement', function($scope, $http) {
+	// boolean for  dialog
+  $scope.tempPallets= new Array();
+  $http.get('/common/initPiNo').success( 
+  	      function(data, status, headers, config) {
+  	    	$scope.PIs =null; 
+  	        $scope.PIs = data; 
+  	    }).error(
+  	      function(data, status, headers, config) {
+  	        $scope.status = status
+  	    });
+  $http.get('/common/initpistatus').success( 
+  	      function(data, status, headers, config) { 
+  	        $scope.piStatuss = data; 
+  	    }).error(
+  	      function(data, status, headers, config) {
+  	        $scope.status = status
+  	    });
+    $scope.callList=function(){
+    	  $http.post('/arrangement/palletarrangement/list').success( 
+    		      function(data, status, headers, config) {
+    		    	$scope.lineStrocks =null; 
+    		        $scope.lineStrocks = data;
+    		        $scope.selecedIndex=-1;
+    		    }).error(
+    		      function(data, status, headers, config) {
+        		 
+    		        $scope.status = status
+    		    });
+        }
+   
+     // PalletArrangement   function method============================================================================
+     //search method^^^^^^^^^^^^^^
+$scope.searchList = function(searchVo) {
+	startLoading();
+	$http.post('/arrangement/palletarrangement/list', JSON.stringify(searchVo))
+			.success(function(data, status, headers, config) {
+				$scope.selecedIndex = -1;
+				endLoading();
+				$scope.lineStrocks = alertMessage(data);
+			}).error(function(data, status, headers, config) {
+				$scope.status = status;
+				endLoading();
+			});
+}
+ 	    
+
+//=======================================================================================================================================================
+//Combine
+ $scope.palletdetailDlg = false;
+ $scope.addDismantleDlg = false;
+ $scope.selectPallets = []; 
+ //combine  这个变量用来标记，合并后的pallet  dismantle 时候用来标记拆分的是哪个pallet
+ $scope.combinPallet= {}; 
+ $scope.dismantlePallet= null; 
+ $scope.selecedIndex=-1;
+ //true 为合并 false 为拆分
+ $scope.combineOrDismantle = true; 
+ //combine   Pallets Detail  点击多选框时调用
+ $scope.selectOperaPallet = function(){
+	    $scope.selectPallets = [];
+	    var copyPallets = JSON.parse(JSON.stringify($scope.pallets));
+	    angular.forEach(copyPallets, function(pallet) {
+	      if (pallet.todo) {$scope.selectPallets.push(pallet);
+	    	  		      };
+	    });
+	    $scope.combinPallet= null;
+	    $scope.palletNumber = null;
+	  };
+	  
+//   dismantle	   Pallets Detail  点击单选按钮时调用
+ $scope.selectSingleOperaPallet = function(stockId){
+  $scope.selectPallets = [];
+  var copyPallets = JSON.parse(JSON.stringify($scope.pallets));
+    angular.forEach(copyPallets, function(pallet) {
+    	if (pallet.stockId == stockId) {
+		      $scope.dismantlePallet= JSON.parse(JSON.stringify(pallet));
+		    
+	    		};				  
+    });
+    if($scope.dismantlePallet.qty<=1){
+    	  alert("dismantlePallet must bigger 1");
+    	  return;
+      }
+    	var palletOne= JSON.parse(JSON.stringify($scope.dismantlePallet));
+    	var palletTwo= JSON.parse(JSON.stringify($scope.dismantlePallet));
+    	var halfQty =$scope.dismantlePallet.qty/2;
+    if($scope.dismantlePallet.qty%2==0){
+    	palletTwo.qty = palletOne.qty = halfQty;
+    }else{
+    	palletOne.qty =parseInt(halfQty);
+    	palletTwo.qty = parseInt(halfQty)+1;
+    }
+    $scope.selectPallets.push(palletOne);
+    $scope.selectPallets.push(palletTwo);
+  };
+//拆分的时候点击取消的时候调用		  
+  $scope.cancelPallet = function() {
+  	$scope.selectPallets = [];
+  }
+  $scope.editPalletQty = function(index, qty) {
+  	$scope.dismantltForm;
+  	var flag = false;
+  	if (qty == undefined) {
+  		if (index == 0) {
+  			$scope.selectPallets[1].qty = $scope.dismantlePallet.qty;
+  		} else {
+  			$scope.selectPallets[0].qty = $scope.dismantlePallet.qty;
+  		}
+  		return;
+  	}
+  	try {
+  		if (!INT_REGEXP.test(qty) || qty <= 0) {
+  			alert("Quantity must be greater than 0");
+  			flag = true;
+  		} else if (parseFloat(qty) > $scope.dismantlePallet.qty) {
+  			alert("dismantle pallet qty " + qty + "must less "
+  					+ $scope.dismantlePallet.qty);
+  			flag = true;
+  		}
+  		if (flag) {
+  			if (index == 0) {
+  				$scope.selectPallets[0].qty = $scope.dismantlePallet.qty
+  						- $scope.selectPallets[1].qty;
+  			} else {
+  				$scope.selectPallets[1].qty = $scope.dismantlePallet.qty
+  						- $scope.selectPallets[0].qty;
+  			}
+  			return;
+  		}
+  		// 没有错
+  		if (index == 0) {
+  			$scope.selectPallets[1].qty = $scope.dismantlePallet.qty
+  					- parseFloat(qty);
+  		} else {
+  			$scope.selectPallets[0].qty = $scope.dismantlePallet.qty
+  					- parseFloat(qty);
+  		}
+  	} catch (err) {
+  		alert(err)
+  	}
+  }
+  // 拆分 点击Add按钮时调用
+  $scope.addDismantleStock = function() {
+  	var flag = false;
+  	var message = "";
+  	if ($scope.dismantlePallet == null) {
+  		alert("please first select one pallet");
+  		return;
+  	}
+  	var total = 0;
+  	if ($scope.selectPallets != null && $scope.selectPallets.length > 0) {
+  		for ( var i = 0; i < $scope.selectPallets.length; i++) {
+  			if ($scope.selectPallets[i].show == false) {
+  				alert("please save data first");
+  				return;
+  			}
+  			total = total + parseFloat($scope.selectPallets[i].qty);
+  		}
+  	}
+  	if (total >= $scope.dismantlePallet.qty) {
+  		alert("you have add" + total);
+  		return;
+  	}
+  	if (flag) {
+  		alert(message);
+  	} else {
+  		var temp = JSON.parse(JSON.stringify($scope.dismantlePallet));
+  		temp.qty = null;
+  		temp.palletNumber = $scope.selectPallets.length + $scope.pallets.length
+  				+ 1;
+  		$scope.tempPallet = angular.copy(temp);
+  		$scope.selectPallets.push(temp);
+  	}
+  }
+  // 拆分 Pallets Detail 点击save 或者 edit 按钮时调用
+  $scope.editOrSvave = function(pallet) {
+  	try {
+  		if (pallet.show == false) { // 保存
+  			if ($scope.dismantltForm.qty.$error.required) {
+  				alert("pallet qty is null");
+  				return;
+  			}
+  			if (!FLOAT_REGEXP.test(pallet.qty) || pallet.qty <= 0) {
+  				alert("Quantity must be greater than 0");
+  				return;
+  			}
+  			if ($scope.selectPallets != null) {
+  				var totalQty = new Number(0);
+  				for ( var i = 0; i < $scope.selectPallets.length; i++) {
+  					totalQty = totalQty
+  							+ parseFloat($scope.selectPallets[i].qty)
+  				}
+  				if (totalQty > $scope.dismantlePallet.qty) {
+  					alert("you dismantle totalQty :" + totalQty
+  							+ " bigger than select pallet qty:"
+  							+ $scope.dismantlePallet.qty);
+  					return;
+  				}
+  			}
+  		}
+  		if (pallet.show) {
+  			$scope.tempPallets.push(angular.copy(pallet));
+  		}
+  		pallet.show = !pallet.show;
+  	} catch (err) {
+  		alert(err)
+  	}
+  }
+  // 拆分 cancel 按钮调用
+  $scope.cancelDismatch = function(index, palletNumber) {
+  	// 如果还没有保存则相当于删除
+  	try {
+  		for ( var i = 0; i < $scope.tempPallets.length; i++) {
+  			if ($scope.tempPallets[i].palletNumber == palletNumber) {
+  				break;
+  			}
+  		}
+  		$scope.selectPallets[index].show = true;
+  		$scope.selectPallets[index] = angular.copy($scope.tempPallets[i]);
+  	} catch (err) {
+  		alert(err)
+  	}
+  	;
+  }
+  // 拆分 deleted 按钮调用
+  $scope.deletedDismatch = function(index) {
+  	$scope.selectPallets.splice(index, 1);
+  }
+  // 当点击 mainPallet下面的select控件时调用此方法
+  $scope.generateCombinPallet = function(mainPalletNumber) {
+  	var flag = true;
+  	var totalQty = 0;
+  	angular.forEach($scope.selectPallets, function(pallet) {
+  		if (flag && pallet.palletNumber == mainPalletNumber) {
+  			$scope.combinPallet = JSON.parse(JSON.stringify(pallet));
+  			pallet.main = true;
+  			$scope.combinPallet.stockId = null;
+  			flag = false;
+  		}
+  		;
+  		totalQty = totalQty + pallet.qty;
+  	});
+  	$scope.combinPallet.qty = totalQty;
+  	$scope.combinPallet.palletNumber = $scope.pallets.length + 1;
+  };	  
+ 
+// if combine turn dismantle   if dismantle trun comibne
+$scope.selectCombineOrDismantle = function() {
+	if ($scope.combineOrDismantle == true) {
+		$scope.combineOrDismantle = false;
+	} else {
+		for ( var i = 0; i < $scope.pallets.length; i++) {
+			$scope.pallets[i].todo = false;
+		}
+		;
+		$scope.combineOrDismantle = true;
+	}
+	$scope.selectPallets = [];
+	$scope.combinPallet = null;
+}
+	
+//Pallets按钮     
+$scope.showPalletsView = function(planItemId, index) {
+	$http.get('/arrangement/palletarrangement/pallets/list/' + planItemId)
+			.success(function(data, status, headers, config) {
+				$scope.palletdetailDlg = true;
+				$scope.selectPallets = [];
+				$scope.combinPallet = null;
+				$scope.selecedIndex = index;
+				$scope.pallets = alertMessage(data);
+			}).error(function(data, status, headers, config) {
+				$scope.status = status
+				console.log(data);
+			});
+
+}
+//cancel pallet dialog
+$scope.cancelpalletsView = function() {
+	$scope.palletdetailDlg = false;
+};
+
+// combine and dismantle operate selectpallets这个参数只是拆分时使用
+$scope.opratePallet = function(selectpallets) {
+	startLoading();
+	// true 合并
+	var flag = true;
+	var url = '';
+	var pallets = [];
+	var message = "";
+	if ($scope.combineOrDismantle == true) { // combine 合并
+		if ($scope.combinPallet == null || $scope.combinPallet.qty == null
+				|| $scope.combinPallet.qty == "") {
+			flag = false;
+			alert("please select main pallet");
+			return;
+		}
+		if ($scope.combinPallet.qty > $scope.combinPallet.palletQty) {
+			// alert("pallet qty cannot bigger than
+			// "+$scope.combinPallet.palletQty);
+			// return;
+		}
+		url = '/arrangement/palletarrangement/combine';
+		$scope.selectPallets.push($scope.combinPallet);
+		pallets = $scope.selectPallets;
+
+	} else { // false 拆分 operate
+		if (selectpallets == null || selectpallets.length == 0) {
+			flag = false;
+			alert("please add pallet");
+			endLoading();
+			return;
+		}
+		var totalQty = 0;
+		for ( var i = 0; i < selectpallets.length; i++) {
+			if (selectpallets[i].qty == undefined) {
+				alert("data is error");
+				endLoading();
+				return;
+			}
+			if (selectpallets[i].qty <= 0) {
+				alert("data must bigger 0");
+				endLoading();
+				return;
+			}
+			totalQty = totalQty + parseFloat(selectpallets[i].qty);
+		}
+
+		if (totalQty != $scope.dismantlePallet.qty) {
+			alert("dismantle qty " + totalQty + " less oldPallet qty "
+					+ $scope.dismantlePallet.qty);
+			endLoading();
+			return;
+		}
+		url = '/arrangement/palletarrangement/dismantle';
+		pallets = JSON.parse(JSON.stringify(selectpallets));
+		$scope.dismantlePallet.main = true;
+		pallets.push($scope.dismantlePallet);
+	}
+
+	$http.post(url, JSON.stringify(pallets)).success(
+			function(data, status, headers, config) {
+				$scope.selectPallets = [];
+				$scope.combinPallet = {};
+				$scope.showPalletsView(pallets[0].stockLineId);
+				endLoading();
+				alertMessage(data);
+			}).error(function(data, status, headers, config) {
+		$scope.status = status;
+		endLoading();
+	});
+};
+
+	  
+			  
+
+
+
+
+				   
+//=======================================================================================================================================================
+
+//util method----------------------------------------------------------------------
+$scope.dlgOpts = {
+		backdropFade : true,
+		dialogFade : false,
+		backdropClick : false
+	};
+	// 选中后的样式选择
+	$scope.getClass = function(ind) {
+		if (ind == $scope.selecedIndex) {
+			return "selected";
+		} else {
+			return "";
+		}
+	};			 
+                      
+  }); </script>
+  
+ 

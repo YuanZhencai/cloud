@@ -1,0 +1,659 @@
+@(name: String)
+@main("user"){
+<div ng-controller="UserCtrl">
+<div class="breadcrumb">
+	<li style=""> Current Location: User Setup</li>
+</div>
+<div alert ng-repeat="alert in alerts" type="alert.type" close="closeAlert($index)" template-url="/template/alert/alert.html">{{alert.msg}}</div>
+	<!-- 查询条件 -->
+	<form novalidate>
+		<table>
+			
+			<tr>
+				<td class="column0">
+					<label>Name:</label>
+				</td>
+				<td class="column2">
+					<input type="text" ng-model="userSearchVo.name">
+				</td>
+				<td class="column0">
+					<label>User Roles:</label>
+				</td>
+				<td class="column2">
+				<select ng-model="userSearchVo.roleVo.id" ng-options="r.id as r.nameKey for r in roleList | orderBy:'nameKey'" ng-change="setRole(userSearchVo.roleVo)">
+					<option value="">All</option>
+				</select>
+				<td>
+				<td colspan="4">
+				</td>
+				<td>
+					<div style="text-align: right;">
+						<input type="submit" id="submit" value="Search" class="btn btn-primary btn-small" ng-click="searchList(userSearchVo)" >
+					</div>
+				</td>
+			</tr>
+		</table>
+	</form>
+	
+	<table cellpadding="0" cellspacing="0" border="0"
+		class="table table-striped table-bordered table-hover table-condensed" id="example" width="100%">
+		<thead>
+			<tr>
+				<th>Company</th>
+				<th>Warehouse</th>
+				<th>Name</th>
+				<th>Email</th>
+				<th>Tel Number</th>
+				<th>Roles</th>
+				<th>Last update date</th>
+				<th>Operation<a href="" class="btn btn-primary btn-small" id="new" ng-click="showUserDlgMethod()">Add</a>
+				</th>
+			</tr>
+		</thead>
+
+		<tbody>
+			<tr ng-repeat="user in userList" >
+				<td>{{user.companyVo.nameKey}}</td>
+				<td>{{user.warehouseVo.nameKey}}</td>
+				<td>{{user.name}}</td>
+				<td>{{user.email}}</td>
+				<td>{{user.telNumber}}</td>
+				<td>{{user.roleNameKeys}}</td>
+				<td>{{user.updateAt}}</td>
+				<th class="center">
+					<span class="btn btn-primary btn-small"  ng-click="showEditDlgMethd(user)">Edit</span>
+					<span ng-disabled="user.delete" class="btn btn-danger btn-small" ng-click="showDeleteUserDlg($index,user)">Delete</span>
+				</th>
+			</tr>
+		</tbody>
+	</table>
+<div modal="showUserDlg" close="closeUserDlg()" options="dlgOpts">
+   <div class="modal-header">
+      <h4>Add User</h4>
+   </div>
+  <div class="modal-body">
+  <form name="addUserForm">
+  <table>
+  <tr>
+  <td class="column0">Company:</td>
+  <td><select type="text"  ng-model="userAdd.companyVo.id" ng-options="b.id as b.nameKey for b in companyList" ng-change="userAdd.column6=setCompany(userAdd.companyVo,userAdd)"></select></td>
+  <td><span style="color: red">*</span><span ng-show="userAdd.column6" style="color: red">can't be null</span></td>
+  </tr>
+  
+  <tr>
+  <td class="column0">Warehouse:</td>
+  <td><select type="text"  ng-model="userAdd.warehouseVo.id" ng-options="w.id as w.nameKey for w in warehouseList" ng-change="userAdd.column4=setWarehouse(userAdd.warehouseVo)"></select></td>
+  <td><span style="color: red">*</span><span ng-show="userAdd.column4" style="color: red">can't be null</span></td>
+  </tr>
+  
+  <tr>
+  <td class="column0" >Name:</td>
+  <td><input type="text" ng-model="userAdd.name" ng-change="userAdd.column0=NullTest(userAdd.name)" ></td>
+  <td><span style="color: red">*</span><span ng-show="userAdd.column0" style="color: red">can't be null</span></td>
+  </tr>
+  
+  <tr>
+  <td class="column0">Password:</td>
+  <td><input type="password" ng-model="userAdd.password" ng-change="userAdd.column1=NullTest(userAdd.password)" ></td>
+  <td><span style="color: red">*</span><span ng-show="userAdd.column1" style="color: red">can't be null</span></td>
+  </tr>
+  
+  <tr>
+  <td class="column0">RePassword:</td>
+  <td><input type="password" ng-model="userAdd.rePassword" ng-change="userAdd.column2=NullTest(userAdd.rePassword)" ></td>
+  <td><span style="color: red">*</span><span ng-show="userAdd.column2" style="color: red">can't be null</span></td>
+  </tr>
+  
+  <tr>
+  <td class="column0">Email:</td>
+  <td><input type="text" ng-model="userAdd.email" ng-change="userAdd.column5=MailTest(userAdd.email)"></td>
+  <td><span ng-show="userAdd.column5" style="color: red">not a valid email !</span></td>
+  </tr>
+  
+  <tr>
+  <td class="column0">Tel Number:</td>
+  <td><input type="text" ng-model="userAdd.telNumber" ng-change="userAdd.column7=TelTest(userAdd.telNumber)"></td>
+  <td><span ng-show="userAdd.column7" style="color: red">not a valid telNumber !</span></td>
+  </tr>
+  
+  <tr>
+  <td class="column0">Roles:</td>
+  <td><div class="inline" ng-repeat="role in selectedRoleList" ng-model="userAdd.roles">{{role.nameKey}}</div></td>
+  <td><span class="btn btn-primary btn-small" ng-click="showRolesSelected()" >Roles</span></td>
+  </tr>
+  </table>
+  </form>
+  </div>
+  <div class="modal-footer">
+  		<a href=""  class="btn btn-primary btn-small" data-toggle="modal" ng-click="saveOrUpdateUser(userAdd)">OK</a>
+		<a href=""  class="btn btn-warning btn-small" data-toggle="modal" ng-click="closeUserDlg()">Cancel</a>
+ </div>
+</div>
+<!-- Select Roles -->
+<div modal="showRolesDlg" close="closeRolesDlg()" >
+   <div class="modal-header">
+      <h4>Roles</h4>
+   </div>
+  <div class="modal-body">
+  <table cellpadding="0" cellspacing="0" border="0"
+		class="table table-striped table-bordered table-hover table-condensed" id="example" width="100%">
+		<thead>
+			<tr>
+			    <th><input type="checkbox" ng-model="checkSelect" ng-change="selectAll(checkSelect)"></th>
+				<th>Roles</th>
+			</tr>
+		</thead>
+
+		<tbody>
+			<tr ng-repeat="role in roleList" >
+			<th><input type="checkbox" ng-model="role.ifSelect" ng-change="changeSelect()"></th>
+				<td>{{role.nameKey}}</td>
+			</tr>
+		</tbody>
+	</table>
+  <div class="modal-footer">
+  		<a href=""  class="btn btn-primary btn-small" data-toggle="modal" ng-click="getRoles()">OK</a>
+		<a href=""  class="btn btn-warning btn-small" data-toggle="modal" ng-click="closeRolesDlg()">Cancel</a>
+ </div>
+  </div>
+</div>
+
+<div modal="showRolesDlgEdit" close="closeRolesDlgEdit()">
+   <div class="modal-header">
+      <h4>Roles</h4>
+   </div>
+  <div class="modal-body">
+  <table cellpadding="0" cellspacing="0" border="0"
+		class="table table-striped table-bordered table-hover table-condensed" id="example" width="100%">
+		<thead>
+			<tr>
+			    <th><input type="checkbox" ng-model="checkSelect" ng-change="selectAll(checkSelect)"></th>
+				<th>Roles</th>
+			</tr>
+		</thead>
+
+		<tbody>
+			<tr ng-repeat="role in roleList" >
+			<th><input type="checkbox" ng-model="role.ifSelect" ng-change="changeSelect()"></th>
+				<td>{{role.nameKey}}</td>
+			</tr>
+		</tbody>
+	</table>
+  <div class="modal-footer">
+  		<a href=""  class="btn btn-primary btn-small" data-toggle="modal" ng-click="getRolesEdit()">OK</a>
+		<a href=""  class="btn btn-warning btn-small" data-toggle="modal" ng-click="closeRolesDlgEdit()">Cancel</a>
+ </div>
+  </div>
+</div>
+
+<div modal="showEditUserDlg" close="closeEditUserDlg()" options="dlgOpts">
+   <div class="modal-header">
+      <h4>Edit User</h4>
+   </div>
+  <div class="modal-body">
+  <form name="addUserForm">
+  <table>
+  
+   <tr>
+  <td class="column0">Company:</td>
+  <td><select type="text"  ng-model="userEdit.companyVo.id" ng-options="b.id as b.nameKey for b in companyList" ng-change="userEdit.column6=setCompany(userEdit.companyVo,userEdit)">
+  </select></td>
+  <td><span style="color: red">*</span><span ng-show="userEdit.column6" style="color: red">can't be null</span></td>
+  </tr>
+  
+  <tr>
+  <td class="column0">Warehouse:</td>
+  <td><select type="text"  ng-model="userEdit.warehouseVo.id" ng-options="w.id as w.nameKey for w in warehouseList" ng-change="userEdit.column4=setWarehouse(userEdit.warehouseVo)">
+  </select></td>
+  <td><span style="color: red">*</span><span ng-show="userEdit.column4" style="color: red">can't be null</span></td>
+  </tr>
+  
+  <tr>
+  <td class="column0" >Name:</td>
+  <td><input type="text" ng-model="userEdit.name" ng-change="userEdit.column0=NullTest(userEdit.name)"></td>
+  <td><span style="color: red">*</span><span ng-show="userEdit.column0" style="color: red">can't be null</span></td>
+  </tr>
+  
+  <tr>
+  <td class="column0">Password:</td>
+  <td><input type="password" ng-model="userEdit.password" ng-change="userEdit.column1=NullTest(userEdit.password)"></td>
+  <td><span style="color: red">*</span><span ng-show="userEdit.column1" style="color: red">can't be null</span></td>
+  </tr>
+  
+  <tr>
+  <td class="column0">RePassword:</td>
+  <td><input type="password" ng-model="userEdit.rePassword" ng-change="userEdit.column2=NullTest(userEdit.rePassword)"></td>
+  <td><span style="color: red">*</span><span ng-show="userEdit.column2" style="color: red">can't be null</span></td>
+  </tr>
+  
+  <tr>
+  <td class="column0">Email:</td>
+  <td><input type="text" ng-model="userEdit.email" ng-change="userEdit.column5=MailTest(userEdit.email)"></td>
+  <td><span ng-show="userEdit.column5" style="color: red">not a valid email !</span></td>
+  </tr>
+  
+  <tr>
+  <td class="column0">Tel Number:</td>
+  <td><input type="text" ng-model="userEdit.telNumber" ng-change="userEdit.column7=TelTest(userEdit.telNumber)"></td>
+  <td><span ng-show="userEdit.column7" style="color: red">not a valid telNumber !</span></td>
+  </tr>
+  
+  <tr>
+  <td class="column0">Roles:</td>
+  <td><div class="inline" ng-repeat="roleEdit in selectedRoleList" ng-model="userEdit.roles" ng-change="userEdit.column3=NullTest(roleEdit.nameKey)">{{roleEdit.nameKey}}</div></td>
+  <td><span class="btn btn-primary btn-small" ng-click="showRolesSelectedEdit()">Roles</span><span ng-show="userEdit.column3" style="color: red">can't be null</span></td>
+  </tr>
+  
+  </table>
+  </form>
+  </div>
+  <div class="modal-footer">
+  		<a href=""  class="btn btn-primary btn-small" data-toggle="modal" ng-click="saveOrUpdateUser(userEdit)">OK</a>
+		<a href=""  class="btn btn-warning btn-small" data-toggle="modal" ng-click="closeEditUserDlg()">Cancel</a>
+ </div>
+</div>
+ <!-- 删除对话框detail Dialog -->
+	<div modal="deleteUserDlg" close="closeDeleteUserDlg()">
+		<div class="modal-header">
+			<h4>Delete User</h4>
+		</div>
+		<div class="modal-body">
+		<form novalidate class="form-horizontal">
+			<table>
+				<tbody>
+					Are you sure to delete ?
+				</tbody>
+			</table>
+			<div class="modal-footer">
+				<button class="btn btn-primary btn-small ok" ng-click="userDelete(Index,deleteUserVo)">YES</button>
+				<button class="btn btn-warning btn-small cancel" ng-click="closeDeleteUserDlg()">NO</button>
+			</div>
+		</form>
+		</div>
+	</div>
+</div>
+<style type="text/css">
+.red{background: red;}
+.column0 {text-align: right;width: 125px;}
+.column1 {text-align: right;width: 165px;}
+.column2 {text-align: left;width: 9px;}
+</style>
+}{
+<script type="text/javascript" charset="utf-8">
+    //var CloudWMS = angular.module('CloudWMS', ['ui.bootstrap']);
+    var NULL_REGEXP=/^\S{1,15}$/;
+    var MAIL_REGEXP=/^([a-zA-Z0-9_\.\-])+\@@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+    var TEL_REGEXP=/((\d{11})|^((\d{7,8})|(\d{4}|\d{3})-(\d{7,8})|(\d{4}|\d{3})-(\d{7,8})-(\d{4}|\d{3}|\d{2}|\d{1})|(\d{7,8})-(\d{4}|\d{3}|\d{2}|\d{1}))$)/;
+    CloudWMS.controller('UserCtrl', function($scope, $http,$timeout) {
+    	$scope.showUserDlg=false;
+    	$scope.showEditUserDlg=false;
+    	$scope.showRolesDlg=false;
+    	$scope.showRolesDlgEdit=false;
+    	$scope.selectedRoleList=[];
+    	$scope.deleteUserDlg = false;
+    	 var addAlert = function(types,msgs) {
+    	        $scope.alerts.push({type:types,msg: msgs});
+    	        $timeout($scope.clearAlerts, 5000);
+    	         };
+    	        $scope.closeAlert = function(index) {
+    	        $scope.alerts.splice(index, 1);
+    	        };
+    	        $scope.clearAlerts = function() {
+    	        $scope.alerts = [];
+    	        }
+    	 $timeout($scope.clearAlerts, 5000);
+    	   
+       /*  $scope.NullTest=function(value){
+        	  if (NULL_REGEXP.test(value)) {
+        		 return false;
+        	  }else{
+        		  return true;
+        	  }
+        } */
+
+    	 $scope.NullTest=function(value){
+ 		    if (value.length > 0 && value.replace(/(^\s*)|(\s*$)/g,"").length != 0) {
+ 		    	return false;
+ 		    }else{
+ 		    	return true;
+ 		    }
+ 		}
+
+        $scope.MailTest=function(value){
+      	  if (MAIL_REGEXP.test(value)) {
+      		 return false;
+      	  }else{
+      		  return true;
+      	  }
+      }
+
+        $scope.TelTest=function(value){
+        	  if (TEL_REGEXP.test(value)) {
+        		 return false;
+        	  }else{
+        		  return true;
+        	  }
+        }
+
+
+        $scope.dlgOpts = {
+    		    backdropFade: true,
+    		    dialogFade:false,
+    		    backdropClick:false
+    		   // dialogClass: [width:'1200px'];
+    		  };
+      
+            $http({method: 'GET', url: '/setup/user/listRoles'}).success(
+                    function(data, status, headers, config) {
+                      $scope.roleList = data;
+                  }).error(
+                    function(data, status, headers, config) {
+                      $scope.status = status
+                  });
+
+        	$scope.setRole=function(roleVo){   //循环遍历company
+				 for(var i = 0, len = $scope.roleList.length; i < len; ++i) {
+			           if($scope.roleList[i].id==roleVo.id){
+			        	   roleVo.nameKey=$scope.roleList[i].nameKey;
+			           }
+			         }
+				}
+         	$scope.setWarehouse=function(warehouseVo){   //循环遍历Warehouse
+ 				 for(var i = 0, len = $scope.warehouseList.length; i < len; ++i) {
+ 			           if($scope.warehouseList[i].id==warehouseVo.id){
+ 			        	  warehouseVo.nameKey=$scope.warehouseList[i].nameKey;
+ 			           }
+ 			         }
+ 				}
+
+         	 $http({method: 'GET', url: '/setup/user/initCompany'}).success(
+                     function(data, status, headers, config) {
+                       $scope.companyList = data;
+                   }).error(
+                     function(data, status, headers, config) {
+                       $scope.status = status
+                   });
+
+         	 $http({method: 'GET', url: '/setup/user/initWarehouse'}).success(
+                     function(data, status, headers, config) {
+                       $scope.warehouseList = data;
+                       var ishave=false;
+                       for(var i = 0, len = $scope.warehouseList.length; i < len; ++i){
+	                       if($scope.warehouseList[i].id==user.warehouseVo.id)
+	                    	   ishave=true;
+	                    }
+	                   if(!ishave){
+	                	   user.warehouseVo='';
+		               }
+                   }).error(
+                     function(data, status, headers, config) {
+                       $scope.status = status
+                   });
+
+         	$scope.setCompany=function(companyVo,user){   //循环遍历company
+ 				 for(var i = 0, len = $scope.companyList.length; i < len; ++i) {
+ 			           if($scope.companyList[i].id==companyVo.id){
+ 			        	  companyVo.nameKey=$scope.companyList[i].nameKey;
+ 			           }
+ 			         }
+ 				}
+
+         	 $scope.searchList=function(userSearchVo){ //Search user
+         		  document.getElementById("submitDiv").style.display = "inline";
+                 $http.post('/setup/user/list', JSON.stringify(userSearchVo)).success(
+                   function(data, status, headers, config) {
+                	   document.getElementById("submitDiv").style.display = "none";
+                      $scope.userList = data;
+                	  $scope.status=status;
+                 }).error(
+                   function(data, status, headers, config) {
+                	   document.getElementById("submitDiv").style.display = "none";
+                     $scope.status = status
+                 });
+            };
+            
+            $scope.userDelete=function($index,user){
+         		 $http.get(' /setup/user/delete/'+user.id).success(
+         		     function(data, status, headers, config) {
+         		        $scope.userList.splice($index,1);
+                	    addAlert('success',data)
+                	    $scope.deleteUserDlg = false;
+         		  }).error(
+         		      function(data, status, headers, config) {
+         		         $scope.status = status
+         		         addAlert('error',data)
+         		  });
+         	  }
+
+            $scope.showUserDlgMethod=function(){
+            	$scope.addRoles=true;
+           		$scope.userAdd={name:'',password:'',rePassword:'',warehouseVo:'',roles:[],column0:undefined,column1:undefined,column2:undefined,column3:undefined,column4:undefined,column5:undefined,column6:undefined,column7:undefined};
+           		$scope.selectedRoleList=[];
+           	    $scope.showUserDlg=true;
+           	    $scope.userAdd.companyVo = JSON.parse(JSON.stringify($scope.companyList[0]));
+                $scope.userAdd.warehouseVo = JSON.parse(JSON.stringify($scope.warehouseList[0]));
+            }
+       	    $scope.closeUserDlg=function(){
+          	  $scope.showUserDlg=false;
+            }
+       	 $scope.saveOrUpdateUser=function(user){
+       		if(typeof user.column0=='undefined'){
+        		 user.column0=$scope.NullTest(user.name);
+	         }
+       		if(typeof user.column1=='undefined'){
+      		     user.column1=$scope.NullTest(user.password);
+	         }
+        	if(typeof user.column2=='undefined'){
+        		user.column2=$scope.NullTest(user.rePassword);
+	        }
+
+        	if(typeof user.column6=='undefined'){
+         		if(user.companyVo!=null && user.companyVo!=''){
+         			user.column6=$scope.NullTest(user.companyVo.nameKey)
+         		}else{
+         			user.column6=true;
+         	  	}
+	        }
+        	if(typeof user.column4=='undefined'){
+         		if(user.warehouseVo!=null && user.warehouseVo!=''){
+         			user.column4=$scope.NullTest(user.warehouseVo.nameKey);
+         		}else{
+         			user.column4= true ;
+         	  	}
+	        }else{
+	        	if(user.warehouseVo!=null && user.warehouseVo!=''){
+         			user.column4=$scope.NullTest(user.warehouseVo.nameKey);
+         		}else{
+         			user.column4= true ;
+         	  	}
+		    }
+	        
+            if(user.email!=null && user.email!=''){
+        		user.column5=$scope.MailTest(user.email);
+            }else{
+            	user.column5 = false;
+            }
+
+            if(user.telNumber!=null && user.telNumber!=''){
+        		user.column7=$scope.TelTest(user.telNumber);
+            }else{
+            	user.column7 = false;
+            }
+	        
+	     if((user.column0||user.column1||user.column2||user.column4||user.column5||user.column6||user.column7)==false){
+		     if(user.id==null){
+			      $scope.addRoles=true;
+			      document.getElementById("submitDiv").style.display = "inline";
+       	          $http.post('/setup/user/save', JSON.stringify(user)).success(
+                     function(data, status, headers, config) {
+                    	  document.getElementById("submitDiv").style.display = "none";
+                      $scope.status = status;
+                      $scope.searchList($scope.userSearchVo);
+                      addAlert('success','Save Success !')
+                      $scope.showUserDlg=false;
+                  }).error(
+                     function(data, status, headers, config) {
+                    	  document.getElementById("submitDiv").style.display = "none";
+                      alert(data)
+                      $scope.status = status
+               });
+		     }else{
+		    	  $scope.addRoles=false;
+		    	  document.getElementById("submitDiv").style.display = "inline";
+		    	  $http.post('/setup/user/update', JSON.stringify(user)).success(
+	                  function(data, status, headers, config) {
+	                	  document.getElementById("submitDiv").style.display = "none";
+	                     $scope.status = status;
+	                     $scope.searchList($scope.userSearchVo);
+	                     addAlert('success','Update Success !')
+	                     $scope.showEditUserDlg=false;
+	              }).error(
+	                  function(data, status, headers, config) {
+	                	  document.getElementById("submitDiv").style.display = "none";
+	                      alert(data)
+	                      $scope.status = status
+	                   });
+			  }
+	       }else{
+		         alert('Data error ,Please check !')
+		   }
+       	 }
+
+         $scope.showEditDlgMethd=function(user){
+              $http({method: 'GET', url: '/setup/user/initWarehouse/'+user.companyVo.id}).success(
+ 			          function(data, status, headers, config) {
+ 			              $scope.warehouseList = data;
+ 			          }).error(
+ 			          function(data, status, headers, config) {
+ 			              $scope.status = status
+ 			          });
+        	  $scope.addRoles=false;
+        	  var s = JSON.stringify(user);
+ 	    	  $scope.userEdit = JSON.parse(s);
+ 	    	  $scope.selectedRoleList =  $scope.userEdit.roles;
+          	  $scope.showEditUserDlg=true;
+           }
+         
+      	  $scope.closeEditUserDlg=function(){
+         	  $scope.showEditUserDlg=false;
+           }
+
+      	  $scope.showRolesSelected=function(){
+      		   $scope.userAdd.roles = [];
+      		   $scope.selectedRoleList = [];
+      		   for(var i = 0, len = $scope.roleList.length; i<len;i++){
+          		     $scope.roleList[i].ifSelect =false;
+          	   }
+      		   $scope.checkSelect = false;
+      		   $scope.showRolesDlg=true;
+      		   $scope.showUserDlg=false;
+            }
+          
+       	    $scope.closeRolesDlg=function(){
+          	     $scope.showRolesDlg=false;
+          	     $scope.showUserDlg=true;
+            }
+
+       	 $scope.showRolesSelectedEdit=function(){
+       		$scope.selectedRoleList =  $scope.userEdit.roles;
+       		for(var i = 0, len = $scope.roleList.length; i<len;i++){
+       		     $scope.roleList[i].ifSelect =false;
+       		}
+       		for(var i = 0, len = $scope.roleList.length; i<len;i++){
+       			for(var j = 0, le = $scope.selectedRoleList.length; j<le;j++){
+				  if($scope.roleList[i].id == $scope.selectedRoleList[j].id ){
+					 $scope.roleList[i].ifSelect =true;
+				  }
+       			}
+       		}
+       	      $scope.changeSelect();
+ 		      $scope.showRolesDlgEdit=true;
+ 		      $scope.showEditUserDlg=false;
+       }
+     
+  	    $scope.closeRolesDlgEdit=function(){
+     	     $scope.showRolesDlgEdit=false;
+     	     $scope.showEditUserDlg=true;
+       }
+
+       	//当全选后，去掉某条不选，则全选按钮设为false
+			$scope.changeSelect = function(){
+				var s = true;
+				for(var i = 0, len = $scope.roleList.length; i<len;i++){
+					if($scope.roleList[i].ifSelect == false){
+						s = false;
+						$scope.checkSelect = false;
+						continue;
+					}
+				}
+				if(s){
+					$scope.checkSelect = true;
+				}
+			}
+
+			//选择全部Roles
+			$scope.selectAll = function(checkSelect){
+				if(checkSelect == false){
+					for(var i = 0, len = $scope.roleList.length; i<len;i++){
+						$scope.roleList[i].ifSelect = checkSelect;
+					}
+				} else {
+					for(var i = 0, len = $scope.roleList.length; i<len;i++){
+						$scope.roleList[i].ifSelect = checkSelect;
+					}
+				}
+			};
+
+			$scope.getRoles = function(){
+				for(var i = 0, len = $scope.roleList.length; i<len;i++){
+				 if($scope.roleList[i].ifSelect == true){
+					  $scope.selectedRoleList.push({id:$scope.roleList[i].id,nameKey:$scope.roleList[i].nameKey});
+				           $scope.showRolesDlg=false;
+				           $scope.showUserDlg=true;
+				  }
+			     }
+			     if($scope.selectedRoleList==null||$scope.selectedRoleList==''){
+			    	 $scope.showRolesDlg=false;
+			     }else{
+				    var rolesTemp = JSON.stringify($scope.selectedRoleList);
+				    $scope.userAdd.roles = JSON.parse(rolesTemp)
+				    $scope.userAdd.column3 = false;
+			     }
+			}
+
+			$scope.getRolesEdit = function(){
+				$scope.selectedRoleList = [];
+				$scope.userEdit.roles = [];
+				for(var i = 0, len = $scope.roleList.length; i<len;i++){
+				 if($scope.roleList[i].ifSelect == true){
+					  $scope.selectedRoleList.push({id:$scope.roleList[i].id,nameKey:$scope.roleList[i].nameKey});
+				      $scope.showRolesDlgEdit=false;
+				      $scope.showEditUserDlg=true;
+				      
+				  }
+			     }
+				  if($scope.selectedRoleList==null||$scope.selectedRoleList==''){
+					     $scope.showRolesDlgEdit=false;
+				     }else{ 
+					     var rolesTemp = JSON.stringify($scope.selectedRoleList);
+				         $scope.userEdit.roles = JSON.parse(rolesTemp)
+				         $scope.userEdit.column3 = false;
+				     }
+			 }
+
+			 $scope.showDeleteUserDlg = function($index,user){
+				$scope.Index = $index;
+   				$scope.deleteUserVo = user;
+				$scope.deleteUserDlg = true;
+			 }
+
+			 $scope.closeDeleteUserDlg = function(){
+				 $scope.deleteUserDlg = false;
+			 }
+				
+
+			  document.getElementById("submitDiv").style.display = "none";
+       	  
+          });
+    </script> 
+}

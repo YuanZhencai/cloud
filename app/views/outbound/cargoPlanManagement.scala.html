@@ -1,0 +1,2087 @@
+@(name: String)
+@main("cargoPlanManagement"){
+<div ng-controller="CargoPlanCtrl">
+ <alert ng-repeat="alert in alerts" type="alert.type" close="closeAlert($index)" template-url="/template/alert/alert.html">{{alert.msg}}</alert>
+	<!--head-->
+	<div class="breadcrumb">
+		<li style="">Current Location:CargoPlan Management</li>
+	<!--<li style="margin-right: 0px"><div class="span2 offset3">Plant:XXXXXXX</div> </li> -->
+		<li ><div class="span2 offset1"></div></li>
+	</div>
+	<!--search -->
+	<form novalidate id="myfrom" class="form-horizontal">
+		<table>
+			<tr>
+				<td>
+					 <div class="control-group">
+						<label class="control-label">PI NO.</label>
+						<div class="controls"> 
+							 <input type="text" class="input-medium"  ng-model="searchVo.piNo" > 
+					 	</div>
+					</div> 
+				</td>
+				<td>
+				<div class="control-group">
+						<label class="control-label" for="date01">Stuffing
+							Date(From)</label>
+						<div class="controls">
+							<input type="date"  class="input-medium"  ng-model="searchVo.fromDate" >
+						</div>
+					</div>
+				</td>
+				<td>
+				<div class="control-group">
+						<label class="control-label" for="date01">Stuffing
+							Date(To)</label>
+						<div class="controls">
+							<input type="date"  class="input-medium"  ng-model="searchVo.toDate" >
+						</div>
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<div class="control-group">
+						<label class="control-label" for="date01">Closing
+							Date(From)</label>
+						<div class="controls">
+							<input type="date"  class="input-medium"  ng-model="searchVo.fromCloseDate" >
+						</div>
+					</div>
+				</td>
+				<td>
+					<div class="control-group">
+						<label class="control-label" for="date01">Closing
+							Date(To)</label>
+						<div class="controls">
+							<input type="date"  class="input-medium"  ng-model="searchVo.toCloseDate">
+						</div>
+					</div>
+				</td>
+				<td>
+				<div class="control-group">
+						<label class="control-label" for="date01">Create
+							Date(From)</label>
+						<div class="controls">
+							<input type="datetime-local"  class="input-medium"  ng-model="searchVo.fromCreateDate" >
+						</div>
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<div class="control-group">
+						<label class="control-label" for="date01">Create
+							Date(to)</label>
+						<div class="controls">
+							<input type="datetime-local"  class="input-medium"  ng-model="searchVo.toCreateDate" >
+						</div>
+					</div>
+				</td>
+				<td>
+					<div class="control-group">
+						<label class="control-label" for="date01">Update
+							Date(From)</label>
+						<div class="controls">
+							<input type="datetime-local"  class="input-medium"  ng-model="searchVo.fromUpdateDate">
+						</div>
+					</div>
+				</td>
+				<td>
+					<div class="control-group">
+						<label class="control-label" for="date01">Update
+							Date(To)</label>
+						<div class="controls">
+							<input type="datetime-local"  class="input-medium"  ng-model="searchVo.toUpdateDate">
+						</div>
+					</div>
+				</td>
+			</tr>
+			<tr>
+			<td></td>
+			<td></td>
+			<td>
+					<div class="control-group">
+						<label class="control-label"></label>
+						<div class="controls">
+							<input type="submit" value="Search" class="btn btn-primary btn-small" ng-click="searchList(searchVo)"/>
+						</div>
+					</div>
+				</td>
+			</tr>
+		</table>
+		<div align="right">
+			<button class="btn btn-primary btn-small" ng-click="saveorupdate(null,true)">Add</button>
+			<a href="/outbound/cargoplan/Mould" class="btn btn-primary btn-small">Template</a>
+			<button ng-click="openUpload()" class="btn btn-primary btn-small" data-toggle="modal">Upload</button>
+			<input type="button" value="Report" onclick="submitForm()" class="btn btn-primary btn-small"/>
+		</div>
+	</form>
+	<div modal="saveOrderDlg" close="closeSaveOrderDlg()" options="opts" class="span2">
+		<div class="modal-header" >
+	      <h4 ng-show="!saveOrUpdate">Edit Order</h4>
+	      <h4 ng-show="saveOrUpdate">Add Order</h4>
+	      <h7 ng-show="PIs==null">No Extra Pi Can Cargo</h7>
+	 	</div>
+  		<div class="modal-body">
+			<form calss="register form-horizontal" ng-submit="update(cargoPlanVo)" name="saveOrupdate"> 
+			<table>
+				<tr>
+				<td>
+					<div class="control-group">
+					<input type="hidden" name="id" class="input-medium"  ng-model="cargoPlanVo.id">
+						<label class="control-label">PI NO.</label> <div class="controls">
+						<input type="text"  ng-disabled="cargoPlanVo.planEdit!='S000'&&cargoPlanVo.planEdit!=''" class="input-medium"  autocomplete="off" ng-model="cargoPlanVo.piNo" typeahead="PI for PI in PIs | filter:$viewValue"  ng-change="cargoPlanVo.column0=NullTest(cargoPlanVo.piNo)"></input>
+						</div>
+					</div>
+				</td>
+				<td>
+					<div class="control-group">
+						<label class="control-label">Split Shipment</label> <div class="controls">
+						<input type="text" name="splitShipment" class="input-medium" ng-disabled="cargoPlanVo.planEdit=='S003'"  ng-model="cargoPlanVo.splitShipment">
+						</div>
+					</div>
+				</td>
+				<td>
+				<div class="control-group">
+					 <label class="control-label">Type</label> <div class="controls">
+						<input type="text" name="thistype" class="input-medium" ng-disabled="cargoPlanVo.planEdit=='S003'" ng-model="cargoPlanVo.thistype"> 
+					</div>
+				</div>
+				</td>
+				</tr>
+				
+				<tr>
+				<td>
+					<span ng-show="cargoPlanVo.column0" style="color: red">{{nullMessage}}</span>
+				</td>
+				<td>
+					<span ng-show="saveOrupdate.loc.$error.date" style="color: red">Not a valid date!</span>
+				</td>
+				<td>
+					<span ng-show="saveOrupdate.feet.$error.date" style="color: red">Not a valid date!</span>
+				</td>
+				</tr>
+				
+				<tr>
+				<td>
+					<div class="control-group">
+					<input type="hidden" name="id" class="input-medium"  ng-model="cargoPlanVo.id">
+						<label class="control-label">Loc</label> <div class="controls">
+						<input type="text"  ng-disabled="cargoPlanVo.planEdit=='S003'" class="input-medium"  ng-model="cargoPlanVo.loc" ></input>
+						</div>
+					</div>
+				</td>
+				<td>
+					<div class="control-group">
+						<label class="control-label">Ref No.</label> <div class="controls">
+						<input type="text" name="splitShipment" class="input-medium" ng-disabled="cargoPlanVo.planEdit=='S003'"  ng-model="cargoPlanVo.refNo">
+						</div>
+					</div>
+				</td>
+				<td>
+				<div class="control-group">
+					 <label class="control-label">agent</label> <div class="controls">
+						<input type="text" name="thistype" class="input-medium" ng-disabled="cargoPlanVo.planEdit=='S003'" ng-model="cargoPlanVo.agent"> 
+					</div>
+				</div>
+				</td>
+				</tr>
+				
+				<tr>
+				<td>
+				<div class="control-group">
+					 <label class="control-label">Feet</label> <div class="controls">
+						<input type="text" name="feet" class="input-medium" ng-disabled="cargoPlanVo.planEdit=='S003'"  ng-model="cargoPlanVo.feet"> 
+					</div>
+				</div>
+				</td>
+				<td>
+				<div class="control-group">
+					<label class="control-label">FCL</label> <div class="controls">
+						<input type="text" name="fcl" class="input-medium"  ng-disabled="cargoPlanVo.planEdit=='S003'" ng-model="cargoPlanVo.fcl" ng-change="cargoPlanVo.column5=check(cargoPlanVo.qtyPerFcl,cargoPlanVo.fcl)">
+					</div> 
+				</div>
+				</td>
+				<td>
+				<div class="control-group">
+					<label class="control-label"> Qty/Fcl(KG)</label> <div class="controls">
+						<input type="text" name="qtyPerFcl" class="input-medium"  ng-disabled="cargoPlanVo.planEdit=='S003'" ng-model="cargoPlanVo.qtyPerFcl"  ng-change="cargoPlanVo.column5=check(cargoPlanVo.qtyPerFcl,cargoPlanVo.fcl)">
+					</div> 
+				</div>
+				</td>
+				</tr>
+				
+				<tr>
+				<td>
+					<!-- <span ng-show="cargoPlanVo.column4" style="color: red">{{nullMessage}}</span> -->
+				</td>
+				<td colspan="2">
+					<span ng-show="cargoPlanVo.column5" style="color: red">Data does not match, Number of ' |' inconsistency</span>
+				</td>
+				</tr>
+				
+				<tr>
+				<td>
+				<div class="control-group">
+					<label class="control-label">IPB Number</label> <div class="controls">
+						<input type="text" name="IPBnumber" class="input-medium" ng-disabled="cargoPlanVo.planEdit=='S003'" ng-model="cargoPlanVo.IPBnumber"> 
+					</div>
+				</div>
+				</td>
+				<td>
+				<div class="control-group">
+					<label class="control-label">Closed Date</label> <div
+						class="controls">
+						<input type="date" name="closedDate" class="input-medium" ng-disabled="cargoPlanVo.planEdit=='S003'"  ng-model="cargoPlanVo.closedDate" ng-change="cargoPlanVo.column4=NullTest(cargoPlanVo.closedDate)"> 
+					</div>
+				</div>
+				</td>
+				<td>
+				<div class="control-group">
+					<label class="control-label">Closed Time(24H)</label> <div
+						class="controls">
+						<input type="time" name="closedTime" class="input-medium" ng-disabled="cargoPlanVo.planEdit=='S003'" ng-model="cargoPlanVo.closedTime" ng-change="cargoPlanVo.column8=NullTest(cargoPlanVo.closedTime)"> 
+					</div>
+				</div>
+				</td>
+				</tr>
+				
+				<tr>
+				<td>
+					<span ng-show="saveOrupdate.thistype.$error.date" style="color: red">Not a valid date!</span>
+				</td>
+				<td>
+					<!-- <span ng-show="cargoPlanVo.column8" style="color: red">{{nullMessage}}</span> -->
+				</td>
+				<td>
+					<span ng-show="saveOrupdate.agent.$error.date" style="color: red">Not a valid date!</span>
+				</td>
+				</tr>
+				
+				<tr>
+				<td> 
+				<div class="control-group">
+				<label class="control-label">Palletized</label> <div class="controls">
+						<select name="palletiZed" class="input-medium" ng-disabled="cargoPlanVo.planEdit=='S003'"  ng-model="cargoPlanVo.palletiZed"> 
+						<option value="true">Y</option>
+						<option value="false">N</option>
+						</select>
+					</div>
+				</div>
+				</td>
+				<td>
+				<div class="control-group">
+				<label class="control-label">Out</label> <div class="controls">
+						<input type="Date" name="out" class="input-medium" ng-disabled="cargoPlanVo.planEdit=='S003'" ng-model="cargoPlanVo.Out"> 
+					</div>
+				</div>
+				</td>
+				<td>
+				<div class="control-group">
+				<label class="control-label">Fumigation</label> <div class="controls">
+						<select name="fumigation" class="input-medium" ng-disabled="cargoPlanVo.planEdit=='S003'"  ng-model="cargoPlanVo.fumigation"> 
+						<option value="true">Y</option>
+						<option value="false">N</option>
+						</select>
+					</div>
+				</div>
+				</td>
+				</tr>
+				
+				<tr>
+				<td>
+					<span ng-show="saveOrupdate.feederVessel.$error.date" style="color: red">Not a valid date!</span>
+				</td>
+				<td>
+					<span ng-show="saveOrupdate.transp.$error.date" style="color: red">Not a valid date!</span>
+				</td>
+				<td>
+					<span ng-show="saveOrupdate.Dest.$error.date" style="color: red">Not a valid date!</span>
+				</td>
+				</tr>
+				<tr>
+				<td>
+				<div class="control-group">
+				<label class="control-label">Transp</label> <div class="controls">
+						<input type="text" name="transp" class="input-medium" ng-disabled="cargoPlanVo.planEdit=='S003'" ng-model="cargoPlanVo.transp"> 
+					</div>
+				</div>
+				</td>
+				<td>
+				<div class="control-group">
+					<label class="control-label">Vessel</label> <div
+						class="controls">
+						<input type="text" name="feederVessel" class="input-medium" ng-disabled="cargoPlanVo.planEdit=='S003'" ng-model="cargoPlanVo.vessel"> 
+					</div>
+				</div>
+				</td>
+				<td>
+				<div class="control-group">
+					<label class="control-label">Dest</label> <div
+						class="controls">
+						<input type="text" name="feederVessel" class="input-medium" ng-disabled="cargoPlanVo.planEdit=='S003'" ng-model="cargoPlanVo.dest"> 
+					</div>
+				</div>
+				</td>
+				</tr>
+				<tr>
+					<td colspan="3">
+						<div class="control-group">
+							<label class="control-label">Remarks</label> <div
+								class="controls">
+								<textarea  ng-disabled="cargoPlanVo.planEdit=='S003'" ng-model="cargoPlanVo.remarks"
+									name="remarks" class="input-medium" style="width: 429px;"></textarea>
+							</div>
+						</div>
+					</td>
+				</tr>
+				</table>
+			</form>
+		</div>
+		<div class="modal-footer">
+			<input type="submit" value="Save" class="btn btn-primary btn-small" ng-disabled="cargoPlanVo.planEdit=='S003'" ng-click="save(cargoPlanVo)" ng-show="saveOrUpdate">
+			<input type="submit" value="Update" class="btn btn-primary btn-small" ng-disabled="cargoPlanVo.planEdit=='S003'" ng-click="update(cargoPlanVo)" ng-show="!saveOrUpdate">  
+			<input type="submit" value="Cancel" class="btn btn-warning btn-small" ng-click="closeSaveOrderDlg(cargoPlanVo)">
+		</div>
+	</div>
+	
+	<div  modal="EditPlansDlg" close="closeEditPlansDlg()" options="opts">
+		<div class="modal-header" >
+		<h4>Show Plan</h4>
+		<h7 ng-show="batchs==''&&baseData.qty!=0" class="text-error">This PI have not BatchNo</h7>
+		<h7 ng-show="baseData.qty==0" class="text-error">This Data have not create PI</h7>
+		</div>
+	  	<div class="modal-body">
+	  		<table ng-show="getShow()" class="table table-striped table-bordered table-hover table-condensed"  cellpadding="0" cellspacing="0" border="0" class="display" name="plan" width="100%">
+	   			<thead>
+					<tr>
+						<th>Truck #  <button class="btn btn-primary btn-small" id="new"  ng-disabled="splitcargoPlanVo.planEdit=='S003'" ng-click="add('')"><i class="icon-plus"></i></button></th>
+						<th>Stuffing Date</th>
+						<th>Container No./Seal No.</th>
+						<th>Stuffing Qty</th>
+					</tr>
+				</thead>
+				<tbody ng-repeat="cargoPlanSplitVo in cargoPlanSplitVos">
+				<tr>
+					<td rowspan="{{cargoPlanSplitVo.Rows+1}}">
+						<span >{{cargoPlanSplitVo.Truck}}<br><button class="btn btn-primary btn-small " id="new" ng-disabled="!cargoPlanSplitVo.Canedit" ng-click="add(cargoPlanSplitVo)"><i class="icon-pencil"></i></button><button   ng-disabled="!cargoPlanSplitVo.Canedit" class="btn btn-danger btn-small" ng-click="plandelete($index,cargoPlanSplitVo,'Truck')"><i class="icon-remove"></i></button></span>
+						</td>
+						<td rowspan="{{cargoPlanSplitVo.Rows+1}}">
+						<span>{{cargoPlanSplitVo.StuffingDate|date:'dd/MM/yyyy'}}</span>
+						</td>
+					</tr>
+					<tr ng-repeat="container in cargoPlanSplitVo.containers">
+						<td rowspan="1" nowrap="nowrap">
+						<span>{{container.container}}<span ng-show="!NullTest(container.SealNo)">[</span>{{container.SealNo}}<span ng-show="!NullTest(container.SealNo)">]</span></span><div style= "display:inline;" align="right"><button  class="btn btn-primary btn-small" ng-disabled="!cargoPlanSplitVo.Canedit" ng-click="containerSplit(cargoPlanSplitVo,container,true)"><i class="icon-plus"></i></button><button   align="right" class="btn btn-primary btn-small" ng-disabled="!cargoPlanSplitVo.Canedit" ng-click="containerSplit(cargoPlanSplitVo,container,false)"><i class="icon-pencil"></i></button><button   ng-disabled="!cargoPlanSplitVo.Canedit" class="btn btn-danger btn-small" ng-click="plandelete($index,cargoPlanSplitVo,'Container')"><i class="icon-remove"></i></button></div>
+						</td>
+						<td rowspan="1" nowrap="nowrap">
+							<dl  style="margin-top: 0px"  ng-repeat="batch in container.batchs">
+	  							  <dd class="divider"><span>{{batch.batch}}<span ng-show="!NullTest(batch.Qty)">(</span>{{batch.Qty}}<span ng-show="!NullTest(batch.Qty)">)</span></span> <div style= "display:inline;" align="right"><button  class="btn btn-primary btn-small" ng-disabled="!cargoPlanSplitVo.Canedit" ng-click="stuffingSplit(cargoPlanSplitVo,container.container,batch,true)"><i class=" icon-plus"></i></button><button   class="btn btn-primary btn-small" ng-disabled="!cargoPlanSplitVo.Canedit" ng-click="stuffingSplit(cargoPlanSplitVo,container.container,batch,false)"><i class="icon-pencil"></i></button><button  ng-disabled="!cargoPlanSplitVo.Canedit" class="btn btn-danger btn-small" ng-click="plandelete($index,container,'Stuffing')"><i class="icon-remove"></i></button></div></dd>
+							</dl>
+						</td>
+					</tr>
+				</tbody>
+	  		</table>
+		</div>
+		 <div class="modal-footer">
+		 	<input id="savePlanBtn" type="button" value="Save" class="btn btn-primary btn-small"  ng-disabled="splitcargoPlanVo.planEdit=='S003'" ng-click="savePlans(cargoPlanSplitVos)">
+			<input id="closePlanBtn" type="button" value="Cancel" class="btn btn-warning btn-small" ng-click="closeEditPlansDlg()">
+		</div>
+	</div>		
+	
+	<div modal="CargoPlansDlg" close="closeEditCargoPlansDlg()">
+		<div class="modal-header" >
+			<h4 ng-show="EditType">Add Plan</h4>
+			<h4 ng-show="!EditType">Edit Plan</h4>
+ 		</div>
+  		<div class="modal-body">
+  			<table>
+				<tr>
+					<td>Truck:</td>
+					<td><input type="text" ng-model="TempcargoPlanSplit.Truck"  class="input-medium" ng-change="isSame(TempcargoPlanSplit,'Truck')"></input><span style="color: red">*</span></td>
+					
+					<td>Stuffing Date:</td>
+					<td><input type="date"  ng-model="TempcargoPlanSplit.StuffingDate"   class="input-medium"></input></td>
+				</tr>
+				<tr>
+					<td colspan="2" ng-show='same' class='text-error'>This TruckNo exit </td>
+					<td colspan="2"></td>
+				</tr>
+  			</table>
+		</div>
+		<div class="modal-footer">
+	 		<span class="btn btn-primary btn-small" ng-click="saveTruck(TempcargoPlanSplit,1)">OK</span>
+			<span class="btn btn-warning btn-small" ng-click="cancel(TempcargoPlanSplit,'Truck')">Cancel</span>
+		</div>
+	</div>
+	
+	<div modal="ContainerDlg" close="closeEditContainerDlg()">
+		<div class="modal-header" >
+			<h4 ng-show="EditType">Add Container</h4>
+			<h4 ng-show="!EditType">Edit Container</h4>
+		</div>
+  		<div class="modal-body">
+  			<table>
+				<tr>
+					<td>Container No </td>
+					<td><input type="text"  ng-model="tempContainer.container.container" class="input-medium" ng-change="isSame(tempContainer,'Container')"></input><span style="color: red">*</span></td>
+					<td>Seal No</td>
+					<td><input type="text"  ng-model="tempContainer.container.SealNo" class="input-medium"></input></td>
+				</tr>
+				<tr>
+					<td colspan="2" ng-show='same' class='text-error'>This ContainerNo exit</td>
+					<td colspan="2"></td>
+				</tr>
+  			</table>
+		</div>
+		<div class="modal-footer">
+	 		<span class="btn btn-primary btn-small" ng-click="saveContainer(tempContainer,1)">OK</span>
+			<span class="btn btn-warning btn-small" ng-click="cancel(tempContainer,'Container')">Cancel</span>
+		</div>
+	</div>
+	
+	<div  modal="StuffingDlg" close="closeEditStuffingDlg()">
+		<div class="modal-header" >
+			<h4 ng-show="EditType">Add Stuffing Qty</h4>
+			<h4 ng-show="!EditType">Edit Stuffing Qty</h4>
+		 	<h7>
+				<span class="label label-info">Fcl SKU</span><span class="label">{{qtyFclofNetw(splitcargoPlanVo.qtyPerFcl,splitcargoPlanVo.netWeight,0)}}</span>
+				<span class="label label-info">Stuffed Qty</span><span class="label">{{sumQty(TempStuffing)}}</span>
+				<span class="label label-info">Remaining</span><span class="label">{{qtyFclofNetw(splitcargoPlanVo.qtyPerFcl,splitcargoPlanVo.netWeight,sumQty(TempStuffing))}}</span></br>
+				<span class="label label-info">Batch Qty</span><span class="label">{{setbatchQty(TempStuffing.batch)}}</span>
+			</h7>
+			<!--<h7>(<span class="{{classType2}}" ng-bind="sumBatchQty()*compate"></span>/{{BatchQty.TotalQty*compate}})</h7> -->
+		</div>
+  		<div class="modal-body" ng-show="StuffingHide">
+  			<table>
+				<tr>
+					<td>Batch No</td>
+					<td><select name="batch" ng-model="TempStuffing.batch.batch" ng-options="batch.batchNo as batch.batchNo for batch in batchs" class="input-medium" ng-change="getPlansQty(TempStuffing.batch)" ></select><span style="color: red">*</span></td>
+					<td>PI SKU</td>
+					<td><input type="text" ng-model="TempStuffing.batch.Qty" class="input-medium" ng-change="TempStuffing.column4=EditTest(TempStuffing.batch.Qty)"></input><span style="color: red">*</span></td>
+				</tr>
+				<tr>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td><span ng-show="TempStuffing.column4" style="color: red">Not a Number</span></td>
+				</tr>
+			<!-- 	<tr>
+					<td>Stuffing Quantity</td>
+					<td><input type="text" name="stuffingQuantity" ng-model="TempStuffing.stuffingQty" class="input-medium" float    ng-change="TempStuffing.column5=compute(TempStuffing,false)"></input><span style="color: red">*</span></td>
+					<td>Stuffing UOM</td>
+					<td><select ng-model="TempStuffing.stuffing_UOM.id" ng-options="UOM.id as UOM.uomCode for UOM in UOMS" class="input-medium" ng-change="TempStuffing.column6=setUOM(TempStuffing.stuffing_UOM,TempStuffing,true)" ></select><span style="color: red">*</span></td>
+				</tr>
+				<tr>
+				<td></td>
+				<td><span ng-show="TempStuffing.column5.flatdate" style="color: red">Not Number!</span>
+					<span ng-show="TempStuffing.column5.date" style="color: red">{{nullMessage}}</span>
+				</td>
+				<td></td>
+				<td>
+					<span ng-show="TempStuffing.column6" style="color: red">{{nullMessage}}</span>
+				</td>
+				</tr> -->
+				<tr>
+					<!-- <td>PI SKU</td>
+					<td><input type="text" ng-model="TempStuffing.Qty" class="input-medium" float ng-change="TempStuffing.column7=compute(TempStuffing,true)"></input><span style="color: red">*</span></td> -->
+				<!-- 	<td>SKU UOM</td>
+					<td><select name="skuUom" ng-model="TempStuffing.sku_UOM.id" ng-options="SKUUOM.id as SKUUOM.uomCode for SKUUOM in SKUUOMS"  class="input-medium" ng-change="TempStuffing.column8=setskuUOM(TempStuffing.sku_UOM,TempStuffing,false)" ></select><span style="color: red">*</span></td> -->
+				</tr>
+				<tr>
+				<!-- <td></td>
+				<td>
+					<span ng-show="TempStuffing.column7.flatdate" style="color: red">Not Number!</span> 
+					<span ng-show="TempStuffing.column7.date" style="color: red">{{nullMessage}}</span>
+				</td>
+				<td></td>
+				<td>
+					<span ng-show="TempStuffing.column8" style="color: red">{{nullMessage}}</span>
+				</td> -->
+				</tr>
+  			</table>
+		</div>
+		<div class="modal-footer">
+	 		<span class="btn btn-primary btn-small" ng-click="saveStuffing(TempStuffing)">OK</span>
+			<span class="btn btn-warning btn-small" ng-click="cancel(TempStuffing,'Stuffing')">Cancel</span>
+		</div>
+	</div>
+	
+	<!-- upload -->
+	<div modal="uploadDlg" close="closeUploadDlg()" options="opts" >
+		<div class="modal-header"> 
+		</div> 
+		<form class="form-horizontal">
+     		 <div class="modal-body">
+          	 	<div class="controls">
+             		 <input type='text' name='textfield' id='textfield'  class='txt' />
+                	 <input type='button' class='btn btn-primary btn-small' value='Browse' />
+                	 <input type="file" name="fileField"  class="file" id="fileField" size="28" onchange="document.getElementById('textfield').value=this.value"  file-upload multiple/>
+            	</div>
+<!--           閿熸枻鎷烽敓鏂ゆ嫹閿熺粨浜ら敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹瑕侀敓鍙唻鎷�-->
+<!--             	 <ul> -->
+<!--        				 <li ng-repeat="file in files">{{file.name}}</li> -->
+<!--   				  </ul> -->
+        	</div>
+          	<!-- Button -->
+          	<div class="modal-footer">
+            	<button class="btn btn-primary btn-small" ng-click="uploadExcel()">Upload</button>
+            	<input type="button" value="Cancel" class="btn btn-warning btn-small" ng-click="closeUploadDlg()">
+          	</div>
+         </form>
+	</div> 
+	
+	<div modal="orderDlg" close="closeOrderDlg()" options="dlgOpts" >
+		@viewOrder("")
+	</div>
+	
+	<!-- table -->
+ 	<table style="table-layout:auto;" class="table table-striped table-bordered table-hover table-condensed"   cellpadding="0" cellspacing="0" border="0" class="display" id="example" >
+			<thead>
+				<tr>
+					<th rowspan="2">PI NO.</th>
+					<th rowspan="2" >Split Shipment</th>
+					<th rowspan="2">Description</th>
+					<th rowspan="2">Net Weight</th>
+					<th rowspan="1" colspan="2">Container</th>
+					<th rowspan="2">Type</th>
+					<th rowspan="2">Qty/Fcl(KG)</th>
+					<th rowspan="2" >IPB Number</th>
+					<th rowspan="2">Available Qty</th>
+					<th rowspan="2">Schedule</th>
+					<th rowspan="2">Batch No.</th>
+					<th rowspan="2">Stuffing Date</th>
+					<th rowspan="2">Palletized</th>
+					<th rowspan="2">Fumigation</th>
+					<th rowspan="2">OUT</th>
+					<th rowspan="2">Status</th>
+					<th rowspan="2">Closing Date</th>
+					<th rowspan="2">Closing Time</th>
+					<th rowspan="2">Operation </th> 
+					<th rowspan="2">Remarks</th>
+					<th rowspan="2">Transport</th>
+					<th rowspan="2">Vessel</th>
+					<th rowspan="2">Destination</th>
+					<th rowspan="2">Created Time</th>
+					<th rowspan="2">Updated Time</th>
+				</tr>
+				<tr>
+				<td ><strong>Fcl</strong></td>
+				<td><strong>Feet</strong></td>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="cargoPlan in cargoPlans">
+					<td><a href="" ng-click="viewOrderDlg(cargoPlan)">{{cargoPlan.piNo}}</a></td>
+					<td>{{cargoPlan.splitShipment}}</td>
+					<td style="font-size:xx-small;">{{cargoPlan.Commodity}}</td>
+					<td>{{cargoPlan.netWeight}} {{cargoPlan.netWeightUOM}}</td>
+					<td>{{cargoPlan.fcl}}</td>
+					<td>{{cargoPlan.feet}}</td>
+					<td>{{cargoPlan.thistype}}</td>
+					<td>{{cargoPlan.qtyPerFcl}}</td>
+					<td>{{cargoPlan.IPBnumber}} {{cargoPlan.Css}}</td>
+					<td>
+					<dl compact="compact"  style="margin-top: 5px;"  ng-repeat="batch in cargoPlan.batchVos">
+	  							  <dd style="height:5px; line-height:2px" class="divider">{{batch.batchNo}}<span ng-show="!NullTest(batch.SumQty)">(</span>{{batch.SumQty-batch.reserveQty}}<span ng-show="!NullTest(batch.SumQty)">)</span></dd>
+							</dl>
+					</td>
+					<td nowrap="nowrap">
+<!-- 					<p  style="display:inline-table;" >Truck:{{cargoPlan.TruckNo}}</p><br> -->
+					<p  style="display:inline-table;" >
+						Container:<span class="badge badge-success">{{cargoPlan.schedule}}</span>/<span class="badge badge-important">{{getTotalFcl(cargoPlan.fcl)-cargoPlan.schedule}}</span>
+					</p><br> 
+					<p  style="display:inline-table;">Stuffing Qty-SKU({{cargoPlan.batchQty|number:0}}/{{getQTYofFcl(cargoPlan.qtyPerFcl,cargoPlan.fcl,cargoPlan.netWeight)|number:0}})</p> <br>
+					<p  style="display:inline-table;"> Stuffing Qty-KG({{cargoPlan.batchQty*cargoPlan.netWeight|number:0}}/{{getQTYofFcl(cargoPlan.qtyPerFcl,cargoPlan.fcl,cargoPlan.netWeight)*cargoPlan.netWeight|number:0}})</p> </td>
+					<td><span ng-bind-html-unsafe="cargoPlan.batchNo"></span></td>
+					<td><span ng-bind-html-unsafe="cargoPlan.StuffingDate"></span></td>
+					<td ng-switch on="cargoPlan.palletiZed">
+					<span ng-switch-when="true">Y</span>
+					<span ng-switch-when="false">N</span>
+					</td>
+					<td ng-switch on="cargoPlan.fumigation">
+					<span ng-switch-when="true">Y</span>
+					<span ng-switch-when="false">N</span>
+					</td>
+					<td>{{cargoPlan.Out|date:'dd/MM/yyyy'}} </td>
+					<td>{{cargoPlan.status}} </td>
+					<td class=" {{cargoPlan.Css}}"><span style="{{cargoPlan.dateExceed}}">{{cargoPlan.closedDate|date:'dd/MM/yyyy'}}</span></td>
+					<td class=" {{cargoPlan.Css}}"><span style="{{cargoPlan.timeExceed}}">{{cargoPlan.closedTime|date:'HH:mm'}}</span></td>
+					<td class="center">
+					<button ng-click="saveorupdate(cargoPlan,false)" class="btn btn-primary btn-small">Edit</button>
+					<button ng-click="split(cargoPlan)" class="btn btn-primary btn-small" >Schedule</button>
+					<button ng-click="deleted(cargoPlan,$index)" class="btn btn-danger btn-small" ng-disabled="!cargoPlan.planEdit=='S000'">Delete</button>
+					 </td>
+					 <td>{{cargoPlan.remarks}}</td>
+					 <td>{{cargoPlan.transp}}</td>
+					<td>{{cargoPlan.vessel}}</td>
+					<td>{{cargoPlan.dest}}</td>
+					<td>{{cargoPlan.createTime|date:'dd/MM/yyyy HH:mm'}}</td>
+					<td>{{cargoPlan.updateTime|date:'dd/MM/yyyy HH:mm'}}</td>
+				</tr>
+			</tbody>
+		</table>
+</div>
+ <style type="text/css">
+            body {
+                font-size:14px;
+            }
+            input {
+                vertical-align:middle;
+                margin:0;
+                padding:0
+            }
+            .txt {
+                height:22px;
+                border:1px solid #cdcdcd;
+                width:200px;
+            }
+            .file {
+                position:absolute;
+                top:0;
+                right:80px;
+                height:24px;
+                filter:alpha(opacity:0);
+                opacity: 0;
+                width:260px
+            }
+        </style>
+}{
+  <script type="text/javascript" charset="utf-8">
+  function submitForm() {  
+      with (document.getElementById("myfrom")) {  
+          method = "post";  
+          action = "/outbound/cargoplan/report/1";  
+          submit();  
+      }  
+  }  
+  //var CloudWMS = angular.module('CloudWMS', ['ui.bootstrap']);
+  CloudWMS.directive('fileUpload', function () {
+      return {
+          scope: true,        //create a new scope
+          link: function (scope, el, attrs) {
+              el.bind('change', function (event) {
+                  var files = event.target.files;
+                  //iterate files since 'multiple' may be specified on the element
+                  for (var i = 0;i<files.length;i++) {
+                      //emit event upward
+                      scope.$emit("fileSelected", { file: files[i] });
+                  }                                       
+              });
+          }
+      };
+  });
+  CloudWMS.filter('Max', function(){
+	   return function(data){
+	 	 return parseInt(data);
+	   }
+  });
+  var DATE_REGEXP =/((^((1[8-9]\d{2})|([2-9]\d{3}))([-\/\._])(10|12|0?[13578])([-\/\._])(3[01]|[12][0-9]|0?[1-9])$)|(^((1[8-9]\d{2})|([2-9]\d{3}))([-\/\._])(11|0?[469])([-\/\._])(30|[12][0-9]|0?[1-9])$)|(^((1[8-9]\d{2})|([2-9]\d{3}))([-\/\._])(0?2)([-\/\._])(2[0-8]|1[0-9]|0?[1-9])$)|(^([2468][048]00)([-\/\._])(0?2)([-\/\._])(29)$)|(^([3579][26]00)([-\/\._])(0?2)([-\/\._])(29)$)|(^([1][89][0][48])([-\/\._])(0?2)([-\/\._])(29)$)|(^([2-9][0-9][0][48])([-\/\._])(0?2)([-\/\._])(29)$)|(^([1][89][2468][048])([-\/\._])(0?2)([-\/\._])(29)$)|(^([2-9][0-9][2468][048])([-\/\._])(0?2)([-\/\._])(29)$)|(^([1][89][13579][26])([-\/\._])(0?2)([-\/\._])(29)$)|(^([2-9][0-9][13579][26])([-\/\._])(0?2)([-\/\._])(29)$))/;
+  var FLOAT_REGEXP =/^[0-9]{1,38}\.{0,1}[0-9]{0,2}$/;
+  var INT_REGEXP=/^[1-9]*[1-9][0-9]*$/;
+  var ISNULL_REGEXP =/^$/;
+  var NULL_REGEXP=/^\S|\s{1,40}$/;
+  CloudWMS.controller('CargoPlanCtrl', function($scope, $http,$timeout,$dialog,$filter) {
+	$scope.nullMessage='null or too long';
+	$scope.show=false;
+	$scope.EditType=true;
+	$scope.saveOrUpdate=true;
+    $scope.cargoPlanVo;
+    $scope.searchVo;
+    $scope.isShow=true;
+    $scope.baseData='';
+    $scope.same=false;
+    $scope.StuffingHide=true;
+    $scope.temp;
+    $scope.BatchQty={reserveQty:0,TotalQty:0};
+    $scope.alerts = [];
+    $scope.cargoPlans=[];
+    $scope.batchs=[];
+    $scope.cargoPlanSplitVos=[];
+    $scope.TempcargoPlanSplitVos=[];
+    $scope.TempcargoPlanSplit='';
+    
+    $scope.getTotalFcl=function(fcl){
+    	try{
+    	var TotalFcl=parseFloat(0);
+    	if(fcl!=null){
+    		Fcls=fcl.split("|");
+    		for(var i=0,len=Fcls.length;i<len;++i){
+    			TotalFcl=parseFloat(TotalFcl)+parseFloat(Fcls[i]);
+    		}
+    	}
+    	return TotalFcl;
+    	}catch(arr){
+    		alert(arr)
+    	}
+    }
+    $scope.qtyFclofNetw=function(qtyPerFcl,netWeight,subtrahend){
+    	try{
+        	if(qtyPerFcl!=null){
+        		Qtys=qtyPerFcl.split("|");
+        		var result;
+        		if(Qtys.length>0){
+        			for(var i=0,len=Qtys.length;i<len;++i){
+        			//	if(typeof Fcls[i]==='Number'&&typeof Qtys[i]==='Number')
+        				if(netWeight>0)
+        				Qtys[i]=parseFloat(Qtys[i]/netWeight);
+        				if(i>0){
+        					result=result+'|'+parseFloat(Qtys[i]-subtrahend).toFixed(2);
+        				}else{
+        					result=parseFloat(Qtys[i]-subtrahend).toFixed(2);
+        				}
+        			}
+        		}
+        	}
+        	
+        	return result;
+        	}catch(arr){
+        		alert(arr)
+        	}
+    }
+    $scope.check=function(qtyPerFcl,fcl){
+    	try{
+        	if(qtyPerFcl!=null&&fcl!=null){
+        		Qtys=qtyPerFcl.split("|");
+        		Fcls=fcl.split("|");
+        		if(Qtys.length==Fcls.length){
+        			return false;
+        		}else{
+        			return true;
+        		}
+        	}else if(qtyPerFcl==null&&fcl==null){
+        		return false;
+        	}else{
+        		return true;
+        	}
+        	}catch(arr){
+        		alert(arr)
+        	}
+    }
+    $scope.getQTYofFcl=function(qtyPerFcl,fcl,netWeight){
+    	try{
+    	var TotalQty=parseFloat(0);
+    	if(qtyPerFcl!=null&&fcl!=null){
+    		Qtys=qtyPerFcl.split("|");
+    		Fcls=fcl.split("|");
+    		if(Qtys.length==Fcls.length){
+    			for(var i=0,len=Fcls.length;i<len;++i){
+    			//	if(typeof Fcls[i]==='Number'&&typeof Qtys[i]==='Number')
+    				TotalQty=parseFloat(TotalQty)+parseFloat(Fcls[i]*Qtys[i]);
+    			}
+    		}
+    	}
+    	if(netWeight>0){
+    		TotalQty=parseFloat(TotalQty/netWeight).toFixed(2)
+    	}
+    	return TotalQty;
+    	}catch(arr){
+    		alert(arr)
+    	}
+    }
+    //PI Detail
+    $scope.currentOrder = {};
+    $scope.orderDlg = false;
+    $scope.closeOrderDlg = function(){
+    	$scope.orderDlg = false;
+    }
+    
+    $scope.viewOrderDlg = function(cargoPlan){
+    	document.getElementById("submitDiv").style.display = "inline";
+        $http.post('/inbound/pi/list', JSON.stringify({"piNo":cargoPlan.piNo})).success(
+          function(data, status, headers, config) {
+        	 document.getElementById("submitDiv").style.display = "none";
+        	 if(data.Type=='success'){
+	       	    $scope.status=status;
+		       	var s = JSON.stringify(data.Data[0]);
+		     	$scope.currentOrder = JSON.parse(s);
+		     	$scope.currentOrder.piDate=$filter('date')($scope.currentOrder.piDate, 'yyyy-MM-dd');
+		  		$scope.currentOrder.reqShipmentDate=$filter('date')($scope.currentOrder.reqShipmentDate, 'yyyy-MM-dd');
+        	 }else{
+    	    	 addAlert(data.Type,data.Message)
+        	 }
+        }).error(
+          function(data, status, headers, config) {
+        	  document.getElementById("submitDiv").style.display = "none";
+            $scope.status = status
+        }); 
+    	$scope.orderDlg = true;
+    }
+    
+    $http.get('/outbound/cargoplan/StatusList').success(
+            function(data, status, headers, config) {
+         	  // alert(112324145)
+         	  if(data.Type=="success"){
+         	  	$scope.orderStatuses=data.Data;
+         	  }else{
+         		  alert(data.Message)
+         	  }
+         	  $scope.status=status;
+          }).error(
+            function(data, status, headers, config) {
+              $scope.status = status
+          });
+    
+    $scope.DateTest=function(value){
+    	//alert(0000)
+    	  if (DATE_REGEXP.test(value)) {
+    		  return false;
+    	  }else{
+    		  return true;
+    	  }
+    }
+    $scope.FloatTest=function(value){
+    	//alert(0000)
+    	  if (FLOAT_REGEXP.test(value)) {
+    		  return false;
+    	  }else{
+    		  return true;
+    	  }
+    }
+    $scope.IntTest=function(value){
+    	//alert(0000)
+    	  if (INT_REGEXP.test(value)) {
+    		  return false;
+    	  }else{
+    		  return true;
+    	  }
+    }
+    $scope.NullTest=function(value){
+    	//alert(value)
+    	  if (NULL_REGEXP.test(value)) {
+    		 return false;
+    	  }else{
+    		  return true;
+    	  }
+    }
+    $scope.EditTest=function(value){
+    	if(!NULL_REGEXP.test(value)){
+    		return false;
+    	}else{
+    		if(FLOAT_REGEXP.test(value)){
+    			return false;
+    		}else{
+    			return true;
+    		}
+    	}
+    }
+    $scope.setbatchQty=function(batch){
+    	for(var i = 0, len = $scope.batchs.length; i < len; ++i){
+			if($scope.batchs[i].batchNo==batch.batch){
+				//$scope.BatchQty.reserveQty=$scope.batchs[i].reserveQty;
+				//$scope.BatchQty.TotalQty=$scope.batchs[i].SumQty;
+				if(typeof batch.Qty=='undefined'||batch.Qty==''||batch.Qty==null)
+					batch.Qty=0;
+				 return  parseInt($scope.BatchQty.TotalQty)- parseInt($scope.BatchQty.reserveQty)-parseInt(batch.Qty) 
+			}
+			
+		}
+    }
+    $scope.SaveChangeBatchQty=function(batch){
+    	for(var i = 0, len = $scope.batchs.length; i < len; ++i){
+			if($scope.batchs[i].batchNo==batch.batch){
+				$scope.batchs[i].reserveQty=$scope.BatchQty.reserveQty;
+			}
+		}
+    }
+    $scope.getPlansQty=function(batch){
+    	//alert(angular.toJson(batch))
+    	try{
+    	var ishave=false;
+    	/* for(var i = 0, len = $scope.batchs.length; i < len; ++i){
+			if(typeof $scope.tempQty!='undefined'&&$scope.batchs[i].batchNo==$scope.tempQty.batch){
+				alert($scope.tempQty.Qty)
+				if(typeof batch.id!='undefined'&&batch.id!=''&&batch.id!=null){
+				if(typeof $scope.tempQty.Qty!='undefined'&&$scope.tempQty.Qty!=''&&$scope.tempQty.Qty!=null){
+					$scope.batchs[i].reserveQty=$scope.BatchQty.reserveQty-parseInt($scope.tempQty.Qty);
+					}
+				}
+			}
+    	} */
+    	for(var i = 0, len = $scope.batchs.length; i < len; ++i){
+    			if($scope.batchs[i].batchNo==batch.batch){
+    				ishave=true;
+    				$scope.BatchQty.TotalQty=$scope.batchs[i].SumQty;
+    				$scope.BatchQty.reserveQty=$scope.batchs[i].reserveQty;
+    				if(typeof batch.Qty!='undefined'&&batch.Qty!=''&&batch.Qty!=null){
+    					$scope.tempQty={'Qty':parseInt(batch.Qty),'batch':batch.batch};
+    				}else{
+    					$scope.tempQty={'Qty':0,'batch':batch.batch};
+    				}
+    			}
+    	}
+    	for(var i = 0, len = $scope.cargoPlanSplitVos.length; i < len; ++i){
+				 for(var j = 0, len2 = $scope.cargoPlanSplitVos[i].containers.length; j < len2; ++j){
+				 	for(var k=0,len3=$scope.cargoPlanSplitVos[i].containers[j].batchs.length;k<len3;++k){
+				 			if($scope.cargoPlanSplitVos[i].containers[j].batchs[k]!=batch&&$scope.cargoPlanSplitVos[i].containers[j].batchs[k].batch==batch.batch){
+				 				$scope.BatchQty.reserveQty=parseInt($scope.BatchQty.reserveQty)+parseInt($scope.cargoPlanSplitVos[i].containers[j].batchs[k].Qty)
+    				 		}
+						} 
+			}
+		} 
+    	 if(!ishave){
+    		 $scope.BatchQty.reserveQty=0;
+			 $scope.BatchQty.TotalQty=0;
+    	 } 
+    	}catch(arr){
+    		alert(arr)
+    	}
+    } 
+    $scope.sumBatchQty=function(){
+    	try{
+    	if( $scope.cargoPlanSplitVos!=null) {
+    		$scope.tempQty;
+    		var Sum=$scope.BatchQty.reserveQty;
+    		var isEdit=false;
+    		for(var i = 0, len = $scope.cargoPlanSplitVos.length; i < len; ++i){
+    			if($scope.cargoPlanSplitVos[i].stuffing_Quantity!=''){
+    				if($scope.cargoPlanSplitVos[i].haslive==false){
+    					Sum=parseFloat(Sum)+parseFloat($scope.cargoPlanSplitVos[i].pi_SKU);
+    				}else{
+    					if($scope.cargoPlanSplitVos[i].Number==$scope.TempcargoPlanSplit.Number){
+    						Sum=parseFloat(Sum)-parseFloat($scope.cargoPlanSplitVos[i].pi_SKU);
+    					}
+    				}
+    			}
+      	  	}
+    			if(typeof $scope.TempcargoPlanSplit.pi_SKU!='undefined'&&$scope.TempcargoPlanSplit.pi_SKU!=''&&$scope.TempcargoPlanSplit.pi_SKU!=null){
+    				Sum=parseFloat(Sum)+parseFloat($scope.TempcargoPlanSplit.pi_SKU);
+    			}
+    		if(Sum>$scope.BatchQty.TotalQty) $scope.classType2='text-error';
+    		else  $scope.classType2='';
+    		$scope.tempQty=Sum;
+    		return Sum;
+    	}
+    	}catch(arr){
+    		alert(arr)
+    	}
+    }
+    $scope.getMaterialCompate=function(){
+    	 if($scope.TempcargoPlanSplit.stuffing_UOM!=null&&$scope.TempcargoPlanSplit.stuffing_UOM!=''&&!$scope.NullTest($scope.TempcargoPlanSplit.stuffing_UOM.umoCode)&&$scope.TempcargoPlanSplit.sku_UOM!=null&&$scope.TempcargoPlanSplit.sku_UOM!=''&&!$scope.NullTest($scope.TempcargoPlanSplit.sku_UOM.umoCode)){
+    			$http.post('/outbound/cargoplan/plan/compute',JSON.stringify($scope.TempcargoPlanSplit)).success(
+   			      function(data, status, headers, config) {
+   			   	 	$scope.compate= data.Data;
+   			    }).error(
+   			      function(data, status, headers, config) {
+   			    });
+         }else{
+        	 $scope.compate= 0;
+         }
+    	 return 0;
+    }
+    $scope.sumQty=function(Stuffing){
+    	//alert(angular.toJson($scope.cargoPlanSplitVos))
+    	var Sum=0;
+    	if( $scope.cargoPlanSplitVos!=null) {
+    		//alert(22)
+    		for(var i = 0, len = $scope.cargoPlanSplitVos.length; i < len; ++i){
+    			if($scope.cargoPlanSplitVos[i].Truck==Stuffing.Truck){
+    				//alert(Stuffing.truck)
+    				 for(var j = 0, len2 = $scope.cargoPlanSplitVos[i].containers.length; j < len2; ++j){
+    					if($scope.cargoPlanSplitVos[i].containers[j].container==Stuffing.container){
+    						//alert(angular.toJson(Stuffing.batch))
+    				 	for(var k=0,len3=$scope.cargoPlanSplitVos[i].containers[j].batchs.length;k<len3;++k){
+    				 		
+    				 		if(typeof $scope.cargoPlanSplitVos[i].containers[j].batchs[k].Qty=='undefined'||$scope.cargoPlanSplitVos[i].containers[j].batchs[k].Qty==''||$scope.cargoPlanSplitVos[i].containers[j].batchs[k].Qty==null)
+    				 			Sum=Sum+0;
+    				 		else{
+    				 			if($scope.cargoPlanSplitVos[i].containers[j].batchs[k]!=Stuffing.batch){
+    				 				Sum=Sum+parseFloat($scope.cargoPlanSplitVos[i].containers[j].batchs[k].Qty)
+        				 		}
+    				 		}
+    						} 
+    					}
+    				}
+    			}
+    		} 
+    		/* if(!isEdit){
+    			if(typeof $scope.TempcargoPlanSplit.stuffing_Quantity!='undefined'&&$scope.TempcargoPlanSplit.stuffing_Quantity!=''&&$scope.TempcargoPlanSplit.stuffing_Quantity!=null){
+    				Sum=parseFloat(Sum)+parseFloat($scope.TempcargoPlanSplit.stuffing_Quantity);
+    			}
+    		} */
+    		//alert(Sum)
+    	}
+    	if(typeof $scope.TempStuffing.batch.Qty!='undefined'&&$scope.TempStuffing.batch.Qty!=''&&$scope.TempStuffing.batch.Qty!=null)
+    	Sum=Sum+parseFloat($scope.TempStuffing.batch.Qty);
+    	return Sum;
+    		
+     }
+    $scope.isSame=function(value,type){
+    	$scope.same=false;
+    	//alert(angular.toJson(value))
+    	if(type=='Truck'){
+    		//alert(0)
+    		for(var i = 0, len = $scope.cargoPlanSplitVos.length; i < len; ++i){
+    			//alert($scope.cargoPlanSplitVos[i]!=value)
+    			if($scope.cargoPlanSplitVos[i]!=value&&$scope.cargoPlanSplitVos[i].Truck==value.Truck){
+    				$scope.same=true;
+    			}
+    		}
+    	}else if(type=='Container'){
+    		//alert(1)
+    		for(var i = 0, len = $scope.cargoPlanSplitVos.length; i < len; ++i){
+    			if($scope.cargoPlanSplitVos[i].Truck==value.Truck){
+    				for(var j = 0, len2 = $scope.cargoPlanSplitVos[i].containers.length; j < len2; ++j){
+    					//alert($scope.cargoPlanSplitVos[i].containers[j]!=value.container)
+    					if($scope.cargoPlanSplitVos[i].containers[j]!=value.container&&$scope.cargoPlanSplitVos[i].containers[j].container==value.container.container){
+    						$scope.same=true;
+    					}
+    				}
+    			}
+    		}
+    	}
+    	
+    }
+    $scope.openUpload=function(){
+    	$scope.uploadDlg=true;
+    }
+    $scope.closeUploadDlg=function(){
+    	$scope.uploadDlg=false;
+    }
+    
+    $scope.saveTruck=function(cargoPlanSplitVo,changetype){
+    	if(!$scope.same){
+    	try{
+    		//alert(angular.toJson(cargoPlanSplitVo))
+    	if($scope.EditType){
+    		$scope.cargoPlanSplitVos.push(JSON.parse(JSON.stringify(cargoPlanSplitVo)));
+    	}
+    	$scope.TempcargoPlanSplitVos=JSON.parse(JSON.stringify($scope.cargoPlanSplitVos))
+    	$scope.cargoPlanSplietsFormat($scope.cargoPlanSplitVos);
+    	$scope.cargoPlanSplietsFormat($scope.TempcargoPlanSplitVos); 
+   	/* 	$scope.cargoPlanSplitformat($scope.cargoPlanSplitVos,cargoPlanSplitVo);
+    	$scope.cargoPlanSplitformat($scope.TempcargoPlanSplitVos,cargoPlanSplitVo); */
+    	}catch(arr){
+    		alert(arr)
+    	}
+   		$scope.closeEditCargoPlansDlg();
+    	}
+    }
+    $scope.saveContainer=function(container){
+    	if(!$scope.same){
+    	try{
+    	if(container.type){
+    		for(var i = 0, len = $scope.cargoPlanSplitVos.length; i < len; ++i){
+    			if($scope.cargoPlanSplitVos[i].Truck==container.Truck){
+    				$scope.cargoPlanSplitVos[i].containers.push(container.container)
+    			}
+    		}
+    	
+    	}
+    	$scope.TempcargoPlanSplitVos=JSON.parse(JSON.stringify($scope.cargoPlanSplitVos))
+    	$scope.cargoPlanSplietsFormat($scope.cargoPlanSplitVos);
+    	$scope.cargoPlanSplietsFormat($scope.TempcargoPlanSplitVos); 
+    	$scope.closeEditContainerDlg();
+    	}catch(arr){
+    		alert(arr)
+    	}
+    	}
+    }
+    $scope.saveStuffing=function(Stuffing){
+    	//alert(angular.toJson(Stuffing))
+    	if(parseFloat($scope.getTotalFcl($scope.splitcargoPlanVo.qtyPerFcl))<parseFloat($scope.sumQty(Stuffing))){
+    		$scope.Tips(Stuffing);
+    	}else{
+    		$scope.doStuffingSave(Stuffing);
+    	}
+    }
+    $scope.cargoPlanSplietsFormat=function(cargoPlanSplitVos){
+    	for(var i = 0, len =cargoPlanSplitVos.length; i < len; ++i){
+      			  	cargoPlanSplitVos[i].stuffing=0;
+      		   		//cargoPlanSplitVos[i].Number=No;
+      		  	    cargoPlanSplitVos[i].Rows=cargoPlanSplitVos[i].containers.length;
+      		  // alert(cargoPlanSplitVos[i].containers)
+      		}
+    }
+    $scope.cargoPlanSplitformat=function(cargoPlanSplitVos,cargoPlanSplitVo){
+    	var ishave=false;
+    	for(var i = 0, len = $scope.cargoPlanSplitVos.length; i < len; ++i){
+   		 if( $scope.cargoPlanSplitVos[i].Truck==cargoPlanSplitVo.Truck){
+   				cargoPlanSplitVos[i]=JSON.parse(JSON.stringify(cargoPlanSplitVo));
+   			  	cargoPlanSplitVos[i].stuffing=0;
+   		   		//cargoPlanSplitVos[i].Number=No;
+   		  	    cargoPlanSplitVos[i].Rows=cargoPlanSplitVos[i].containers.length;
+   		  // alert(cargoPlanSplitVos[i].containers)
+   		  /*  		for(var j =0.,len2=cargoPlanSplitVos[i].containers.length;j<len2;++j){
+   		   			//alert(cargoPlanSplitVos[i].Rows[j])
+   		   		if(cargoPlanSplitVos[i].containers[j]!='undefined')
+   			   	cargoPlanSplitVos[i].Rows++;
+   		   } */
+   				ishave=true;
+   			 } 
+   		}
+   		if(!ishave){
+   			cargoPlanSplitVo.stuffing=0;
+   			//cargoPlanSplitVo.Number=No;
+   			cargoPlanSplitVo.Rows=0;
+		  // alert(cargoPlanSplitVos[i].containers)
+		  for(var j =0.,len2=cargoPlanSplitVo.containers.length;j<len2;++j){
+			  cargoPlanSplitVo.Rows++;
+		   }
+			cargoPlanSplitVos.push(JSON.parse(JSON.stringify(cargoPlanSplitVo)));
+   		}
+    }
+   $scope.change=function(cargoPlanSplitVo,changetype){
+	   //alert(123);
+	   if(cargoPlanSplitVo.Canedit){
+	    /* if(typeof cargoPlanSplitVo.column0=='undefined'){
+	    	cargoPlanSplitVo.column0=$scope.NullTest(cargoPlanSplitVo.stuffing_Date);
+	    } */
+		/* if(typeof cargoPlanSplitVo.column1=='undefined'){
+			cargoPlanSplitVo.column1=$scope.NullTest(cargoPlanSplitVo.ipb_No)
+		} */
+		/* if(typeof cargoPlanSplitVo.column2=='undefined'||cargoPlanSplitVo.column2==''){
+			//alert(123);
+			cargoPlanSplitVo.column2=$scope.NullTest(cargoPlanSplitVo.Rows)
+		}  */
+  		/* if(typeof cargoPlanSplitVo.column3=='undefined'){
+  			cargoPlanSplitVo.column3=$scope.NullTest(cargoPlanSplitVo.seal_No)
+  		}  */
+  		/* if(typeof cargoPlanSplitVo.column4=='undefined'){
+  			if(cargoPlanSplitVo.batch_No!=null)
+  			cargoPlanSplitVo.column4=$scope.NullTest(cargoPlanSplitVo.batch_No.batchNo)
+  			else{
+  			cargoPlanSplitVo.column4=true;
+  			}
+  		}  */
+  		//alert(5555)
+  		if(typeof cargoPlanSplitVo.column5=='undefined'){
+  			cargoPlanSplitVo.column5={flatdate:$scope.FloatTest(cargoPlanSplitVo.stuffing_Quantity)};
+  		} else{
+  			cargoPlanSplitVo.column5={flatdate:$scope.FloatTest(cargoPlanSplitVo.stuffing_Quantity)};
+  		}
+  		/* if(typeof cargoPlanSplitVo.column6=='undefined'){
+  			if(cargoPlanSplitVo.stuffing_UOM!=''&&cargoPlanSplitVo.stuffing_UOM!=null){
+  			cargoPlanSplitVo.column6=$scope.NullTest(cargoPlanSplitVo.stuffing_UOM.uomCode)
+  			}else{
+  				cargoPlanSplitVo.column6=true
+  			}
+  		}  */
+  		//alert(111)
+  		if(typeof cargoPlanSplitVo.column7=='undefined'){
+  			//alert($scope.FloatTest(cargoPlanSplitVo.pi_SKU))
+  			cargoPlanSplitVo.column7={flatdate:$scope.FloatTest(cargoPlanSplitVo.pi_SKU)}
+  		} else{
+  			cargoPlanSplitVo.column7={flatdate:$scope.FloatTest(cargoPlanSplitVo.pi_SKU)}
+  		}
+  		//alert(cargoPlanSplitVo.sku_UOM)
+  		/* if(typeof cargoPlanSplitVo.column8=='undefined'){
+  			if(cargoPlanSplitVo.sku_UOM!=''&&cargoPlanSplitVo.sku_UOM!=null)
+  			cargoPlanSplitVo.column8=$scope.NullTest(cargoPlanSplitVo.sku_UOM.uomCode)
+  			else{
+  			cargoPlanSplitVo.column8=true;
+  			}
+  		} */
+  		//alert(cargoPlanSplitVo.column0||cargoPlanSplitVo.column1||cargoPlanSplitVo.column2||cargoPlanSplitVo.column3||cargoPlanSplitVo.column4||cargoPlanSplitVo.column5.date||cargoPlanSplitVo.column5.flatdate||cargoPlanSplitVo.column6||cargoPlanSplitVo.column7.date||cargoPlanSplitVo.column7.flatdate||cargoPlanSplitVo.column8);
+	   if((/*cargoPlanSplitVo.column0 ||cargoPlanSplitVo.column2 ||cargoPlanSplitVo.column4||cargoPlanSplitVo.column5.date||*/cargoPlanSplitVo.column5.flatdate/* ||cargoPlanSplitVo.column6||cargoPlanSplitVo.column7.date*/|| cargoPlanSplitVo.column7.flatdate/* ||cargoPlanSplitVo.column8 */)==false){
+	   		//cargoPlanSplitVo.show=!(cargoPlanSplitVo.show);
+	   		/* 
+	   		if(changetype==0){
+	   			//alert(cargoPlanSplitVo.stuffing_Date)
+	   			cargoPlanSplitVo.stuffing_Date=$filter('date')(new Date(cargoPlanSplitVo.stuffing_Date),'yyyy-MM-dd');
+	   				//alert(cargoPlanSplitVo.stuffing_Date)
+	   		} */
+	   		var ishave=false;
+	   		for(var i = 0, len = $scope.cargoPlanSplitVos.length; i < len; ++i){
+	   		 if($scope.cargoPlanSplitVos[i].Number==cargoPlanSplitVo.Number){
+	   				$scope.cargoPlanSplitVos[i]=JSON.parse(JSON.stringify(cargoPlanSplitVo));
+	   				ishave=true;
+	   			 } 
+	   		}
+	   		if(!ishave){
+	   			$scope.cargoPlanSplitVos.push(JSON.parse(JSON.stringify(cargoPlanSplitVo)));
+	   		}
+	   		var isTemphave=false;
+	   		for(var i = 0, len = $scope.TempcargoPlanSplitVos.length; i < len; ++i){
+	   			 if($scope.TempcargoPlanSplitVos[i].Number==cargoPlanSplitVo.Number){
+	   				$scope.TempcargoPlanSplitVos[i]=JSON.parse(JSON.stringify(cargoPlanSplitVo));
+	   				isTemphave=true;
+	   			 } 
+	   		}
+	   		if(!isTemphave){
+	   			$scope.TempcargoPlanSplitVos.push(JSON.parse(JSON.stringify(cargoPlanSplitVo)));
+	   		}
+	   		for(var i = 0, len = $scope.batchs.length; i < len; ++i){
+	   			//alert(111)
+    			if($scope.batchs[i].batchNo==cargoPlanSplitVo.batch_No){
+    				$scope.batchs[i].reserveQty=$scope.tempQty
+    				//$scope.batchs[i].SumQty=$scope.BatchQty.TotalQty;
+    				//alert(JSON.stringify($scope.batchs))
+    			}
+    		}
+	   	 	$scope.closeEditCargoPlansDlg();
+	   		}
+	   //alert(123);
+	   }
+   }
+   $scope.cancel=function(temp,type){
+	//alert(1111)
+	try{
+	var cargoPlanSplitVo='';
+	var isFind=false;
+	   for(var i = 0, len = $scope.TempcargoPlanSplitVos.length; i < len; ++i){
+ 			 if($scope.TempcargoPlanSplitVos[i].Number==temp.Number){
+ 				cargoPlanSplitVo=JSON.parse(JSON.stringify($scope.TempcargoPlanSplitVos[i]));
+ 				//alert(angular.toJson(cargoPlanSplitVo))
+ 				isFind=true;
+ 			 } 
+ 		}
+	   if(isFind){
+	   for(var i = 0, len = $scope.cargoPlanSplitVos.length; i < len; ++i){
+			 if($scope.cargoPlanSplitVos[i].Number==temp.Number){
+				 $scope.cargoPlanSplitVos[i].Truck=cargoPlanSplitVo.Truck;
+				 $scope.cargoPlanSplitVos[i].StuffingDate=cargoPlanSplitVo.StuffingDate;
+				 $scope.cargoPlanSplitVos[i].containers=cargoPlanSplitVo.containers;
+			 } 
+		}
+	   }
+	}catch(arr){
+		alert(arr)
+	}
+	  // alert(222)
+	   //alert(isdeleted)
+	   /* if(isdeleted){
+		   $scope.plandelete($index,cargoPlanSplitVo);
+	   } */
+	   //alert(1232)
+	  // cargoPlanSplitVo.show=!(cargoPlanSplitVo.show);
+	   if(type=='Truck')
+		   $scope.closeEditCargoPlansDlg();
+	   else if(type=='Container')
+		   $scope.closeEditContainerDlg();
+	   else if(type=='Stuffing')
+		   $scope.closeEditStuffingDlg();
+   }
+   $scope.planSave=function(cargoPlanSplitVo){
+	   /* if(cargoPlanSplitVo.stuffing_Date==''){
+		   alert(13)
+		  // $scope.column0.stuffingDate.$error.date===true;
+	   } 
+	   if(typeof $scope.column1.ipbNo.$error.date=='undefined'){
+		   alert(12312312)
+		   $scope.column1.ipbNo.$error.date===true;
+	   }
+	   if(typeof $scope.column0.stuffingDate.$error.date=='undefined'){
+		   $scope.column0.stuffingDate.$error.date=true;
+	   }
+	   if(typeof $scope.column2.containerNo.$error.date=='undefined'){
+		   $scope.column2.containerNo.$error.date=true;
+	   }
+	   if(typeof $scope.column3.sealNo.$error.date=='undefined'){
+		   $scope.column3.sealNo.$error.date=true;
+	   }
+	   if(typeof $scope.column4.batch.$error.date=='undefined'){
+		   $scope.column4.batch.$error.date=true;
+	   }
+	   
+	   if(typeof $scope.column5.stuffingQuantity.$error.date=='undefined'){
+		   $scope.column5.stuffingQuantity.$error.date=true;
+	   }
+	   if(typeof $scope.column6.stuffingUom.$error.date=='undefined'){
+		   $scope.column6.stuffingUom.$error.date=true;
+	   }
+	   if(typeof $scope.column7.piSku.$error.date=='undefined'){
+		   $scope.column7.piSku.$error.date=true;
+	   }
+	   if(typeof $scope.column8.skuUom.$error.date=='undefined'){
+		   $scope.column8.skuUom.$error.date=true;
+	   } */
+	   //if(($scope.column0.stuffingDate.$error.date||$scope.column1.ipbNo.$error.date||$scope.column2.containerNo.$error.date||$scope.column3.sealNo.$error.date||$scope.column4.batch.$error.date||$scope.column5.stuffingQuantity.$error.date||$scope.column6.stuffingUom.$error.date||$scope.column7.piSku.$error.date||$scope.column8.skuUom.$error.date)==false){
+	   cargoPlanSplitVo.show=!(cargoPlanSplitVo.show);
+	   //}
+   }
+   $scope.closeAlert = function(index) {
+	   $scope.alerts.splice(index, 1);
+   };
+   $scope.clearAlerts = function() {
+	   $scope.alerts.splice(0, 1);
+   }
+   
+    /* $http.post('/outbound/cargoplan/list').success(
+      function(data, status, headers, config) {
+        $scope.cargoPlans = data;
+        //$scope.alerts.push({type:'success',msg: "success!"});
+    }).error(
+      function(data, status, headers, config) {
+        $scope.status = status
+    }); */
+    $scope.setcargoPlanVo = function(cargoPlan) {
+      $scope.cargoPlanVo = cargoPlan;
+    };
+      
+    $scope.getNowDate = function(){
+    	 var now = new Date();
+    	 return now.getFullYear()+"-"+(now.getMonth()+1)+"-"+now.getDate();
+    }
+    
+    $scope.getNowTime = function(){
+    	var now = new Date();
+  	  	return now.getHours()+":"+now.getMinutes();
+    }
+    
+    $scope.getExceedDateTime = function(cargoPlans){
+    	
+    	var currentDate = $scope.getNowDate();
+  	  	var currentTime = $scope.getNowTime();
+    	if(typeof cargoPlans.closedDate=='number'){
+			var closedDate = new Date(cargoPlans.closedDate);
+			var closedDateStr = closedDate.getFullYear()+"-"+(closedDate.getMonth()+1)+"-"+closedDate.getDate();
+			if(closedDateStr==currentDate){
+				if(typeof cargoPlans.closedTime=='number'){
+					  var closedTimed = new Date(cargoPlans.closedTime);
+					  cargoPlans.timeExceed = (currentTime>(closedTimed.getHours()+":"+closedTimed.getMinutes()))?"color:red":"";
+				}
+			}else{
+				cargoPlans.dateExceed = (new Date()>cargoPlans.closedDate)?"color:red":"";
+				if(""!=cargoPlans.dateExceed){
+					cargoPlans.timeExceed = "color:red";
+				}
+			}
+		}
+    	return cargoPlans;
+    }
+    
+    
+    $scope.searchList=function(searchVo){
+    	 document.getElementById("submitDiv").style.display = "inline";
+    	  $http.post('/outbound/cargoplan/list', JSON.stringify(searchVo)).success(
+           function(data, status, headers, config) {
+        	   document.getElementById("submitDiv").style.display = "none";
+        	  // alert(112324145)
+        	  if(data.Type=="success"){
+	        	  $scope.cargoPlans=data.Data;
+	        	    
+	        	  for(var i = 0, len = $scope.cargoPlans.length; i < len; ++i) {
+	        		  
+	        		  $scope.cargoPlans[i] =  $scope.getExceedDateTime($scope.cargoPlans[i]);
+	        		  
+	        		  $scope.initCargoPlan($scope.cargoPlans[i]);
+	        	  }
+        	 
+        	  }else{
+        		   $scope.alerts.push({type:data.Type,msg: data.Message});
+  	             $timeout($scope.clearAlerts, 5000);
+        	  }
+        	  $scope.status=status;
+         }).error(
+           function(data, status, headers, config) {
+        	   document.getElementById("submitDiv").style.display = "none";
+             $scope.status = status
+         });
+    };
+    $scope.deleted=function(cargoPlanVo,$index){
+    	 var title = 'Waring';
+    	    var msg = 'Do you sure?';
+    	    var btns = [ {result:'ok', label: 'Yes', cssClass: 'btn-danger'},{result:'no', label: 'No',cssClass:'btn-warning'}];
+
+    	    $dialog.messageBox(title, msg, btns).open()
+    	      .then(function(result){
+    	        if(result=='ok'){
+    	        	 document.getElementById("submitDiv").style.display = "inline";
+    	        	 $http.get('/outbound/cargoplan/delete/'+cargoPlanVo.id).success(
+    	        	           function(data, status, headers, config) {
+    	        	        	   document.getElementById("submitDiv").style.display = "none";
+    	        	        	 if(data.Type=="success"){
+    	        	        	 $scope.cargoPlans.splice($index,1);
+    	        	             $scope.status = status;
+    	        	        	 }
+    	        	             $scope.alerts.push({type:data.Type,msg: data.Message});
+    	        	             $timeout($scope.clearAlerts, 5000);
+    	        	             
+    	        	         }).error(
+    	        	           function(data, status, headers, config) {
+    	        	        	   document.getElementById("submitDiv").style.display = "none";
+    	        	             $scope.status = status
+    	        	         });	
+    	        }
+    	    });
+    };
+    $scope.update=function(cargoPlanVo){
+ 	   if(cargoPlanVo!=null){
+ 		   if(typeof cargoPlanVo.piNo=='undefined'){
+ 			   cargoPlanVo.column0=true;
+ 		   }else{
+ 			   cargoPlanVo.column0=$scope.NullTest(cargoPlanVo.piNo)
+ 		   }
+		    if(typeof cargoPlanVo.column5=='undefined'){
+		    	cargoPlanVo.column5=$scope.check(cargoPlanVo.qtyPerFcl,cargoPlanVo.fcl)
+		    }	  
+ 		   /* if(typeof cargoPlanVo.closedDate=='undefined')
+ 			   cargoPlanVo.column4=true;
+ 		   else
+ 			   cargoPlanVo.column4=$scope.NullTest(cargoPlanVo.closedDate) */
+ 		  /* if(typeof cargoPlanVo.refNo=='undefined')
+ 			   cargoPlanVo.column5=true;
+ 		   else
+ 			   cargoPlanVo.column5=$scope.NullTest(cargoPlanVo.refNo) */
+ 		  /*  if(typeof cargoPlanVo.closedTime=='undefined')
+ 			   cargoPlanVo.column8=true;
+ 		   else   
+ 			   cargoPlanVo.column8=$scope.NullTest(cargoPlanVo.closedTime) */
+ 		   if((cargoPlanVo.column0 ||cargoPlanVo.column5 /*||cargoPlanVo.column4 ||cargoPlanVo.column8|| cargoPlanVo.column6*/)==false){
+    	document.getElementById("submitDiv").style.display = "inline";
+    	$http.post('/outbound/cargoplan/update', JSON.stringify(cargoPlanVo)).success(
+          function(data, status, headers, config) {
+        	  document.getElementById("submitDiv").style.display = "none";
+        	if(data.Type=="success"){
+            for(var i = 0, len = $scope.cargoPlans.length; i < len; ++i) {
+                if($scope.cargoPlans[i].id==cargoPlanVo.id){
+                	$scope.cargoPlans[i]=data.Data;
+  					$scope.cargoPlans[i] =  $scope.getExceedDateTime($scope.cargoPlans[i]);
+	        		$scope.initCargoPlan($scope.cargoPlans[i]);
+                }
+              }
+            $scope.saveOrderDlg=false;
+        	}
+        	$scope.alerts.push({type:data.Type,msg: data.Message});
+        	$timeout($scope.clearAlerts, 5000);
+           
+        }).error(
+          function(data, status, headers, config) {
+        	  document.getElementById("submitDiv").style.display = "none";
+              $scope.status = status
+        });
+ 		   }
+ 			}else{
+ 			   alert("NO DATA")
+ 		   }
+   };
+   $scope.getShow=function(){
+	   return $scope.isShow;
+   }
+   $scope.save=function(cargoPlanVo){
+	   if(cargoPlanVo!=null){
+	   if(typeof cargoPlanVo.piNo=='undefined'){
+		   cargoPlanVo.column0=true;
+	   }else{
+		   cargoPlanVo.column0=$scope.NullTest(cargoPlanVo.piNo)
+	   }
+		if(typeof cargoPlanVo.column5=='undefined')
+		   cargoPlanVo.column5=$scope.check(cargoPlanVo.qtyPerFcl,cargoPlanVo.fcl) 
+	   /* if(typeof cargoPlanVo.closedDate=='undefined')
+		   cargoPlanVo.column4=true;
+	   else
+		   cargoPlanVo.column4=$scope.NullTest(cargoPlanVo.closedDate) */
+	  /* if(typeof cargoPlanVo.refNo=='undefined')
+		   cargoPlanVo.column5=true;
+	   else
+		   cargoPlanVo.column5=$scope.NullTest(cargoPlanVo.refNo) */
+	  /*  if(typeof cargoPlanVo.closedTime=='undefined')
+		   cargoPlanVo.column8=true;
+	   else   
+		   cargoPlanVo.column8=$scope.NullTest(cargoPlanVo.closedTime) */
+	   if((cargoPlanVo.column0 ||cargoPlanVo.column5/*||cargoPlanVo.column4 ||cargoPlanVo.column8|| cargoPlanVo.column6*/)==false){
+		   document.getElementById("submitDiv").style.display = "inline";
+   			$http.post('/outbound/cargoplan/save', JSON.stringify(cargoPlanVo)).success(
+         	function(data, status, headers, config) {
+         	document.getElementById("submitDiv").style.display = "none";
+         	if(data.Type=="success"){
+         		data.Data.schedule = 0;
+       		  $scope.cargoPlans.push(data.Data);
+       		  $scope.alerts.push({type:'success',msg: "add success!"});
+       		  $timeout($scope.clearAlerts, 5000);
+           	  $scope.saveOrderDlg=false;
+         	}else{
+         		alert(data.Message);
+         	}
+       			}).error(
+        	 function(data, status, headers, config) {
+        		 document.getElementById("submitDiv").style.display = "none";
+       		 // $timeout($scope.clearAlerts, 5000);
+             $scope.status = status
+       });
+	   }
+	   }else{
+		   alert("NO DATA")
+	   }
+  };
+   $scope.saveorupdate=function(cargoPlan,type){
+	   $scope.saveOrUpdate=type;
+	   $http.get('/outbound/cargoplan/pilist').success(
+	           function(data, status, headers, config) {
+	        	if(data.Type=="success")
+	             $scope.PIs = data.Data;
+	         }).error(
+	           function(data, status, headers, config) {
+	             $scope.status = status
+	         });
+	   $scope.cargoPlanVo=null;
+	   if(cargoPlan!=null){
+		   $scope.cargoPlanVo = JSON.parse(JSON.stringify(cargoPlan));
+		  // alert($scope.cargoPlanVo.closedDate)
+		   if($scope.cargoPlanVo.closedDate!=null)
+		   $scope.cargoPlanVo.closedDate=$filter('date')(new Date($scope.cargoPlanVo.closedDate), 'yyyy-MM-dd')
+		   if($scope.cargoPlanVo.Out!=null)
+		   $scope.cargoPlanVo.Out=$filter('date')(new Date($scope.cargoPlanVo.Out), 'yyyy-MM-dd')
+		   if($scope.cargoPlanVo.closedTime!=null)
+		   $scope.cargoPlanVo.closedTime=$filter('date')($scope.cargoPlanVo.closedTime, 'HH:mm')
+	   }else{
+		   $scope.cargoPlanVo={planEdit:''}
+	   }
+	   $scope.saveOrderDlg=true;
+   }
+   var No=1; 
+   $scope.add=function(cargoPlanSplitVo){
+	   //$scope.BatchQty={reserveQty:0,TotalQty:0};
+	   try{
+	   	$scope.cargoPlan='';
+	   	var conNo="";
+	   	if($scope.baseData.ConNo!=null&&$scope.baseData.ConNo!=''&&$scope.baseData.ConNo!='undefined')
+	   		conNo=$scope.baseData.ConNo;
+	   	if(cargoPlanSplitVo==''||typeof cargoPlanSplitVo=='undefined'||cargoPlanSplitVo==null){
+	   		$scope.EditType=true;
+			$scope.TempcargoPlanSplit=({Number:No,orderId:$scope.orderId,Truck:'',StuffingDate:'',containers:[{container:'',SealNo:'',batchs:[{batch:'',Qty:''}]}],show:false,haslive:false,Canedit:true,column0:undefined,column1:undefined,column2:undefined,column3:undefined,column4:undefined,column5:undefined,column6:undefined,column7:undefined,column8:undefined});
+			//$scope.getPlansQty(cargoPlanSplitVo.batch_No)
+	   	}else{
+	   		$scope.EditType=false;
+	   		//alert(angular.toJson(cargoPlanSplitVo));
+	   		if(typeof cargoPlanSplitVo.StuffingDate!='undefined'&&cargoPlanSplitVo.StuffingDate!=''&&cargoPlanSplitVo.StuffingDate!=null)
+	   		cargoPlanSplitVo.StuffingDate=$filter('date')(new Date(cargoPlanSplitVo.StuffingDate),'yyyy-MM-dd');
+	   		$scope.TempcargoPlanSplit=cargoPlanSplitVo;
+	   	   // $scope.getPlansQty(cargoPlanSplitVo.batch_No)
+	   	}
+	   	No=No+1;
+	   	$scope.getMaterialCompate();
+	   	$scope.same=false;
+	   	if($scope.TempcargoPlanSplit.Canedit==true)
+   		$scope.showEditCargoPlansDlg();
+	   }catch(arr){
+		   alert(arr)
+	   }
+   }
+   $scope.containerSplit=function(Truck,Container,type){
+	 try{
+	if(type){
+		$scope.tempContainer={'Truck':Truck.Truck,'Number':Truck.Number,'container':{container:'',SealNo:'',batchs:[{batch:'',Qty:''}]},'type':type};
+	}else{
+		$scope.tempContainer={'Truck':Truck.Truck,'Number':Truck.Number,'container':Container,'type':type};
+	}
+	$scope.same=false;
+	  // $scope.isShow=false;
+	   $scope.ContainerDlgShow();
+	   }catch(arr){
+		   alert(arr)
+	   }
+   }
+   $scope.stuffingSplit=function(truck,container,batch,type){
+	   if(type){
+		   $scope.TempStuffing={'Truck':truck.Truck,'Number':truck.Number,'container':container,'type':type,'batch':{'batch':'','Qty':''}};
+	   }else{
+		   $scope.TempStuffing={'Truck':truck.Truck,'Number':truck.Number,'container':container,'type':type,'batch':batch};
+		   $scope.getPlansQty(batch);
+	   }
+	   //alert(container)
+	   //alert(angular.toJson($scope.TempStuffing))
+	   $scope.StuffingDlgShow();
+   }
+   $scope.plandelete=function($index,value,type){
+	   //alert(123132)
+	   try{
+	/*    if(cargoPlanSplitVo.haslive){
+		   document.getElementById("submitDiv").style.display = "inline";
+		   $http.get('/outbound/cargoplan/plan/delete/'+cargoPlanSplitVo.id).success(
+		           function(data, status, headers, config) {
+		        	document.getElementById("submitDiv").style.display = "none";
+		        	if(data.Type=="success"){
+		        	$scope.cargoPlanSplitVos.splice($index,1);
+		        	for(var i = 0, len = $scope.cargoPlans.length; i < len; ++i) {
+		                  if($scope.cargoPlans[i].id==cargoPlanSplitVo.orderId){
+		                  	$scope.cargoPlans[i].planEdit=true;
+		                  }
+		               }
+		        	}
+		           alert(data.Message)
+		         }).error(
+		           function(data, status, headers, config) {
+		        	  // alert(11111)
+		        	   document.getElementById("submitDiv").style.display = "none";
+		             $scope.status = status
+		         });
+	   }else{ */
+		if(type=='Truck'){
+	   	$scope.cargoPlanSplitVos.splice($index,1);
+	   	for(var i = 0, len = $scope.cargoPlans.length; i < len; ++i) {
+            if($scope.cargoPlans[i].id==value.orderId){
+            	$scope.cargoPlans[i].planEdit=true;
+            }
+         }
+		}else if(type=='Container'){
+			for(var i = 0, len = $scope.cargoPlanSplitVos.length; i < len; ++i) {
+				if($scope.cargoPlanSplitVos[i].Truck==value.Truck){
+					$scope.cargoPlanSplitVos[i].containers.splice($index,1);
+					if($scope.cargoPlanSplitVos[i].containers.length==0){
+						$scope.cargoPlanSplitVos[i].containers.push({container:'',SealNo:'',batchs:[{batch:'',Qty:''}]})
+					}
+				}
+			}
+		}else if(type=='Stuffing'){
+			//alert(angular.toJson(value))
+			for(var i = 0, len = $scope.cargoPlanSplitVos.length; i < len; ++i) {
+					for(var j = 0, len2 = $scope.cargoPlanSplitVos[i].containers.length; j < len2; ++j) {
+						if($scope.cargoPlanSplitVos[i].containers[j]==value)
+						$scope.cargoPlanSplitVos[i].containers[j].batchs.splice($index,1);
+						if($scope.cargoPlanSplitVos[i].containers[j].batchs.length==0){
+							$scope.cargoPlanSplitVos[i].containers[j].batchs.push({batch:'',Qty:''});
+						}
+				}
+			}
+		}
+	   	alert("success");
+	  /*  } */
+	   }catch(arr){
+		   alert(arr)
+	   }
+   }
+   $scope.savePlans=function(cargoPlanSplitVos){
+	   var sum=0;
+	   var canSave=true;
+	   var containerNum = 0;
+	   for(var i = 0, len = cargoPlanSplitVos.length; i < len; ++i){
+		   containerNum += cargoPlanSplitVos[i].containers.length;
+		  // alert(cargoPlanSplitVos[i].show)
+		 //  canSave=canSave&&cargoPlanSplitVos[i].show;
+		  // alert(canSave)
+		   sum=parseFloat(sum)+parseFloat(cargoPlanSplitVos[i].stuffing_Quantity);
+		//  alert(cargoPlanSplitVos[i].stuffing_Date)
+		//  alert($filter('date')(cargoPlanSplitVos[i].stuffing_Date,'yyyy-MM-dd'))
+		 //  cargoPlanSplitVos[i].stuffing_Date=$filter('date')(new Date(cargoPlanSplitVos[i].stuffing_Date),'yyyy-MM-dd');
+		//  alert(cargoPlanSplitVos[i].stuffing_Date) 
+		  // alert(sum)
+	   }
+	   if(parseFloat(containerNum)>parseFloat($scope.getTotalFcl($scope.splitcargoPlanVo.fcl))){
+		   var title = 'Warning';
+		   var msg = "Container entered in schedule ("+containerNum+") is more than FCL ("+$scope.getTotalFcl($scope.splitcargoPlanVo.fcl)+")."
+		   		+"Click 'OK'  to proceed and 'Cancel' to amend";
+		   var btns = [{result:'cancel', label: 'Cancel',cssClass:'btn-warning'}, {result:'ok', label: 'OK', cssClass: 'btn-primary'}];
+		   var savePlanBtn = document.getElementById("savePlanBtn");
+		   var closePlanBtn = document.getElementById("closePlanBtn");
+		   savePlanBtn.disabled = true;
+		   closePlanBtn.disabled = true;
+		   $dialog.messageBox(title, msg, btns)
+		   .open()
+		   .then(function(result){
+		   		if(result=='ok'){
+		   			$scope.doSavePlan(cargoPlanSplitVos);
+		   			savePlanBtn.disabled = false;
+		 		    closePlanBtn.disabled = false;
+		   		}else{
+		   			savePlanBtn.disabled = false;
+		 		    closePlanBtn.disabled = false;
+		   		}
+		   });
+	   }else{
+		   $scope.doSavePlan(cargoPlanSplitVos);
+	   }
+   }
+   
+    $scope.doSavePlan = function(cargoPlanSplitVos){
+	   document.getElementById("submitDiv").style.display = "inline";
+	   $http.post('/outbound/cargoPlan/plans/save/'+$scope.splitcargoPlanVo.id, JSON.stringify(cargoPlanSplitVos)).success(
+          function(data, status, headers, config) {
+        	  document.getElementById("submitDiv").style.display = "none";
+        	  if(data.Type=="success"){
+        		  //alert(angular.toJson(data.Data))
+	        	  for(var i = 0, len = $scope.cargoPlans.length; i < len; ++i) {
+	                  if($scope.cargoPlans[i].id==$scope.splitcargoPlanVo.id){
+	                	  $scope.cargoPlans[i]=data.Data;
+	                	  $scope.initCargoPlan($scope.cargoPlans[i]);
+	                	 // alert(angular.toJson($scope.cargoPlans[i]))
+	                	if(cargoPlanSplitVos.length>0){
+	                  	$scope.cargoPlans[i].planEdit='S001';
+	                  }
+	                }
+	        	  }
+	        	  $scope.alerts.push({type:data.Type,msg: data.Message});
+	        	  $timeout($scope.clearAlerts, 20000);
+	        	  $scope.EditPlansDlg=false;
+        	  }else{
+        		  alert(data.Message)
+        	  }
+        }).error(
+          function(data, status, headers, config) {
+        	 document.getElementById("submitDiv").style.display = "none";
+        	  //$timeout($scope.clearAlerts, 20000);
+              $scope.status = status
+        });
+   }
+   
+   $scope.initCargoPlan=function(cargoPlan){
+		  var number=0;
+		  cargoPlan.batchQty=0;
+		  cargoPlan.batchNo='';
+		  cargoPlan.TruckNo=0;
+		  cargoPlan.StuffingDate='';
+		  for(var k in cargoPlan.Trucks){
+			  cargoPlan.TruckNo++;
+			  if(new Date(cargoPlan.Trucks[k].StuffingDate)>new Date()){
+				  cargoPlan.Css='text-error';
+			  }else{
+				  cargoPlan.Css='';
+			  }
+			  if(typeof cargoPlan.Trucks[k].StuffingDate!='undefined'&&cargoPlan.Trucks[k].StuffingDate!=''&&cargoPlan.Trucks[k].StuffingDate!=null)
+			  cargoPlan.StuffingDate=cargoPlan.StuffingDate+$filter('date')(new Date(cargoPlan.Trucks[k].StuffingDate),'dd/MM/yyyy');
+			  try{
+			  for(var j in cargoPlan.Trucks[k].containers){
+				  number=number+1;
+				  for(var l in  cargoPlan.Trucks[k].containers[j].batchs){
+					  if(typeof cargoPlan.Trucks[k].containers[j].batchs[l].batch=='undefined'||cargoPlan.Trucks[k].containers[j].batchs[l].batch==null)
+						  cargoPlan.Trucks[k].containers[j].batchs[l].batch='';
+					  cargoPlan.batchNo=cargoPlan.batchNo+(cargoPlan.Trucks[k].containers[j].batchs[l].batch+'('+cargoPlan.Trucks[k].containers[j].batchs[l].Qty+')')+'<br>';
+				      cargoPlan.batchQty= parseFloat(cargoPlan.batchQty)+parseFloat(cargoPlan.Trucks[k].containers[j].batchs[l].Qty);
+				      cargoPlan.StuffingDate=cargoPlan.StuffingDate+'<br>'
+				  }
+			  }
+			  }catch(arr){
+        		  alert(arr)
+        	  }
+		  }
+		  cargoPlan.schedule=number;
+		  return cargoPlan;
+    	 // alert(angular.toJson(cargoPlan))
+    	
+   }
+   
+   $scope.split=function(cargoPlan){
+	   $scope.tempQty={'Qty':'','batch':''};
+	   $scope.orderId=cargoPlan.id
+	   $scope.splitcargoPlanVo=cargoPlan;
+	   $scope.cargoPlanSplitVos=[];
+	   try{
+	   $http.get('/outbound/cargoplan/plan/baseData/'+cargoPlan.id).success(
+	           function(data, status, headers, config) {
+	        	// alert(JSON.stringify(data))
+	             $scope.baseData = data.Data;
+	        	//alert(angular.toJson(data));
+	             if(data!=null){
+	            	 $http.get('/outbound/cargoplan/plan/uom/'+cargoPlan.id).success(
+	          	           function(data, status, headers, config) {
+	          	             $scope.UOMS = data.Data;
+	          	         }).error(
+	          	           function(data, status, headers, config) {
+	          	             $scope.status = status
+	          	         });
+	          	   $http.get('/outbound/cargoplan/plan/skuuom/'+cargoPlan.id).success(
+	          	           function(data, status, headers, config) {
+	          	             $scope.SKUUOMS = data.Data;
+	          	         }).error(
+	          	           function(data, status, headers, config) {
+	          	             $scope.status = status
+	          	         });
+	          	   $http.get('/outbound/cargoplan/plan/batch/'+cargoPlan.id).success(
+	          	           function(data, status, headers, config) {
+	          	        	//   alert(angular.toJson(data))
+	          	             $scope.batchs = data.Data;
+	          	         }).error(
+	          	           function(data, status, headers, config) {
+	          	             $scope.status = status
+	          	         });
+	             }
+	         }).error(
+	           function(data, status, headers, config) {
+	        	  // alert(JSON.stringify(data))
+	             $scope.status = status
+	         });
+	   $http.get('/outbound/cargoplan/plan/get/'+cargoPlan.id).success(
+	           function(data, status, headers, config) {
+	        	   if(data.Type=="success"){
+	        	   $scope.orderId=cargoPlan.id;
+	        	   if(data!=''&&data!=null&&data!='undefined'){
+	        		   //alert(data)
+	        		   No=1;
+	        		   $scope.cargoPlanSplitVos=data.Data;
+	        		   for(var i = 0, len = $scope.cargoPlanSplitVos.length; i < len; ++i) {
+	        			   $scope.cargoPlanSplitVos[i].Number=No;
+	        			   No=No+1;
+	        			   $scope.cargoPlanSplitVos[i].Rows= $scope.cargoPlanSplitVos[i].containers.length;
+	        		   }
+	        		   //alert( angular.toJson($scope.cargoPlanSplitVos))
+	        		 /*   for(var i  in tempSplits){
+	        			   var cargoPlanSplitVo='';
+	        			   cargoPlanSplitVo.Truck=tempSplits[i].Truck;
+	        			   cargoPlanSplitVo.StuffingDate=tempSplits[i].StuffingDate;
+	        			   cargoPlanSplitVo.containerNo=0;
+	        			   cargoPlanSplitVo.container=[];
+	        			   tempSplits[i].stuffing=0;
+	        			   tempSplits[i].Number=No;
+	        			   //tempSplits[i].containerNo=0;
+	        			  // alert(tempSplits[i].containers)
+	        			   for(var j in tempSplits[i].containers){
+	        				   var Tempcontaienr='';
+	        				    Tempcontaienr.container=tempSplits[i].containers[j].container;
+	        				    Tempcontaienr.SealNo=tempSplits[i].containers[j].SealNo;
+	        				    Tempcontaienr.batchs=[];
+	        				   cargoPlanSplitVo.containerNo.containerNo++;
+	        				   for(var k in tempSplits[i].containers[j].batchs){
+	        					   var Tempbatch=tempSplits[i].containers[j].batchs[k];
+	        					   Tempcontaienr.batchs.push(Tempbatch)
+	        				   }
+	        				   cargoPlanSplitVo.container.push(Tempcontaienr);
+	        			   }
+	        			   $scope.cargoPlanSplitVos.push(cargoPlanSplitVo) */
+	        			 //  tempSplits[i].stuffing_Quantity= tempSplits[i].stuffing_Quantity.toFixed(2);
+	        			  // tempSplits[i].pi_SKU=tempSplits[i].pi_SKU.toFixed(2);
+	        		   //}
+	        		   $scope.TempcargoPlanSplitVos=JSON.parse(JSON.stringify($scope.cargoPlanSplitVos))
+	        	   }
+	        	   $scope.EditPlansDlg=true;
+	        	   }else{
+	        		   $scope.alerts.push({type:'error',msg: data.Message});
+	  	        	 	$timeout($scope.clearAlerts, 5000);
+	        	   }
+	         }).error(
+	           function(data, status, headers, config) {
+	         });
+	   }catch(arr){
+		   alert(arr)
+	   }
+   }
+   $scope.closeEditStuffingDlg=function(){
+	   $scope.StuffingDlg=false;
+	   $scope.isShow=true;
+   }
+   $scope.StuffingDlgShow=function(){
+	   $scope.isShow=false;
+	   $scope.StuffingDlg=true;
+   }
+  	$scope.closeEditPlansDlg=function(){
+  		$scope.EditPlansDlg=false;
+  	}
+  	$scope.ContainerDlgShow=function(){
+  		$scope.isShow=false;
+  		$scope.ContainerDlg=true;
+  	}
+  	$scope.closeEditContainerDlg=function(){
+  		$scope.ContainerDlg=false;
+  		$scope.isShow=true;
+  	}
+  	$scope.closeEditCargoPlansDlg=function(){
+  		$scope.CargoPlansDlg=false;
+  		$scope.isShow=true;
+  	}
+  	$scope.showEditCargoPlansDlg=function(){
+  		$scope.isShow=false;
+  		$scope.CargoPlansDlg=true;
+  	}
+   $scope.closeSaveOrderDlg=function(cargoPlanVo){
+	   cargoPlanVo=$scope.temp;
+	   $scope.saveOrderDlg=false;
+   }
+   $timeout($scope.clearAlerts, 20000);
+   $scope.opts = {
+		    backdropFade: true,
+		    dialogFade:false,
+		    backdropClick:false
+		  };
+   $scope.setUOM=function(UOM,cargoPlanSplitVo,type){
+	   for(var i = 0, len = $scope.UOMS.length; i < len; ++i) {
+           if($scope.UOMS[i].id==UOM.id){
+           	UOM.uomCode=$scope.UOMS[i].uomCode;
+           	//alert(UOM.uomCode);
+           }
+         }
+	   $scope.compute(cargoPlanSplitVo,type);
+	   return  $scope.NullTest(UOM.uomCode);
+   }
+   $scope.setskuUOM=function(SKUUOM,cargoPlanSplitVo,type){
+	 //  alert(123)
+	   for(var i = 0, len = $scope.SKUUOMS.length; i < len; ++i) {
+           if($scope.SKUUOMS[i].id==SKUUOM.id){
+        	   SKUUOM.uomCode=$scope.SKUUOMS[i].uomCode;
+           	//alert(SKUUOM.uomCode);
+           }
+         }
+	   $scope.compute(cargoPlanSplitVo,type);
+	  // alert(123)
+	   return  $scope.NullTest(SKUUOM.uomCode);
+   }
+   	/*
+   	*閿熺獤鎾呮嫹鍒犻敓鏂ゆ嫹閿熸枻鎷稬OTNO閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷疯檹閿熸枻鎷烽敓鎻拷
+   	*/
+   /* $scope.setbatch=function(cargoPlanSplit){
+	   for(var i = 0, len = $scope.batchs.length; i < len; ++i) {
+           if($scope.batchs[i].id==cargoPlanSplit.batch_No.id){
+        	   cargoPlanSplit.batch_No.batchNo=$scope.batchs[i].batchNo;
+           	//alert(UOM.uomCode);
+           }
+         }
+	$http.get('/outbound/cargoplan/plan/stockQty/'+cargoPlanSplit.batch_No.id).success(
+	           function(data, status, headers, config) {
+	        	   alert(data)
+	        	 cargoPlanSplit.qty = parseDouble(data);
+	         }).error(
+	           function(data, status, headers, config) {
+	             $scope.status = status
+	         });
+	//alert($scope.NullTest(cargoPlanSplit.batch_No.batchNo))
+	 return  $scope.NullTest(cargoPlanSplit.batch_No.batchNo);
+   }
+  */
+   $scope.compute = function(cargoPlanSplitVo,type){
+	  // alert(type)
+   				    	  if(type){
+   				    		  if(!$scope.FloatTest(cargoPlanSplitVo.pi_SKU)&&!$scope.NullTest(cargoPlanSplitVo.stuffing_UOM.umoCode)&&!$scope.NullTest(cargoPlanSplitVo.sku_UOM.umoCode)){
+   				    			$http.post('/outbound/cargoplan/plan/compute',JSON.stringify(cargoPlanSplitVo)).success(
+   				   			      function(data, status, headers, config) {
+   				   			   	 	cargoPlanSplitVo.stuffing_Quantity=(cargoPlanSplitVo.pi_SKU*data.Data).toFixed(2);
+   				   					cargoPlanSplitVo.column5={flatdate:$scope.FloatTest(cargoPlanSplitVo.stuffing_Quantity),date:$scope.NullTest(cargoPlanSplitVo.stuffing_Quantity)}
+   				   			    }).error(
+   				   			      function(data, status, headers, config) {
+   				   			    });
+   				      			}
+   				    		  if($scope.FloatTest(cargoPlanSplitVo.pi_SKU)&&$scope.NullTest(cargoPlanSplitVo.pi_SKU)){
+   				    			  	if(!$scope.NullTest(cargoPlanSplitVo.stuffing_Quantity))
+   				    				cargoPlanSplitVo.stuffing_Quantity=0;
+   				    				return {date:$scope.NullTest(cargoPlanSplitVo.pi_SKU)};
+   				    			 }else
+   				    				return {flatdate:$scope.FloatTest(cargoPlanSplitVo.pi_SKU),date:$scope.NullTest(cargoPlanSplitVo.pi_SKU)};
+   				    	  }else{
+   				    		 if(!$scope.FloatTest(cargoPlanSplitVo.stuffing_Quantity)&&!$scope.NullTest(cargoPlanSplitVo.stuffing_UOM.umoCode)&&!$scope.NullTest(cargoPlanSplitVo.sku_UOM.umoCode)){
+   				    			$http.post('/outbound/cargoplan/plan/compute',JSON.stringify(cargoPlanSplitVo)).success(
+   	   				   			      function(data, status, headers, config) {
+   	   				   			 		cargoPlanSplitVo.pi_SKU=(cargoPlanSplitVo.stuffing_Quantity/data.Data).toFixed(2);
+   	   				   					cargoPlanSplitVo.column7={flatdate:$scope.FloatTest(cargoPlanSplitVo.pi_SKU),date:$scope.NullTest(cargoPlanSplitVo.pi_SKU)}
+   	   				   			    }).error(
+   	   				   			      function(data, status, headers, config) {
+   	   				   			    });
+   				    		 	}
+   				    		  if($scope.FloatTest(cargoPlanSplitVo.stuffing_Quantity)&&$scope.NullTest(cargoPlanSplitVo.stuffing_Quantity)){
+   				    				if(!$scope.NullTest(cargoPlanSplitVo.pi_SKU))
+   				    		 		cargoPlanSplitVo.pi_SKU=0;
+   				    		 		return {date:$scope.NullTest(cargoPlanSplitVo.stuffing_Quantity)};
+   				    		 	}else{
+   				    		 	 return {flatdate:$scope.FloatTest(cargoPlanSplitVo.stuffing_Quantity),date:$scope.NullTest(cargoPlanSplitVo.stuffing_Quantity)}
+   				    		 	}
+   				    	  }
+   	 }
+  
+  		$scope.model = {
+	        name: "",
+	        comments: ""
+	    };
+	$scope.doStuffingSave=function(Stuffing){
+		if(!Stuffing.column4){
+	          	try{
+	          	if(Stuffing.type){
+	          		for(var i = 0, len = $scope.cargoPlanSplitVos.length; i < len; ++i){
+	          			if($scope.cargoPlanSplitVos[i].Truck==Stuffing.Truck){
+	          				//alert(Stuffing.truck)
+	          				for(var j = 0, len2 = $scope.cargoPlanSplitVos[i].containers.length; j < len2; ++j){
+	          					if($scope.cargoPlanSplitVos[i].containers[j].container==Stuffing.container){
+	          						//alert(angular.toJson(Stuffing.batch))
+	          						$scope.cargoPlanSplitVos[i].containers[j].batchs.push(Stuffing.batch);
+	          					}
+	          				}
+	          			}
+	          		}
+	          	}
+	          	}catch(arr){
+	          		alert(arr)
+	          	}
+	          	$scope.TempcargoPlanSplitVos=JSON.parse(JSON.stringify($scope.cargoPlanSplitVos))
+	          	$scope.cargoPlanSplietsFormat($scope.cargoPlanSplitVos);
+	          	$scope.cargoPlanSplietsFormat($scope.TempcargoPlanSplitVos); 
+	          	//$scope.SaveChangeBatchQty(Stuffing.batch);
+	          	$scope.closeEditStuffingDlg()
+	          	}
+	}
+  		
+  		$scope.Tips=function(Stuffing){
+  			$scope.StuffingHide=false;
+  			var title = 'Warning';
+ 	    	var msg = 'Stuffing\'Qty greater than Qty/Fcl,Are you sure to Save?';
+ 	    	var btns = [ {result:'ok', label: 'Yes', cssClass: 'btn-primary'},{result:'no', label: 'No',cssClass:'btn-warning'}];
+ 	    	$dialog.messageBox(title, msg, btns).open()
+ 	      		.then(function(result){
+ 	      		$scope.StuffingHide=true;
+	  	        if(result=='ok'){
+	  	        	$scope.doStuffingSave(Stuffing);
+	  	        }
+ 	    	});
+  		}
+  		
+  		
+	    //an array of files selected
+	    $scope.files = [];
+
+	    //listen for the file selected event
+	    $scope.$on("fileSelected", function (event, args) {
+	        $scope.$apply(function () {            
+	            //add the file object to the scope's files collection
+	             $scope.files=[];//閿熸枻鎷烽敓绲漣les,鐩墠鍙敓鏂ゆ嫹閿熸枻鎷蜂竴閿熸枻鎷烽敓缁撲氦
+	            $scope.files.push(args.file);
+	        });
+	    });
+	    
+	    //the save method
+	    $scope.uploadExcel = function() {
+	    	document.getElementById("submitDiv").style.display = "inline";
+	        $http({
+	            method: 'POST',
+	            url: "/outbound/cargoplan/upload",
+	            //IMPORTANT!!! You might think this should be set to 'multipart/form-data' 
+	            // but this is not true because when we are sending up files the request 
+	            // needs to include a 'boundary' parameter which identifies the boundary 
+	            // name between parts in this multi-part request and setting the Content-type 
+	            // manually will not set this boundary parameter. For whatever reason, 
+	            // setting the Content-type to 'false' will force the request to automatically
+	            // populate the headers properly including the boundary parameter.
+	            headers: { 'Content-Type': false },
+	            //This method will allow us to change how the data is sent up to the server
+	            // for which we'll need to encapsulate the model data in 'FormData'
+	            transformRequest: function (data) {
+	                var formData = new FormData();
+	                //need to convert our json object to a string version of json otherwise
+	                // the browser will do a 'toString()' on the object which will result 
+	                // in the value '[Object object]' on the server.
+	                formData.append("model", angular.toJson(data.model));
+	                //now add all of the assigned files
+	               // alert(data.files.length)
+	                for (var i = 0; i < data.files.length; i++) {
+	                	//alert(angular.toJson(data.files[i]))
+	                    //add each file to the form data and iteratively name them
+	                    formData.append("file" + i, data.files[i]);
+	                }
+	                return formData;
+	            },
+	            //Create an object that contains the model and files which will be transformed
+	            // in the above transformRequest method
+	            data: { model: $scope.model, files: $scope.files }
+	        }).
+	        success(function (data, status, headers, config) {
+	        	//alert(data);
+	        	 document.getElementById("submitDiv").style.display = "none";
+	        	if(data.Type=="success"){
+	        	 if(data.Data!=null&&data.Data!=''){
+	        		 for(var i=0;i<data.Data.length;++i){
+	        			 var isUpdate=false;
+	        			 for(var j=0;j<$scope.cargoPlans.length;++j){
+	        				// alert($scope.cargoPlans[i].id==data.Data[j].id)
+	        				 try{ 
+	        				if($scope.cargoPlans[j].id==data.Data[i].id){
+	        					 $scope.cargoPlans[j]= $scope.initCargoPlan(data.Data[i]);
+	        					 isUpdate=true;
+	        				 }
+	        				 }catch(arr){
+        						 alert(arr)
+        					 }
+	        			 }
+	        			 if(!isUpdate&&typeof data.Data[i].piNo!='undefined'&&data.Data[i].piNo!=null&&data.Data[i].piNo!='')
+	        				 $scope.cargoPlans.push( $scope.initCargoPlan(data.Data[i]));
+	        		 }
+	        	 }
+	        	 $scope.closeUploadDlg()
+	        	 $scope.alerts.push({type:'success',msg: 'Upload Success'});
+	        	 $timeout($scope.clearAlerts, 5000);
+	        	}else{
+	        		alert(data.Message);
+	        	}
+	        }).
+	        error(function (data, status, headers, config) {
+	        	document.getElementById("submitDiv").style.display = "none";
+	        });
+	    };
+   document.getElementById("submitDiv").style.display = "none";
+  });
+   </script>
+}

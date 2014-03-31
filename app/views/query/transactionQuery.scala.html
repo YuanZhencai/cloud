@@ -1,0 +1,164 @@
+@(name: String)(
+@main("TransactionQuery"){
+<div ng-controller="transactionCtrl">
+ <alert ng-repeat="alert in alerts" type="alert.type" close="closeAlert($index)" template-url="/template/alert/alert.html">{{alert.msg}}</alert>
+	<!--head-->
+	<div class="breadcrumb">
+		<li style="">Current Location: Transaction Query</li>
+	</div>
+	<!--search -->
+	<form novalidate id="myfrom" class="form-horizontal">
+		<table>
+			<tr>
+				<td>
+				
+					 <div class="control-group">
+						<label class="control-label">PI NO.</label>
+						<div class="controls"> 
+							 <input type="text" name="piNo" ng-model="searchVo.piNo"  style="height: 30px" class="input-medium"> 
+					 	</div>
+					</div> 
+				</td>
+				<td>
+					<div class="control-group">
+						<label class="control-label">Sales Contract No	</label>
+						<div class="controls">
+							<input type="text" name="sgPiNo" ng-model="searchVo.sgPiNo"  style="height: 30px"    class="input-medium">
+						</div>
+					</div>
+				</td>
+				<td>
+					<div class="control-group">
+						<label id="piStatus" class="control-label">Transaction Type</label>
+						<div class="controls">
+							<input type="hidden" name="piStatus" value="{{searchVo.piStatus}}">
+							<select ng-model="searchVo.piStatus" class="span2" ng-options="transactionType.codeKey as transactionType.nameKey for transactionType in TransactionTypes|orderBy:'codeKey'">
+								<option value="">ALL</option>
+							</select>
+						</div>
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<div class="control-group">
+						<label class="control-label">Transaction
+							Date(From)</label>
+						<div class="controls">
+							<input type="date"  class="input-medium" name="fromDate" style="height: 30px"  ng-model="searchVo.fromDate" >
+						</div>
+					</div>
+				</td>
+				<td>
+					<div class="control-group">
+						<label class="control-label">Transaction
+							Date(To)</label>
+						<div class="controls">
+							<input type="date"  class="input-medium"  name="toDate" style="height: 30px"  ng-model="searchVo.toDate">
+						</div>
+					</div>
+				</td>
+				<td>
+					<div class="control-group">
+						<label class="control-label"></label>
+						<div class="controls" align="right">
+							<input type="submit"  class="btn btn-primary btn-small" value="Search" ng-click="searchList(searchVo)">
+							<input type="submit" class="btn btn-primary btn-small" value="Report" onclick="submitForm()">
+						</div>
+					</div>
+				</td>
+			</tr>
+		</table>
+	</form>
+	<!-- table -->
+		
+ 	<table cellpadding="0" cellspacing="0" border="0"
+		class="table table-striped table-bordered table-hover table-condensed" id="example" width="100%">
+			<thead>
+				<tr>
+					<th>Transaction Type</th>
+					<th>Transaction Date</th>
+					<th>PI NO</th>
+					<th>Batch No</th>
+					<th>Sales Contract No</th>
+					<th>Material Code</th>
+					<th>From Storage Type</th>
+					<th>To Storage Type</th>
+					<th>Transaction quantity</th>
+					<th>Uom</th>
+					<th>Remarks</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="transactionquery in transactionQueryVos">
+					<td>{{transactionquery.transaction_Type}}</td>
+					<td>{{transactionquery.transaction_Date|date:'dd/MM/yyyy'}}</td>
+					<td>{{transactionquery.pI_No}}</td>
+					<td>{{transactionquery.batch_No}}</td>
+					<td>{{transactionquery.sales_Contract_No}}</td>
+					<td>{{transactionquery.materialCode}}</td>
+					<td>{{transactionquery.from_storage_type}}</td>
+					<td>{{transactionquery.to_storage_Type}}</td>
+					<td>{{transactionquery.Qty}}</td>
+					<td>{{transactionquery.UOM}}</td>
+					<td>{{transactionquery.remarks}}</td>
+				</tr>
+			</tbody>
+		</table>
+</div>
+
+}{
+  <script type="text/javascript" charset="utf-8">
+	function submitForm() {  
+	   	 with (document.getElementById("myfrom")) {  
+       	 	method = "post";  
+	        action = "/query/TransactionQuery/report";  
+	        submit();  
+	   	 }  
+	}  
+  
+  //var CloudWMS = angular.module('CloudWMS', ['ui.bootstrap']);
+  CloudWMS.controller('transactionCtrl', function($scope, $http,$timeout) {
+   $scope.goodsStuffingDetials=[];
+   $scope.alerts = [];
+    $http.get('/query/TransactionQuery/TypeList').success(
+  	    function(data, status, headers, config) {
+  	    	if(data.Type=='success'){
+  	    	  $scope.TransactionTypes = data.Data;
+  	    	}else{
+  	    		$scope.alerts.push({type:data.Type,msg: data.Message});
+  	    	}
+  	        //
+  	    }).error(
+  	    function(data, status, headers, config) {
+  	        $scope.status = status
+  	    });
+    $scope.searchList=function(searchVo){
+    	 document.getElementById("submitDiv").style.display = "inline";
+    $http.post('/query/TransactionQuery/list', JSON.stringify(searchVo)).success(
+  	    function(data, status, headers, config) {
+  	        	  // alert(112324145)
+  	        	   document.getElementById("submitDiv").style.display = "none";
+  	       if(data.Type=='success'){
+  	        $scope.transactionQueryVos=data.Data;
+  	       }else{
+  	    	 $scope.alerts.push({type:data.Type,msg: data.Message});
+  	    	$timeout($scope.clearAlerts, 5000);
+  	       }
+  	        $scope.status=status;
+  	    }).error(
+  	    function(data, status, headers, config) {
+  	        //alert(12324145)
+  	        $scope.status = status
+  	      document.getElementById("submitDiv").style.display = "none";
+  	    });
+    };
+    $scope.closeAlert = function(index) {
+ 	   $scope.alerts.splice(index, 1);
+    };
+    $scope.clearAlerts = function() {
+ 	   $scope.alerts.splice(0, 1);
+    }
+  });
+   </script>
+}

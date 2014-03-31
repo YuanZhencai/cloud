@@ -1,0 +1,383 @@
+@(name: String)
+@main("Stock Count"){
+<div ng-controller="stockCountCtrl">
+	<!--head-->
+	<div class="breadcrumb">
+		<li style="">Current Location: Stock Count</li>
+<!-- 		<li style="margin-right: 0px"><div class="span2 offset3">Plant:XXXXXXX</div> </li> -->
+		<li ><div class="span2 offset1"><div id="time" align="right"></div></div></li>
+	</div>
+	<!--search -->
+	<form class="form-horizontal" action="/stockcount/StockCount/report/0" method="post">
+		<table >
+			<tr ng-show="type==0">
+			 
+				<td>
+				<input name="binVo" value="{{binVo|json}}" type="hidden">
+					 <div class="control-group">
+						<label class="control-label">Warehouse</label>
+						<div class="controls"> 
+							<select name="warehouse" class="input-medium" ng-model="binVo.areaVo.storageTypeVo.warehouseVo.id" ng-options="warehouse.id as warehouse.nameKey for warehouse in warehouses" ng-change="setwarehouse(binVo.areaVo.storageTypeVo.warehouseVo)">
+							<option value="">All</option>
+							</select>
+					 	</div>
+					</div> 
+				</td>  
+				<td>
+					<div class="control-group">
+						<label class="control-label">Storage Type</label>
+						<div class="controls">
+							<select name="storage_type" class="input-medium" ng-model="binVo.areaVo.storageTypeVo.id" ng-options="storageType.id as storageType.nameKey for storageType in storageTypes" ng-change="setstorageType(binVo.areaVo.storageTypeVo)">
+							<option value="">All</option>
+							</select>
+						</div>
+					</div>
+				</td>
+				<td>
+					<div class="control-group">
+						<label id="piStatus" class="control-label">Storage Area</label>
+						<div class="controls">
+							<select name="storage_area" class="input-medium" ng-model="binVo.areaVo.id" ng-options="area.id as area.nameKey for area in areas" ng-change="setarea(binVo.areaVo)">
+								<option value="">All</option>
+							</select>
+						</div>
+					</div>
+				</td>
+			 
+				</tr>
+				<td>
+					<div class="control-group">
+						<label class="control-label" for="date01">Storage Bin</label>
+						<div class="controls">
+							<select name="storage_bin" class="input-medium" ng-model="binVo.id" ng-options="bin.id as bin.nameKey for bin in bins" ng-change="setbin(binVo)">
+								<option value="">All</option>
+							</select>
+						</div>
+					</div>
+				</td>
+				<td>
+				<!-- <div class="control-group">
+						<label class="control-label" >Stock Check Type</label>
+						<div class="controls">
+							<select name="type" class="span1" ng-model="type" ng-options="type.value as type.name for type in types" ng-change="setType()">
+							</select>
+						</div>
+					</div> -->
+				</td>
+			 
+			 
+				<td>
+					<div class="control-group">
+						<label class="control-label"></label>
+						<div class="controls">
+							<input ng-show="type==0"  type="button" value="Search" class="btn btn-primary btn-small" ng-click="searchList(binVo,type)"/>
+                            <input ng-show="type==0"  type="submit" value="Report" class="btn btn-primary btn-small "ng-click="print(type)" />
+                            <input ng-show="type==0" type="button" value="Save" class="btn btn-primary btn-small" ng-click="Save(binVo,type)"/>
+						</div>
+					</div>
+				</td>
+			</tr>
+		</table>
+	</form>	
+	<!-- table -->
+ 	<table ng-show="show" class="table table-striped table-bordered table-hover table-condensed" cellpadding="0" cellspacing="0" border="0" class="display" id="example" width="100%">
+			<thead>
+				<tr>
+					<th>Storage Type</th>
+					<th>Storage Area</th>
+					<th>Storage Bin</th>
+					<th>PI No</th>
+					<th>Batch No</th>
+					<th>Material Desc</th>
+					<th>Pallet Qty</th>
+					<th>Total Pallet</th>
+					<th>Total Qty</th>
+					<th>UOM</th>
+				</tr>
+			</thead>
+			<tbody class="stockCountVo">
+				<tr ng-repeat="stockCountVo in stockCountVos">
+					<td>{{stockCountVo.storageType}}</td>
+					<td>{{stockCountVo.storageArea}}</td>
+					<td>{{stockCountVo.storageBin}}</td>
+					<td>{{stockCountVo.piNo}}</td>
+					<td>{{stockCountVo.batchNo}}</td>
+					<td>{{stockCountVo.materialDescription}}</td>
+					<td>{{stockCountVo.palletQty}}</td>
+					<td>{{stockCountVo.stockCount}}</td>
+					<td>{{stockCountVo.systemQty}}</td>
+					<td>{{stockCountVo.QtyUom}}</td>
+				</tr>
+			</tbody>
+		</table>
+		<table ng-show="!show" class="table table-striped table-bordered table-hover table-condensed" cellpadding="0" cellspacing="0" border="0" class="display" id="example" width="100%">
+			<thead>
+				<tr>
+					<th>PI Number</th>
+					<th>Material Code</th>
+					<th>Batch Number</th>
+					<th>Warehouse</th>
+					<th>Storage Type</th>
+					<th>Storage Area</th>
+					<th>Storage Bin</th>
+					<th>System Quantity</th>
+					<th>Quantity UOM</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="stockCountVo in stockCountVos">
+					<td>{{stockCountVo.piNo}}</td>
+					<td>{{stockCountVo.materialCode}}</td>
+					<td>{{stockCountVo.batchNo}}</td>
+					<td>{{stockCountVo.warehouse}}</td>
+					<td>{{stockCountVo.storageType}}</td>
+					<td>{{stockCountVo.storageArea}}</td>
+					<td>{{stockCountVo.storageBin}}</td>
+					<td>{{stockCountVo.systemQty}}</td>
+					<td>{{stockCountVo.QtyUom}}</td>
+				</tr>
+			</tbody>
+		</table>
+</div>
+}{
+  <script type="text/javascript" charset="utf-8">
+  //var CloudWMS = angular.module('CloudWMS', ['ui.bootstrap']);
+  	CloudWMS.controller('stockCountCtrl', function($scope, $http,$window) {
+    //$scope.stockCountVos=[];
+    $scope.type=0;
+    $scope.show=true;
+    $scope.stockCountVos=[];
+    $scope.types=[{value:0,name:'Location'},{value:1,name:'Batch'}]
+    $scope.binVo={id:'',nameKey:'',areaVo:{id:'',nameKey:'',storageTypeVo:{id:'',nameKey:'',warehouseVo:{id:'',nameKey:''}}}};
+   /*  $http.post('/stockcount/StockCount/list/0').success(
+  	    function(data, status, headers, config) {
+  	    	//alert(JSON.stringify(data))
+  	    	  $scope.stockCountVos = data;
+  	    	  //$filter:orderBy($scope.stockCountVos,'+storageBin');
+  	    	  $scope.status=status
+  	        //$scope.alerts.push({type:'success',msg: "success!"});
+  	    }).error(
+  	    function(data, status, headers, config) {
+  	    	alert(data)
+  	        $scope.status = status
+  	    });  */
+    
+     $http.get('/stockcount/StockCount/initBin').success(
+    	function(data, status, headers, config) {
+    		 $scope.tempbins=JSON.parse(JSON.stringify(data));
+     	     $scope.bins = JSON.parse(JSON.stringify(data));
+     	        //$scope.alerts.push({type:'success',msg: "success!"});
+     	}).error(
+     	function(data, status, headers, config) {
+     	     $scope.status = status
+     	}); 
+     $http.get('/stockcount/StockCount/initArea').success(
+    	    	function(data, status, headers, config) {
+    	    		$scope.tempareas=JSON.parse(JSON.stringify(data));
+    	     	     $scope.areas = JSON.parse(JSON.stringify(data));
+    	     	        //$scope.alerts.push({type:'success',msg: "success!"});
+    	     	}).error(
+    	     	function(data, status, headers, config) {
+    	     	     $scope.status = status
+    	     	}); 
+     $http.get('/stockcount/StockCount/initStorageType').success(
+    	    	function(data, status, headers, config) {
+    	    		$scope.tempstorageTypes=JSON.parse(JSON.stringify(data));
+    	     	     $scope.storageTypes = JSON.parse(JSON.stringify(data));
+    	     	        //$scope.alerts.push({type:'success',msg: "success!"});
+    	     	}).error(
+    	     	function(data, status, headers, config) {
+    	     	     $scope.status = status
+    	     	}); 
+     $http.get('/stockcount/StockCount/initWarehouse').success(
+    	    	function(data, status, headers, config) {
+    	    		$scope.tempwarehouses=JSON.parse(JSON.stringify(data));
+    	     	     $scope.warehouses = JSON.parse(JSON.stringify(data));
+    	     	        //$scope.alerts.push({type:'success',msg: "success!"});
+    	     	}).error(
+    	     	function(data, status, headers, config) {
+    	     	     $scope.status = status
+    	     	}); 
+    $scope.setbin=function(binVo){
+    	if(binVo.id!=null){
+    	for(var i = 0, len = $scope.bins.length; i < len; ++i) {
+    		if($scope.bins[i].id==binVo.id){
+    			binVo.nameKey=$scope.bins[i].nameKey;
+    			binVo.areaVo=JSON.parse(JSON.stringify($scope.bins[i].areaVo));
+    		}
+    	}
+    	}else{
+    		$scope.binVo.nameKey='';
+    		$scope.binVo.id='';
+    	}
+    }
+    $scope.setarea=function(area){
+    	//$scope.binVo.id='';
+    	//$scope.binVo.nameKey='';
+    	//alert(area.id)
+    	if(area.id!=null){
+    	for(var i = 0, len = $scope.areas.length; i < len; ++i) {
+    		if($scope.areas[i].id==area.id){
+    			//area=JSON.parse(JSON.stringify($scope.areas[i]))
+    			area.nameKey=$scope.areas[i].nameKey;
+    			area.storageTypeVo=JSON.parse(JSON.stringify($scope.areas[i].storageTypeVo));
+    		}
+    	}
+    	var tempbin=[];
+    	for(var i=0,len=$scope.tempbins.length;i<len;++i){
+    		if($scope.tempbins[i].areaVo.id==area.id){
+    			//alert($scope.tempbins[i].areaVo.id)
+    			//alert($scope.tempbins[i].nameKey)
+    			tempbin.push(JSON.parse(JSON.stringify($scope.tempbins[i])));
+    		}
+    	}
+    	$scope.bins=tempbin;
+        var isbin=true;
+       	for(var i=0,len=$scope.bins.length;i<len;++i){
+       		if($scope.bins[i].id==$scope.binVo.id)
+       			isbin=false;
+       	}
+       	if(isbin){
+       		$scope.binVo.nameKey='';
+       		$scope.binVo.id='';
+       	}
+    	}else{
+    		//alert(area.storageTypeVo.id)
+    		var tempbin=[];
+        	for(var i=0,len=$scope.tempbins.length;i<len;++i){
+        		if($scope.tempbins[i].areaVo.storageTypeVo.id==area.storageTypeVo.id){
+        			//alert($scope.tempbins[i].areaVo.id)
+        			//alert($scope.tempbins[i].nameKey)
+        			tempbin.push(JSON.parse(JSON.stringify($scope.tempbins[i])));
+        		}
+        	}
+        	$scope.bins=tempbin;
+        	var temparea=[];
+        	for(var i=0,len=$scope.tempareas.length;i<len;++i){
+        		//alert(area.storageTypeVo.id)
+        		if($scope.tempareas[i].storageTypeVo.id==area.storageTypeVo.id){
+        			//alert($scope.tempstorageTypes[i].nameKey)
+        			temparea.push(JSON.parse(JSON.stringify($scope.tempareas[i])));
+        		}
+        	}
+        	
+        	//temparea.splice($scope.binVo.areaVo,1);
+        	$scope.areas=temparea;
+        	$scope.binVo.areaVo.id='';
+        	$scope.binVo.areaVo.nameKey='';
+    		//$scope.bins=$scope.tempbins;
+    	}
+    }
+    $scope.setstorageType=function(storageType){
+    	if(storageType.id!=null){
+    	for(var i = 0, len = $scope.storageTypes.length; i < len; ++i) {
+    		if($scope.storageTypes[i].id==storageType.id){
+    			storageType.nameKey=$scope.storageTypes[i].nameKey;
+    			storageType.warehouseVo=JSON.parse(JSON.stringify($scope.storageTypes[i].warehouseVo));
+    		}
+    	}
+    	var temparea=[];
+    	for(var i=0,len=$scope.tempareas.length;i<len;++i){
+    		if($scope.tempareas[i].storageTypeVo.id==storageType.id){
+    			//alert($scope.tempstorageTypes[i].nameKey)
+    			temparea.push(JSON.parse(JSON.stringify($scope.tempareas[i])));
+    		}
+    	}
+    	//temparea.splice($scope.binVo.areaVo,1);
+    	$scope.areas=temparea;
+    	var isarea=true;
+    	for(var i=0,len=$scope.areas.length;i<len;++i){
+    		if($scope.areas[i].id==$scope.binVo.areaVo.id)
+    			isarea=false;
+    	}
+    	if(isarea){
+    	$scope.binVo.areaVo.id='';
+    	$scope.binVo.areaVo.nameKey='';
+    	}
+    	var tempbin=[];
+        for(var i=0,len=$scope.tempbins.length;i<len;++i){
+        	if($scope.tempbins[i].areaVo.storageTypeVo.id==storageType.id){
+        		//alert($scope.tempstorageTypes[i].nameKey)
+        		tempbin.push(JSON.parse(JSON.stringify($scope.tempbins[i])));
+        	}
+        }
+        //tempbin.splice($scope.binVo,1)
+        $scope.bins=tempbin;
+        var isbin=true;
+    	for(var i=0,len=$scope.bins.length;i<len;++i){
+    		if($scope.bins[i].id==$scope.binVo.id)
+    			isbin=false;
+    	}
+    	if(isbin){
+    		$scope.binVo.nameKey='';
+    		$scope.binVo.id='';
+    	}
+    	}else{
+    		$scope.binVo.areaVo.storageTypeVo.id='';
+    		$scope.binVo.areaVo.storageTypeVo.nameKey='';
+    		$scope.areas=$scope.tempareas;
+    	}
+    }
+    $scope.setwarehouse=function(warehouse){
+    	if(warehouse.id!=null){
+    	for(var i = 0, len = $scope.warehouses.length; i < len; ++i) {
+    		if($scope.warehouses[i].id==warehouse.id){
+    			warehouse.nameKey=$scope.warehouses[i].nameKey;
+    		}
+    	}
+    	var tempstorageType=[];
+    	for(var i = 0, len = $scope.tempstorageTypes.length; i < len; ++i){
+    		if($scope.tempstorageTypes[i].warehouseVo.id==warehouse.id){
+    			//alert($scope.tempstorageTypes[i].nameKey)
+    			tempstorageType.push(JSON.parse(JSON.stringify($scope.tempstorageTypes[i])));
+    		}
+    	}
+    	$scope.storageTypes=tempstorageType;
+    	}else{
+    		$scope.binVo.areaVo.storageTypeVo.warehouseVo.id='';
+    		$scope.binVo.areaVo.storageTypeVo.warehouseVo.nameKey='';
+    		$scope.storageTypes=$scope.tempstorageTypes;
+    	}
+    }
+    $scope.setType=function(){
+    	//alert(123)
+    	if($scope.type==0){
+    		$scope.show=true;
+    	}else{
+    		$scope.show=false;
+    	}
+    	$scope.stockCountVos='';
+    }
+    $scope.print=function(type){
+   	 // alert("/outbound/goodsStuffing/print/"+printDital.intProdNo+"/"+printDital.reportDate+"/"+printDital.style);
+   	  $window.location.href="/stockcount/StockCount/report/"+type;
+     }
+    $scope.searchList=function(binVo,type){
+    	 document.getElementById("submitDiv").style.display = "inline";
+    $http.post('/stockcount/StockCount/list/'+type, JSON.stringify(binVo)).success(
+  	    function(data, status, headers, config) {
+  	        $scope.stockCountVos=data;
+  	        $scope.status=status;
+  	      document.getElementById("submitDiv").style.display = "none";
+  	    }).error(
+  	    function(data, status, headers, config) {
+  	        $scope.status = status
+  	      document.getElementById("submitDiv").style.display = "none";
+  	    });
+    };
+    $scope.Save=function(binVo,type){
+    	 document.getElementById("submitDiv").style.display = "inline";
+    $http.post('/stockcount/StockCount/SaveStockCount/'+type, JSON.stringify(binVo)).success(
+      	    function(data, status, headers, config) {
+      	        //$scope.stockCountVos=data;
+      	        $scope.status=status;
+      	      document.getElementById("submitDiv").style.display = "none";
+      	    }).error(
+      	    function(data, status, headers, config) {
+      	        $scope.status = status
+      	      document.getElementById("submitDiv").style.display = "none";
+      	    });
+        };
+  });
+   </script>
+}

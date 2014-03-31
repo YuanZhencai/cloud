@@ -1,0 +1,578 @@
+@(name:String) @main("ProductionLine SetUp"){
+<div ng-controller="MasterialMasterSetUp">
+	<div class="breadcrumb">
+		<li style="">Current Location: </li>
+		<li>Material Setup</li>
+	</div>
+
+<!-- 鏌ヨ鏉′欢 -->
+<form novalidate class="form-horizontal" ng-submit="searchVoList(materialSearchVo,true)">
+	<table>
+		<tr>
+			<td>
+				<div class="control-group">
+					<label class="control-label">Customer Name :</label>
+					<div class="controls">
+						<select ui-select2 ng-model="materialSearchVo.customId"
+							ng-options="custom.id as custom.desc for custom in customs">
+						</select>
+					</div>
+				</div>
+			</td>
+			<td>
+				<div class="control-group">
+					<label class="control-label">Material Code</label>
+					<div class="controls">
+						<input type="text" ng-model="materialSearchVo.matCode">
+					</div>
+				</div>
+			</td>
+		</tr>
+		<tr>
+
+			<td>
+				<div class="control-group">
+					<label id="piStatus" class="control-label">Material Desc</label>
+					<div class="controls">
+						<input type="text" ng-model="materialSearchVo.matDesc">
+					</div>
+				</div>
+			</td>
+
+			<td>
+				<div class="control-group">
+					<label class="control-label"></label>
+					<div class="controls">
+						<input class="btn btn-primary" type="submit" value="Search">
+					</div>
+				</div>
+			</td>
+		</tr>
+	</table>
+</form>
+<!-- PItable -->
+<table class="table   table-bordered   table-condensed">
+	<thead>
+		<tr>
+			<th>Customer Name</th>
+			<th>Material Code</th>
+			<th>Material Desc</th>
+			<th>UOM</th>
+			<th>UOM Capacity Point</th>
+			<th>Capacity Type</th>
+			<th>Last Update Date</th>
+			<th>Operation <input type="submit" class="btn btn-primary btn-small" ng-click="showAddView()" value="Add" /> <!--  
+				<input type="submit" class="btn btn-primary btn-small" ng-click="showUploadView()" value="Template" />
+				<input type="submit" class="btn btn-primary btn-small" ng-click="updateAll()" value="Update" />-->
+			</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr ng-repeat="materialVo in materialVoList">
+			<td>{{materialVo.customName}}</td>
+			<td>{{materialVo.matCode}}</td>
+			<td>{{materialVo.matDesc}}</td>
+			<td>{{materialVo.fromuom}}</td>
+			<td>{{materialVo.uomCap}}</td>
+			<td>{{materialVo.capType}}</td>
+			<td>{{materialVo.matLastUpdateDate|date:'dd/MM/yyyy HH:mm'}}</td>
+			<td><input type="submit" class="btn btn-primary btn-small" ng-click="showEditView(materialVo)" value="Edit" />
+				<input type="submit" class="btn btn-danger btn-small" ng-click="showdeleteMatView(materialVo)" value="Deleted" /> <input
+				type="submit" class="btn btn-info btn-small" ng-click="showUoms(materialVo)" value="Uom" /></td>
+		</tr>
+	</tbody>
+</table>
+
+<!-- add or edit dlg -->
+<div modal="addOrEditDlg" close="cancelAddview()" options="dlgOpts">
+	<div class="modal-header">
+		<h4>
+			<span ng-show="saveOrEdit">Add Material</span> <span ng-show="!saveOrEdit">Edit Material</span>
+		</h4>
+	</div>
+	<div class="modal-body">
+		<form name="addAndEdit" novalidate class="css-form">
+			<table>
+				<tbody>
+					<tr>
+						<td align="right"><label>Customer Name:</label></td>
+						<td><select name="customId" ng-model="currentMaterial.customId"
+							ng-options="custom.id as custom.desc for custom in customs" required>
+						</select> <span style="color: red;">*</span></td>
+					</tr>
+					<tr>
+						<td align="right"><label>Material Code :</label></td>
+						<td><input type="text" name="matCode" ng-model="currentMaterial.matCode" required /> <span
+							style="color: red;">*</span></td>
+					</tr>
+					<tr>
+						<td align="right"><label>Material Desc:</label></td>
+						<td><input type="text" name="matDesc" ng-model="currentMaterial.matDesc" required> <span
+							style="color: red;">*</span></td>
+					</tr>
+					<tr>
+						<td align="right"><label>UOM:</label></td>
+						<td><input type="text" name='fromuom' ng-model="currentMaterial.fromuom" required><span
+							style="color: red;">*</span></td>
+					</tr>
+					<tr>
+						<td align="right"><label>UOM Capacity Point:</label></td>
+						<td><input type="text" name="uomCap" ng-model="currentMaterial.uomCap" required float><span
+							style="color: red;">*</span></td>
+					</tr>
+				</tbody>
+			</table>
+		</form>
+	</div>
+	<div class="modal-footer">
+		<input class="btn btn-primary btn-small" type="submit" ng-click="saveOrUpdate(currentMaterial)" value="OK" /> <input
+			type="submit" class="btn btn-warning btn-small" ng-click="cancelAddOrEditView()" value="Cancel" />
+	</div>
+</div>
+
+<!-- 杩欎釜寮瑰嚭妗嗘槸瀵箄om鐨勬搷浣�-->
+<div modal="uomTableDlg" close="closeUomTableDlg()" options="dlgOpts">
+	<!-- uom Table -->
+	<div id="uomTable" ng-show="uomTable">
+		<div class="modal-header">
+			<h4>UomTable</h4>
+		</div>
+		<div class="modal-body">
+			<table id="pitable" class="table  table-bordered   table-condensed noNewLine">
+				<thead>
+					<tr>
+						<th>UOM(From)</th>
+						<th>UOM(To)</th>
+						<th>Convert Rate</th>
+						<th>UOM Capacity Point</th>
+						<th>Last Update Date</th>
+						<th>Operation <input type="submit" class="btn btn-primary btn-small"
+							ng-disabled="matForUom.active=='N' || !isUom" ng-click="showAddOrEditUomView(null)" value="Add" />
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr ng-repeat="uom in uoms">
+						<th>{{uom.fromuom}}</th>
+						<th>{{uom.touom}}</th>
+						<th>{{uom.convertRate}}</th>
+						<th>{{uom.uomCap}}</th>
+						<th>{{uom.lastUpdateDate |date:'dd/MM/yyyy HH:mm'}}</th>
+						<th><input type="submit" class="btn btn-primary btn-small" ng-click="showAddOrEditUomView(uom)" value="Edit" />
+							<input type="submit" class="btn btn-danger btn-small" ng-click="showdeleteUomView(uom)" value="Deleted" /></th>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+		<div class="modal-footer">
+			<input type="submit" class="btn btn-warning btn-small" ng-click="closeUomTableDlg()" value="Cancel" />
+		</div>
+	</div>
+
+
+	<!-- add or edit Uom -->
+	<div id="addOrEditUomDlg" ng-show="addOrEditUomDlg">
+		<div class="modal-header">
+			<h4>
+				<span ng-show="saveOrEditUom">Add UOM</span> <span ng-show="!saveOrEditUom">Edit UOM</span>
+			</h4>
+		</div>
+		<div class="modal-body">
+			<form name="addAndEditUom" novalidate class="css-form">
+				<table>
+					<tbody>
+
+						<tr>
+							<td align="right"><label>UOM(From):</label></td>
+							<td><input type="text" name="fromuom" ng-model="currentUom.fromuom" disabled="true" /></td>
+						</tr>
+						<td align="right"><label>UOM(To) :</label></td>
+						<td><input type="text" name="touom" ng-model="currentUom.touom" required /> <span style="color: red;">*</span>
+						</td>
+						<tr>
+						</tr>
+						<tr>
+							<td align="right"><label>Convert Rate:</label></td>
+							<td><input type="text" name="convertRate" ng-model="currentUom.convertRate" required float> <span
+								style="color: red;">*</span></td>
+						</tr>
+					</tbody>
+				</table>
+			</form>
+		</div>
+		<div class="modal-footer">
+			<input class="btn btn-primary btn-small" type="submit" ng-click="saveOrUpdateUom(currentUom)" value="OK" /> <input
+				type="submit" class="btn btn-warning btn-small" ng-click="cancelAddOrEditUomView()" value="Cancel" />
+		</div>
+	</div>
+
+	<div ng-show="deleteUomDlg" id="deleteUomDlg">
+		<div class="modal-header">
+			<h4>Delete MatUom</h4>
+		</div>
+		<div class="modal-body">
+			<form novalidate class="form-horizontal">
+				<table>
+					<tbody>Are you sure to delete ?
+					</tbody>
+				</table>
+			</form>
+		</div>
+		<div class="modal-footer">
+			<button class="btn btn-primary btn-small ok" ng-click="sureDeleteUom()">YES</button>
+			<button class="btn btn-warning btn-small cancel" ng-click="closeDeleteUomDlg()">NO</button>
+		</div>
+	</div>
+</div>
+
+
+
+
+
+
+<!--  鍒犻櫎鐗╂枡鐨勫璇濇 -->
+<div modal="deleteDlg" close="closeDeleteDlg()" options="dlgOpts">
+	<div class="modal-header">
+		<h4>Delete Material</h4>
+	</div>
+	<div class="modal-body">
+		<form novalidate class="form-horizontal">
+			<table>
+				<tbody>Are you sure to delete ?
+				</tbody>
+			</table>
+		</form>
+	</div>
+	<div class="modal-footer">
+		<button class="btn btn-primary btn-small ok" ng-click="sureDelete()">YES</button>
+		<button class="btn btn-warning btn-small cancel" ng-click="closeDeleteDlg()">NO</button>
+	</div>
+</div>
+
+<!-- 涓婁紶 -->
+<div modal="uploadDlg" close="closeUploadeDlg()" options="dlgOpts">
+	<div class="modal-header">
+		<h4>Uploat Materia</h4>
+	</div>
+	<form class="form-horizontal" enctype="multipart/form-data" method="post" action="/setup/materialMaster/upload">
+		<div class="modal-body">
+			<input type='file' name='file' />
+		</div>
+		<div class="modal-footer">
+			<button class="btn btn-primary btn-small ok" type="submit">YES</button>
+			<button class="btn btn-warning btn-small cancel" ng-click="closeUploadeDlg()">NO</button>
+		</div>
+	</form>
+</div>
+
+</div>
+}{
+<script src="@routes.Assets.at("/public", "javascripts/loading.js")" type="text/javascript"></script>
+<script type="text/javascript" charset="utf-8">
+	//var CloudWMS = angular.module('CloudWMS', [ 'ui', 'ui.bootstrap' ]);
+	var FLOAT_REGEXP = /^([0-9]{1,14}|[0-9]{1,14}\.[0-9]{0,2})$/;//鏁存暟浣�4浣嶏紝灏忔暟浣嶄袱浣�
+	var INT_REGEXP = /^[1-9]{1}[0-9]{0,13}$/;//灏忎簬绛変簬14浣嶇殑姝ｆ暣鏁�
+	var ISNULL_REGEXP = /^$/;
+	var NULL_REGEXP = /^\.+$/;
+
+	CloudWMS.directive('float', function() {
+		return {
+			require : 'ngModel',
+			link : function(scope, elm, attrs, ctrl) {
+				ctrl.$parsers.unshift(function(viewValue) {
+					if (FLOAT_REGEXP.test(viewValue) || viewValue == '') {
+						ctrl.$setValidity('f', true);
+						return viewValue;
+					} else {
+						ctrl.$setValidity('f', false);
+						return viewValue;
+					}
+				});
+			}
+		};
+	});
+	CloudWMS.controller('MasterialMasterSetUp', function($scope, $http,
+			$timeout, $filter, $window) {
+		$scope.alerts = [];
+		$scope.saveOrEdit = true;
+		$scope.addOrEditDlg = false;
+		$scope.deleteDlg = false;
+		$scope.deleteUomDlg = false;
+		$scope.uploadDlg = false;
+		//====================uom鍙橀噺==============================
+		$scope.saveOrEditUom = true;
+		$scope.addOrEditUomDlg = false;
+		$scope.uomTableDlg = false;
+		$scope.uomTable = false;
+		//鍒ゆ柇鏄惁杩涜杩噑howUoms 鏂规硶
+		$scope.isUom = false;
+		$scope.uoms = [];
+		$scope.matForUom = {};
+		//鏍规嵁鏉′欢瀵规暟鎹簱杩涜涓�鏌ヨ	        
+$scope.searchVoList = function(materialSearchVo, init) {
+	if (init) {
+		startLoading();
+		$scope.tempSearchVo=materialSearchVo 
+	}
+	$http.post('/setup/materialMaster/list', JSON.stringify(materialSearchVo)).success(function(data, status, headers, config) {
+		$scope.materialVoList = alertMessage(data);
+		endLoading();
+	}).error(function(data, status, headers, config) {
+		endLoading();
+	});
+};
+// 寰楀埌杩欎釜浠撳簱涓嬬殑owner
+$scope.getCustoms = function() {
+	$http.get('/setup/materialMaster/getcuteoms/warehouseid').success(function(data, status, headers, config) {
+		$scope.customs = data;
+	}).error(function(data, status, headers, config) {
+	});
+}
+// 鍒濆鍖栭〉闈㈢殑鏃跺�鑾峰彇owner
+$scope.getCustoms();
+// 寮瑰嚭娣诲姞鐗╂枡鐨勯〉闈�
+$scope.showAddView = function() {
+	$scope.currentMaterial = {};
+	$scope.saveOrEdit = true;
+	$scope.addOrEditDlg = true;
+}
+// 鍙栨秷娣诲姞鐗╂枡鐨勫脊鍑烘
+$scope.cancelAddOrEditView = function() {
+	$scope.addOrEditDlg = false;
+};
+// 寮瑰嚭缂栬緫鐗╂枡鐨勯〉闈�
+$scope.showEditView = function(material) {
+	$scope.currentMaterial = angular.copy(material);
+	$scope.saveOrEdit = false;
+	$scope.addOrEditDlg = true;
+}
+//============================function mehtod======================================
+//鏂板鎴栬�绶ㄨ集鐗╂枡鐨勬檪鍊欒鐢�
+$scope.saveOrUpdate = function(currentMaterial) {
+	if (($scope.addAndEdit.customId.$error.required) || ($scope.addAndEdit.matCode.$error.required) || ($scope.addAndEdit.matDesc.$error.required)
+			|| ($scope.addAndEdit.fromuom.$error.required) || ($scope.addAndEdit.uomCap.$error.required)) {
+		alert("you must input when '*'");
+		return;
+	}
+	if ($scope.addAndEdit.uomCap.$error.f) {
+		alert('Data is not a valiad number ')
+		return;
+	}
+
+	$http.post('/setup/materialMaster/saveorupdate', JSON.stringify(currentMaterial)).success(function(data, status, headers, config) {
+		if (isOk(data)) {
+			if(currentMaterial.id!=null){
+			$scope.searchVoList($scope.tempSearchVo, false);	
+			}
+			$scope.addOrEditDlg = false;
+		}
+	}).error(function(data, status, headers, config) {
+		$scope.status = status;
+
+	});
+}
+
+//==================================鐗╂枡鍗曚綅鐨勬搷浣滄柟娉�=========================
+//寮瑰嚭uom瀵硅瘽妗�
+$scope.showUoms = function(materialVo,flag) {
+	$http.get('/setup/materialMaster/uom/list/' + materialVo.id)
+			.success(function(data, status, headers, config) {
+				$scope.status = status;
+				$scope.uoms = alertMessage(data);
+				if($scope.uoms!=null){
+					$scope.matForUom = angular.copy(materialVo);
+					$scope.isUom = true;
+					$scope.uomTableDlg = true;
+					$scope.uomTable = true;
+				 if(flag='add'){//涓烘坊鍔犲拰缂栬緫鐨勫洖璋�
+					$scope.addOrEditUomDlg = false;
+					$scope.uomTable = true;	
+				 }
+				 if(flag='deleted'){//鍒犻櫎鍥炶皟
+				$scope.deleteUomDlg = false;
+				$scope.uomTable = true;
+				 }	
+				}
+			
+			}).error(function(data, status, headers, config) {
+				$scope.status = status
+			});
+	//鍏抽棴uom瀵硅瘽妗�
+	$scope.closeUomTableDlg = function() {
+		$scope.uomTableDlg = false;
+	}
+	//寮瑰嚭娣诲姞鐗╂枡鍗曚綅鐨勯〉闈�
+$scope.showAddOrEditUomView = function(uom) {
+		//鏂板
+		if (uom == null) {
+			if (!$scope.isUom) {
+				alert("please first show one material");
+				return;
+			}
+			$scope.currentUom = {};
+			$scope.currentUom.fromuom = $scope.matForUom.fromuom;
+			$scope.saveOrEditUom = true;
+		} else {//缂栬緫
+			$scope.saveOrEditUom = false;
+			$scope.currentUom = angular.copy(uom);
+		}
+		$scope.currentUom.id = $scope.matForUom.id;
+		$scope.uomTable = false;
+		$scope.addOrEditUomDlg = true;
+	}
+	//鍙栨秷娣诲姞鐗╂枡鍗曚綅鐨勫脊鍑烘   
+	$scope.cancelAddOrEditUomView = function() {
+		$scope.addOrEditUomDlg = false;
+		$scope.uomTable = true;
+	};
+//鏂板鎴栬�绶ㄨ集鐗╂枡鐨勬檪鍊欒鐢�   
+$scope.saveOrUpdateUom = function(currentUom) {
+	var flag = false;
+	var message = 'The ';
+	if ($scope.addAndEditUom.touom.$error.required) {
+		message = message + ' UOM(To)'
+		flag = true;
+	}
+	if ($scope.addAndEditUom.$error.required) {
+		message = message + ' Convert Rate'
+		flag = true;
+	}
+	if (flag) {
+		alert(message + ' null')
+		return;
+	}
+	if ($scope.addAndEditUom.convertRate.$error.f) {
+		alert('Data is  beyond the scope ')
+		return;
+	}
+	$http.post('/setup/materialMaster/uom/saveorupdate', angular.toJson(currentUom)).success(function(data, status, headers, config) {
+		if (isOk(data)) {
+			$scope.showUoms($scope.matForUom, 'add')
+
+		}
+	}).error(function(data, status, headers, config) {
+		$scope.status = status
+	});
+};}
+	//====================涓婁紶=====================================
+	//寮瑰嚭涓婁紶鐨勫璇濇	
+	$scope.showUploadView = function() {
+		$scope.uploadDlg = true;
+	}
+	//鍙栨秷涓婁紶鐨勫璇濇
+	$scope.closeUploadeDlg = function() {
+		$scope.uploadDlg = false;
+	}
+
+	$scope.upload = function() {
+		try {
+			// $httpProvider.defaults.headers.post['Content-Type']='multipart/form-data';
+			$http.post('/setup/materialMaster/upload').success(
+					function(data, status, headers, config) {
+						alert(data);
+						$scope.uploadDlg = false;
+					}).error(function(data, status, headers, config) {
+				alert(data);
+				$scope.status = status
+			});
+
+		} catch (err) {
+			alert(err);
+		}
+	}
+	$scope.updateAll = function() {
+		$window.location.href = '/files/MaterialMasterSetup_FInal.xlsx';
+		$http.post('/setup/materialMaster/updateall').success(
+				function(data, status, headers, config) {
+					alert(data);
+				}).error(function(data, status, headers, config) {
+			alert(data);
+			$scope.status = status
+		});
+	}
+
+	//==================================宸ュ叿鏂规硶==========================
+
+	//popup a confirm dialog 
+	//鏄剧ず鍒犻櫎Material瀵硅瘽妗�
+	$scope.showdeleteMatView = function(deleteEntity) {
+		$scope.deletedUrl = '/setup/materialMaster/delete/'
+				+ deleteEntity.id;
+		$scope.deleteDlg = true;
+	};
+	//鏄剧ず鍒犻櫎Uom瀵硅瘽妗�
+	$scope.showdeleteUomView = function(deleteEntity) {
+		$scope.deletedUrl = '/setup/materialMaster/uom/delete/'
+				+ deleteEntity.uomId;
+		$scope.uomTable = false;
+		$scope.deleteUomDlg = true;
+	};
+
+	//纭鍒犻櫎
+	$scope.sureDelete = function() {
+		$http.get($scope.deletedUrl).success(
+				function(data, status, headers, config) {
+					$scope.status = status;
+					//浣滀负鍥炶皟鍑芥暟
+					if(isOk(data)){
+					$scope.deleteDlg = false;
+					$scope.searchVoList($scope.tempSearchVo,false);
+					}
+				}).error(function(data, status, headers, config) {
+			alert(data);
+			$scope.status = status;
+		});
+	}
+	$scope.sureDeleteUom = function() {
+		
+		$http.get($scope.deletedUrl).success(
+				function(data, status, headers, config) {
+					$scope.status = status;
+					alert(data);
+					
+					$scope.showUoms($scope.matForUom,'deleted');
+					
+				}).error(function(data, status, headers, config) {
+			alert(data);
+			$scope.status = status;
+		});
+	}
+	//鍙栨秷鍒犻櫎瀵硅瘽妗�			    
+	$scope.closeDeleteDlg = function() {
+		$scope.deleteDlg = false;
+	}
+	$scope.closeDeleteUomDlg = function() {
+		$scope.deleteUomDlg = false;
+		$scope.uomTable = true;
+	}
+	var addAlert = function(types, msgs) {
+		$scope.alerts.push({
+			type : types,
+			msg : msgs
+		});
+		$timeout($scope.clearAlerts, 5000);
+	};
+	$scope.closeAlert = function(index) {
+		$scope.alerts.splice(index, 1);
+	};
+	$scope.clearAlerts = function() {
+		$scope.alerts = [];
+	};
+	$timeout($scope.clearAlerts, 5000);
+	//鍒濆鍖栭〉闈㈡煡璇㈡潯浠�
+	$scope.materialSearchVo = {
+		active : "Y"
+	};
+	$scope.dlgOpts = {
+		backdropFade : true,
+		dialogFade : false,
+		backdropClick : false
+	};
+
+ 
+
+});
+</script>
+<style type="text/css">
+</style>
+}

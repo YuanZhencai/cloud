@@ -1,0 +1,151 @@
+@(name:String) @main("Goods Transfer"){
+<div ng-controller="GoodsTransferCtrl">
+	<div class="breadcrumb">
+		<li>Current Location:</li>
+		<li>Transfer Execution</li>
+		<li><div class="span2 offset1"></div></li>
+	</div>
+	<!-- search -->
+	<form novalidate class="form-horizontal" ng-submit="searchList(searchVo,true)">
+		<table>
+			<tr>
+				<td>
+					<div class="control-group">
+						<label class="control-label">PI NO.</label>
+						<div class="controls">
+							<input type="text" class="input-small" name="piNO" ng-model="searchVo.piNO">
+						</div>
+					</div>
+				</td>
+				<td>
+					<div class="control-group">
+						<label class="control-label">Sales Contract No</label>
+						<div class="controls">
+							<input type="text" ng-model="searchVo.sgPiNO" class="input-small">
+						</div>
+					</div>
+				</td>
+				<td>
+					<div class="control-group">
+						<label id="piStatus" class="control-label">PI Status</label>
+						<div class="controls">
+							<select ng-model="searchVo.piStatus" class="input-small" ng-options="os.code_key as os.code_name for os in piStatuss|orderBy:'code_key'">
+								<option value="">ALL</option>
+							</select>
+						</div>
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<div class="control-group">
+						<label class="control-label" for="date01">Transfer Date(From)</label>
+						<div class="controls">
+							<input type="date" ng-model="searchVo.transferFromDate" style="width: 130px">
+						</div>
+					</div>
+				</td>
+				<td>
+					<div class="control-group">
+						<label class="control-label" for="date01">Transfer Date(To)</label>
+						<div class="controls">
+							<input type="date" ng-model="searchVo.transferToDate" style="width: 130px">
+						</div>
+					</div>
+				</td>
+				<td>
+					<div class="control-group">
+						<label class="control-label" for="date01">Transfer Status</label>
+						<div class="controls">
+							<select ng-model="searchVo.planStatus" class="input-small" ng-options="os.code_key as os.code_name for os in planStatuss|orderBy:'code_key'">
+								<option value="">ALL</option>
+							</select>
+						</div>
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<div class="control-group">
+						<label class="control-label" for="date01">Transfer Type</label>
+						<div class="controls">
+							<select ng-model="searchVo.transferType" class="input-small">
+								<option value="">ALL</option>
+								<option value="Stuffing">Stuffing</option>
+								<option value="Tempering">Tempering</option>
+								<option value="Manual">Manual</option>
+							</select>
+						</div>
+					</div>
+				</td>
+				<td></td>
+				<td style="text-align: right;">
+					<div class="control-group">
+						<label class="control-label"></label>
+						<div class="controls">
+							<input type="submit" id="submit" value="Search" class="btn btn-primary btn-small" ng-click="searchList(searchVo,true)">
+						</div>
+					</div>
+				</td>
+			</tr>
+		</table>
+	</form>
+	<!--     planItem table-->
+	<table class="table  table-bordered   table-condensed">
+		<thead>
+			<th>#</th>
+			<th style="display: none;">id</th>
+			<th>Transfer Type</th>
+			<th>Transfer Status</th>
+			<th>PI No</th>
+			<th>Batch No</th>
+			<th>Prod Qty</th>
+			<th>UOM</th>
+			<th>Transfer Qty</th>
+			<th>UOM</th>
+			<th>Transfer Date/Time</th>
+			<th>Container No</th>
+			<th>Palletized</th>
+			<th>Close Date/Time</th>
+			<th>Remaks</th>
+		</thead>
+		<tbody>
+			<tr ng-repeat="transferPlan in transferPlans" ng-class="getClass($index)">
+				<td><input type="radio" name="radiao" ng-click="showPalletsView(transferPlan,$index)"></td>
+				<td style="display: none;">{{transferPlan.id}}</td>
+				<td>{{transferPlan.transferType}}</td>
+				<td>{{transferPlan.statusName}}</td>
+				<td>{{transferPlan.pino}}</td>
+				<td>{{transferPlan.batchNo}}</td>
+				<td>{{transferPlan.proQty}}</td>
+				<td>{{transferPlan.proUom}}</td>
+				<td>{{transferPlan.transferQty}}</td>
+				<td>{{transferPlan.matUom}}</td>
+				<td>{{transferPlan.transferDate|date:'dd/MM/yyyy'}}</td>
+				<td>{{transferPlan.containerNo}}</td>
+				<td>{{transferPlan.palletized}}</td>
+				<td>{{transferPlan.closeDateTime}}</td>
+				<td>{{transferPlan.remaks}}</td>
+			</tr>
+		</tbody>
+	</table>
+	<div modal="deleteTransferPlantDlg" close="closeDeleteTransferPlanDlg()" options="dlgOpts">
+		<div class="modal-header">
+			<h4>Delete TransferPlan</h4>
+		</div>
+		<div class="modal-body">
+			<form novalidate class="form-horizontal">
+				<table>
+					<tbody>Are you sure to delete ?
+					</tbody>
+				</table>
+				<div class="modal-footer">
+					<button class="btn btn-primary btn-small ok" ng-click="deleteTransferPlan()">YES</button>
+					<button class="btn btn-warning btn-small cancel" ng-click="closeDeleteTransferPlanDlg()">NO</button>
+				</div>
+			</form>
+		</div>
+	</div>
+	<span>@goodsTransferPallert("")</span>
+</div>
+}{ @goodsTransferScript("") }

@@ -1,0 +1,209 @@
+@(name:String)
+<div ng-show="productionshow">
+<div class="modal-header">
+      <h4>Production Details(Total Received Quantity:{{totalReceivedQty}})</h4>
+</div>
+<div class="modal-body">
+
+  <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered table-hover table-condensed" id="example" width="100%">
+   <thead>
+			<tr>
+			<th class="noNewLine">Prod Date</th>
+			<th class="noNewLine">Split Prod</th>
+			<th class="noNewLine">Prod Line</th>
+			<!-- <th class="noNewLine">Batch No</th> -->
+			<th>Plan Prod Qty(<span class="{{classType}}">{{currentUsedQty|number:2}}</span>/{{currentAllQty|number:2}})</th>
+			<th>UOM</th>
+			<th class="noNewLine">PI SKU</th>
+			<th class="noNewLine">SKU UOM</th>
+			<th class="noNewLine">PI Status</th>
+			<th class="noNewLine">Operation <a href="" role="button" id="new"  class="btn btn-primary btn-small" ng-click="showProductionDlg()" >Add</a></th> 
+		</tr>
+			</thead>
+			<tbody>
+		    <tr ng-repeat="prod in prods">
+			<td class="noNewLine">{{prod.prodDate|date:'dd/MM/yyyy'}}</td>
+			<td class="noNewLine">{{prod.splitProduction}}</td>
+			<td class="noNewLine">{{prod.binVo.nameKey}}</td>
+			<!-- <td class="noNewLine">{{prod.batchNo}}</td> -->
+			<td>{{prod.prodQty|number:2}}</td>
+			<td>{{prod.uom}}</td>
+			<td>{{prod.piSku|number:2}}</td>
+			<td>{{prod.skuUom}}</td>
+			<td>{{prod.piStatus}}</td>
+			<td class="center">
+					<a class="btn btn-primary btn-small" class="edit" href=""  ng-click="editProduction(prod,$index)">Edit</a>
+					<a class="btn btn-danger btn-small" class="delete" href=""  ng-click="openDeletePlanDlg(prod,$index)">Delete</a>
+			</td>
+		  </tr>
+			</tbody>
+  </table>
+  </div>
+  <div class="modal-footer">
+  		<a href=""  class="btn btn-primary btn-small" data-toggle="modal" ng-click="savePlan(prods)">Save</a>
+		<a href=""  class="btn btn-warning btn-small" data-toggle="modal" ng-click="closeSplitDlg()">Cancel</a>
+ </div>
+ </div>
+ <div modal="saveProductionDlg" close="closeProductionDlg()">
+ <div class="modal-header">
+      <h4>Add Production Details(Total Received Quantity:{{totalReceivedQty}})</h4>
+      <h7>(<span class="{{classType}}" ng-bind="sumQty()|number:2"></span>/<span>{{currentAllQty|number:2}}</span>)</h7>
+</div>
+<div class="modal-body">
+ <form name="addproduction">
+  <table>
+		<tr>
+			<td align="right">Prod Date</td>
+			<td><input type="date" name="prodDate" ng-model="prod.prodDate" class="input-medium" dateornull><span style="color: red;">*</span>
+		    </td>
+			<td align="right">Prod Line</td>
+			<td><select type="text" name="prodLine" ng-model="prod.binVo.id" class="input-medium" ng-options="b.id as b.nameKey for b in lines | orderBy:'nameKey':false" ng-change="setProdLine(prod.binVo)" null>
+			</select><span style="color: red;">*</span></td>
+		</tr>
+		<tr>
+			<td></td><td>
+			<span ng-show="addproduction.prodDate.$error.date1" style="color: red">can't be null !</span></td><td></td>
+			<td><span ng-show="addproduction.prodLine.$error.date" style="color: red">can't be null !</span>
+			</td>
+		</tr>
+		<input type="hidden" name="batchNo" ng-model="prod.batchNo" class="input-medium" />
+		 <tr>
+			<td align="right">Split Production</td>
+			<td><input type="text" name="splitProduction" ng-model="prod.splitProduction" class="input-medium">
+			</td>
+			<td align="right"></td>
+			<td></td>
+		</tr>
+		<!-- <tr><td></td>
+			<td>
+			 <span ng-show="addproduction.batchNo.$error.date" style="color: red">can't be null !</span> 
+		<span ng-show="batchNolength" style="color: red">length can't be more than 40 !</span></td></tr>
+ -->	<tr>
+			<td align="right">Plan Prod Qty</td>
+			<td><input type="text" name="prodQty" ng-model="prod.prodQty" class="input-medium" ng-change="addproduction.piSku.$error.datef=getPiSku(prod,false)" placeholder="Must be a number!" float  floatnull>
+			<span style="color: red;">*</span></td>
+			<td align="right">UOM</td>
+			<td><input type="text" name="uom" ng-model="prod.uom" class="input-medium"   ng-change="addproduction.prodQty.$error.datef=getPiSku(prod,false)" ng-disabled="true">
+			<span style="color: red;">*</span></td>
+		</tr>
+		<tr>
+		<td></td><td>
+		<span ng-show="addproduction.prodQty.$error.date" style="color: red">not a valid number!</span>
+		<span ng-show="addproduction.prodQty.$error.datef" style="color: red">can't be null !</span>
+		</td>
+		<td></td>
+		<td></td>
+		</tr>
+		<tr>
+			<td align="right">PI SKU</td>
+			<td><input type="text" name="piSku" ng-model="prod.piSku" class="input-medium"  ng-change="addproduction.prodQty.$error.datef=getPiSku(prod,true)" placeholder="Must be a number!" float floatnull>
+			<span style="color: red;">*</span>
+			</td>
+			<td align="right">SKU UOM</td>
+			<td><input type="text" id="e1" name="skuUom" ng-model="prod.skuUom" class="input-medium" ng-change="addproduction.piSku.$error.datef=getPiSku(prod,false)" ng-disabled="true">
+			<span style="color: red;">*</span></td>
+		</tr>
+		<tr>
+		<td></td><td>
+		<span ng-show="addproduction.piSku.$error.date" style="color: red">not a valid number!</span>
+		<span ng-show="addproduction.piSku.$error.datef" style="color: red">can't be null !</span>
+		</td><td></td>
+		<td></td>
+		</tr>
+  </table>
+   </form>
+  </div>
+  <div class="modal-footer">
+  		<a href=""  class="btn btn-primary btn-small" data-toggle="modal" ng-click="saveProduction(prod)">OK</a>
+		<a href=""  class="btn btn-warning btn-small" data-toggle="modal" ng-click="closeProductionDlg()">Cancel</a>
+ </div>
+ </div>
+
+
+ <div modal="editProductionDlg" close="closeEditProductionDlg()">
+ <div class="modal-header">
+      <h4>Edit Production Details</h4>
+      <h7>(<span class="{{classType}}" ng-bind="sumQty()|number:2"></span>/<span>{{currentAllQty|number:2}}</span>)</h7>
+</div>
+<div class="modal-body">
+ <form name="productionedit">
+  <table>
+		<tr>
+			<td align="right">Prod Date</td>
+			<td><input type="date" name="prodDate" ng-model="prod.prodDate" class="input-medium" dateornull><span style="color: red;">*</span></td>
+			<td align="right">Prod Line</td>
+			<td><select type="text" name="prodLine" ng-model="prod.binVo.id" class="input-medium" ng-options="b.id as b.nameKey for b in lines | orderBy:'nameKey':false" ng-change="setProdLine(prod.binVo)">
+			</select><span style="color: red;">*</span>
+			</td>
+		</tr>
+		<tr><td></td><td>
+		<span ng-show="productionedit.prodDate.$error.date1" style="color: red">can't be null !</span></td><td></td>
+		<td><span ng-show="productionedit.prodLine.$error.date" style="color: red">can't be null !</span>
+		</td></tr>
+		<input type="hidden" name="batchNo" ng-model="prod.batchNo" class="input-medium" />
+ 	 <tr>
+			<td align="right">Split Production</td>
+			<td><input type="text" name="splitProduction" ng-model="prod.splitProduction" class="input-medium">
+			</td>
+			<td align="right"></td>
+			<td></td>
+		</tr>
+<!--		<tr><td></td><td><span ng-show="productionedit.batchNo.$error.date" style="color: red">can't be null !</span>
+		<span ng-show="batchNolengthUp" style="color: red">length can't be more than 40 !</span></td></tr> -->
+		<tr>
+			<td align="right">Plan Prod Qty</td>
+			<td><input type="text" name="prodQty" ng-model="prod.prodQty" class="input-medium" ng-change="productionedit.piSku.$error.datef=getPiSku(prod,false)" placeholder="Must be a number!" float floatnull><span style="color: red;">*</span></td>
+		    <td align="right">UOM</td>
+			<td><input type="text" name="uom" ng-model="prod.uom" class="input-medium" ng-change="productionedit.prodQty.$error.datef=getPiSku(prod,false)" ng-disabled="true">
+			<span style="color: red;">*</span></td>
+		</tr>
+		<tr>
+		<td></td><td>
+		<span ng-show="productionedit.prodQty.$error.date" style="color: red">not a valid number!</span>
+		<span ng-show="productionedit.prodQty.$error.datef" style="color: red">can't be null !</span>
+		</td>
+		<td></td>
+		<td></td>
+		</tr>
+		<tr>
+			<td align="right">PI SKU</td>
+			<td><input type="text" name="piSku" ng-model="prod.piSku" class="input-medium" ng-change="productionedit.prodQty.$error.datef=getPiSku(prod,true)" float floatnull><span style="color: red;">*</span></td>
+			<td align="right">SKU UOM</td>
+			<td><input type="text" name="skuUom" ng-model="prod.skuUom" class="input-medium" ng-change="productionedit.piSku.$error.datef=getPiSku(prod,false)" ng-disabled="true">
+			<span style="color: red;">*</span></td>
+		</tr>
+		<tr>
+		<td></td><td>
+		<span ng-show="productionedit.piSku.$error.date" style="color: red">not a valid number!</span>
+		<span ng-show="productionedit.piSku.$error.datef" style="color: red">can't be null !</span>
+		</td><td></td>
+		<td></td>
+		</tr>
+  </table>
+  </form>
+  </div>
+  <div class="modal-footer">
+  		<a href=""  class="btn btn-primary btn-small" data-toggle="modal" ng-click="confirmEdit(prod)">OK</a>
+		<a href=""  class="btn btn-warning btn-small" data-toggle="modal" ng-click="closeEditProductionDlg()">Cancel</a>
+ </div>
+ </div>
+  <!-- 删除对话框detail Dialog -->
+<div modal="deletePlanDlg" close="closeDeletePlanDlg()">
+	<div class="modal-header">
+		<h4>Delete Plan</h4>
+	</div>
+	<div class="modal-body">
+		<form novalidate class="form-horizontal">
+			<table>
+				<tbody>
+					Are you sure to delete ?
+				</tbody>
+			</table>
+		</form>
+	</div>
+	<div class="modal-footer">
+		<button class="btn btn-primary btn-small ok" ng-click="deleteProd(deletePlanVo,planIndex)">YES</button>
+		<button class="btn btn-warning btn-small cancel" ng-click="closeDeletePlanDlg()">NO</button>
+	</div>
+</div>
+

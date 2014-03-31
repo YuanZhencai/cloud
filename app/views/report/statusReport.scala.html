@@ -1,0 +1,98 @@
+@(name:String) 
+@main("PI Status Report"){
+<div ng-controller="PiStatusCtrl">
+	<div class="breadcrumb">
+		<li style="">Current Location: PI Status Report</li>
+	</div>
+	<form  class="form-horizontal" id="myfrom" name="myfrom" novalidate="true">
+		<table>
+			<tr>
+				<td>
+					<div class="control-group">
+						<label id="piStatus" class="control-label">Date Time From:</label>
+						<div class="controls">
+							<input type="datetime-local" name="dateTimeFrom" ng-model="serchVo.dateTimeFrom" class="input-medium">
+						</div>
+					</div>
+				</td>
+				<td>
+					<div class="control-group">
+						<label class="control-label">Date Time To:</label>
+						<div class="controls">
+							<input type="datetime-local" name="dateTimeTo" ng-model="serchVo.dateTimeTo" class="input-medium">
+						</div>
+					</div>
+				</td>
+				<td>
+					<div class="control-group">
+						<label class="control-label"></label>
+						<div class="controls">
+							<input class="btn btn-primary btn-small" type="submit" value="Search" ng-click="searchVoList(serchVo)"> 
+							<input class="btn btn-primary btn-small" type="submit" value="Report"  onclick="submitForm()">
+						</div>
+					</div>
+				</td>
+			</tr>
+		</table>
+	</form>
+	<!-- PItable -->
+	<table class="table   table-bordered   table-condensed">
+		<thead>
+			<tr>
+				<th></th>
+				<th>PI No.</th>
+				<th>Material Desc</th>
+				<th>Receive</th>
+				<th>Issue</th>
+				<th>Remaining</th>
+				<th>PI Qty</th>
+				<th>Closing Date/Time</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr ng-repeat="pack in packs">
+				<td>{{pack.statustype}}</td>
+				<td>{{pack.pino}}</td>
+				<td>{{pack.materialdesc}}</td>
+				<td>{{pack.receiveqty|number:2}}</td>
+				<td>{{pack.issueqty|number:2}}</td>
+				<td>{{pack.remainingqty|number:2}}</td>
+				<td>{{pack.piqty|number:2}}</td>
+				<td>{{pack.closeddatetime}}</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
+
+}{
+<script type="text/javascript" charset="utf-8">
+	function submitForm() {  
+   	 with (document.getElementById("myfrom")) {  
+       	 method = "post";  
+	        action = "/respot/statusReport/download";  
+	        submit();  
+   	 	}  
+	}  
+	//var CloudWMS = angular.module('CloudWMS', [ 'ui', 'ui.bootstrap' ]);
+	CloudWMS.controller('PiStatusCtrl', function($scope, $http,
+			$timeout, $filter, $window) {
+		$scope.serchVo = {};
+		//鎶ヨ〃妫�储      
+		$scope.searchVoList = function(serchVo) {
+			try {
+				$http.post('/report/statusReport/search',
+						JSON.stringify(serchVo)).success(function(data, status, headers, config) {
+							$scope.packs = data;
+						}).error(function(data, status, headers, config) {
+				});
+			} catch (err) {
+				alert(err);
+			}
+		};
+		//鎶ヨ〃涓嬭浇
+		$scope.download = function() {
+			$window.location.href = "/respot/statusReport/download";
+		}
+	});
+</script>
+}

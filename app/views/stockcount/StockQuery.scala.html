@@ -1,0 +1,241 @@
+@(name: String)
+@main("Stock Query"){
+<div ng-controller="stockCountCtrl">
+	<!--head-->
+	<div class="breadcrumb">
+		<li style="">Current Location: Stock Query</li>
+<!-- 		<li style="margin-right: 0px"><div class="span2 offset3">Plant:XXXXXXX</div> </li> -->
+		<li ><div class="span2 offset1"><div id="time" align="right"></div></div></li>
+	</div>
+	<!--search -->
+	<form id="myfrom" name="myfrom" class="form-horizontal">
+		<table >
+                <tr >
+                    <td>
+                        <div class="control-group">
+                             <label class="control-label">PI No</label>
+                             <div class="controls">
+                                <input type="text" name="piNo" class="span2" ng-model="batch.piNo" />
+                            </div>
+                        </div>
+                    </td>
+                    <!--   
+                    <td>
+                        <div class="control-group">
+                             <label class="control-label">Product Line</label>
+                          <div class="controls">
+                           <input type="hidden" name="prodLine" value="{{batch.prodLine}}">
+							<select ng-model="batch.prodLine" class="span2"  ng-options="prodLine.id as prodLine.nameKey for prodLine in prodLines|orderBy:'nameKey'">
+								<option value="">ALL</option>
+							</select>
+						</div>
+                        </div>
+                    </td> 
+                    <td>
+                       <div class="control-group">
+                             <label class="control-label">SG Contract No.</label>
+                             <div class="controls">
+                                <input type="text" class="span2" ng-model="batch.lotNo" />
+                            </div>
+                        </div> 
+                    </td>-->
+                     <td>
+                        <div class="control-group">
+                             <label class="control-label">Prod Date From</label>
+                             <div class="controls">
+                                <input type="date" class="span2" name="prodDateFrom" ng-model="batch.prodDateFrom" />
+                            </div>
+                        </div>
+                    </td>
+                      <td>
+                        <div class="control-group">
+                             <label class="control-label">Prod Date To</label>
+                             <div class="controls">
+                                <input type="date" class="span2" name="prodDateTo" ng-model="batch.prodDateTo" />
+                            </div>
+                        </div>
+                    </td>
+				<td>
+                </tr>
+				<tr>
+				  <td></td>
+				   <td></td>
+				<td>
+					<div class="control-group">
+						<label class="control-label"></label>
+						<div class="controls" align="right">
+                            <input  type="submit" value="Search" class="btn btn-primary btn-small" ng-click="searchList( batch,type)"/>
+       						<input  type="button"  value="Report"  onclick="submitForm()"  class="btn btn-primary btn-small"/>
+						</div>
+					</div>
+				</td>
+			</tr>
+		</table>
+	</form>	
+	<!-- table -->
+	<table cellpadding="0" cellspacing="0" border="0" class="table  table-bordered "
+			id="example" width="100%">
+			<thead>
+				<tr>
+					<th></th>
+					<th>PI No</th>
+					<th>Batch No.</th>
+					<th>Prod Date</th>
+					<th>Material Code</th>
+					<th>Material Description</th>
+					<th>Pallet Count</th>
+					<th>Total Qty</th>
+					<th>UOM</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="stockCountVo in stockCountVos|orderBy:['piNo','batchNo','prodDate']" ng-class="getClass($index)">
+					<td> <input type="radio" name="select" ng-click="getstuffingList(stockCountVo,$index)" ><br/> {{getClass(stockCountVo)}}</td>
+					<td>{{stockCountVo.piNo}}</td>
+					<td>{{stockCountVo.batchNo}}</td>
+					<td>{{stockCountVo.prodDate}}</td>
+					<td>{{stockCountVo.materialCode}}</td>
+					<td>{{stockCountVo.materialDescription}}</td>
+					<td>{{stockCountVo.stockCount}}</td>
+					<td>{{stockCountVo.systemQty}}</td>
+					<td>{{stockCountVo.QtyUom}}</td>
+				</tr>
+			</tbody>
+		</table>
+		
+		<table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered"
+			width="100%">
+	<thead>
+		<tr>
+			<th>#</th>
+			<th>Warehouse</th>
+			<th>Storage Area</th>
+			<th>Storage Bin</th>
+			<th>Qty/ Pallet</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr  ng-repeat="stock in stocks|orderBy:getNumber">
+			<td>{{stock.No}}</td>
+			<td>{{stock.warehouse}}</td>
+			<td>{{stock.storageArea}}</td>
+			<td>{{stock.storageBin}}</td>
+			<td>
+			<span ng-bind="stock.quantityPallet" ></span>
+			</td>
+		</tr>
+	</tbody>
+	</table>
+</div>
+<style type="text/css">
+.selected{color:red;background:GreenYellow;}
+</style>
+}{
+  <script type="text/javascript" charset="utf-8">
+   function submitForm() {  
+       with (document.getElementById("myfrom")) {  
+           method = "post";  
+           action = "/stockcount/StockCount/report/1";  
+           submit();  
+       }  
+   }  
+  //var CloudWMS = angular.module('CloudWMS', ['ui.bootstrap']);
+  
+  	CloudWMS.controller('stockCountCtrl', function($scope, $http,$window,$filter) {
+    //$scope.stockCountVos=[];
+    $scope.type=1;
+    $scope.index=-1;
+    $scope.show=true;
+    $scope.stockCountVos=[];
+    $scope.stocks=[];
+    $scope.types=[{value:0,name:'Location'},{value:1,name:'Batch'}]
+    $scope.binVo={id:'',nameKey:'',areaVo:{id:'',nameKey:'',storageTypeVo:{id:'',nameKey:'',warehouseVo:{id:'',nameKey:''}}}};
+    $scope.getNumber=function(stock){
+    	return parseInt(stock.No);
+    }
+    
+  	$http.get('/stockcount/StockCount/prodLineList').success(
+  	   		function(data, status, headers, config) {
+  	    	//alert(JSON.stringify(data))
+  	    	  $scope.prodLines = data;
+  	    	  //$filter:orderBy($scope.stockCountVos,'+storageBin');
+  	    	  $scope.status=status
+  	        //$scope.alerts.push({type:'success',msg: "success!"});
+  	    }).error(
+  	    	function(data, status, headers, config) {
+  	    	//alert(data)
+  	        $scope.status = status
+  	    });  
+	
+
+    $scope.setType=function(){
+    	//alert(123)
+    	if($scope.type==0){
+    		$scope.show=true;
+    	}else{
+    		$scope.show=false;
+    	}
+    	$scope.stockCountVos='';
+    }
+   	$scope.getClass=function($index){
+   		if( $scope.index==$index)
+   			return 'selected';
+   		else
+   			return '';
+   	}
+    $scope.print=function(type){
+   	 // alert("/outbound/goodsStuffing/print/"+printDital.intProdNo+"/"+printDital.reportDate+"/"+printDital.style);
+   	  $window.location.href="/stockcount/StockCount/report/"+type;
+     }
+    $scope.searchList=function(binVo,type){
+    	 document.getElementById("submitDiv").style.display = "inline";
+    $http.post('/stockcount/StockCount/list/'+type, JSON.stringify(binVo)).success(
+  	    function(data, status, headers, config) {
+  	    	document.getElementById("submitDiv").style.display = "none";
+  	    	$scope.index=-1;
+  	        $scope.stockCountVos=data;
+  	  	for(var i = 0, len = $scope.stockCountVos.length; i < len; ++i){
+  	  		$scope.stockCountVos[i].No=parseInt($scope.stockCountVos[i].No);
+  	  		}
+  	      $scope.stocks=[];
+  	        $scope.status=status;
+  	    }).error(
+  	    function(data, status, headers, config) {
+  	        $scope.status = status
+  	      document.getElementById("submitDiv").style.display = "none";
+  	    });
+    };
+    $scope.Save=function(binVo,type){
+    	 document.getElementById("submitDiv").style.display = "inline";
+    $http.post('/stockcount/StockCount/SaveStockCount/'+type, JSON.stringify(binVo)).success(
+      	    function(data, status, headers, config) {
+      	        //$scope.stockCountVos=data;
+      	        $scope.status=status;
+      	      document.getElementById("submitDiv").style.display = "none";
+      	    }).error(
+      	    function(data, status, headers, config) {
+      	        $scope.status = status
+      	      document.getElementById("submitDiv").style.display = "none";
+      	    });
+        };
+        $scope.getstuffingList=function(stockCountVo,index){
+      	  //alert(132);
+      	  $scope.index=index;
+      	// document.getElementById("submitDiv").style.display = "inline";
+      	var obj = new Object();
+      	obj.pi = stockCountVo.piNo;
+      	obj.lot = stockCountVo.batchNo;
+           $http.post('/stockcount/StockQuery/getStocks',JSON.stringify(obj)).success(
+          	    function(data, status, headers, config) {
+          	    	 document.getElementById("submitDiv").style.display = "none";
+          	    	$scope.stocks=data;
+          	    }).error(
+          	    function(data, status, headers, config) {
+          	        //$scope.AlertTip(12324145)
+          	         document.getElementById("submitDiv").style.display = "none";
+          	        $scope.status = status
+          	    }); 
+            };
+  });
+   </script>
+}

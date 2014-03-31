@@ -1,0 +1,86 @@
+html,
+body {
+    height: 100%;
+    /* The html and body elements cannot have any padding or margin. */
+}
+
+/* Wrapper for page content to push down footer */
+#wrap {
+    min-height: 100%;
+    height: auto !important;
+    height: 100%;
+    /* Negative indent footer by it's height */
+    margin: 0 auto -40px;
+}
+
+/* Set the fixed height of the footer here */
+#push,
+#footer {
+    height: 40px;
+}
+#footer {
+    background-color: #f5f5f5;
+}
+
+/* Lastly, apply responsive CSS fixes as necessary */
+@media (max-width: 767px) {
+    #footer {
+        margin-left: -20px;
+        margin-right: -20px;
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+}
+
+#navbar-inner {
+    background-color: #5f5f5f;
+}
+/*强制不换行*/
+.noNewLine{
+	white-space:nowrap;
+}
+/*加载图片样式开始*/
+.ajaxStatus{
+    float:left;
+    z-index:99991; 
+    width:100%;
+    height:100%;
+    line-height:100%;
+    vertical-align:middle;
+    /*background-color:Gray;*/
+    position:absolute;
+	text-align:center;
+   	left:0px;
+    top:0px;
+   /* opacity: 0.2; */               /* Firefox, Safari(WebKit), Opera)*/
+    /* filter: "alpha(opacity=20)";*/ /* IE 8 */
+    /* filter: alpha(opacity=20);*/   /* IE 4-7 */
+    display:table;
+}
+.ajaxStatus span{
+	z-index:99992; 
+	position:absolute;
+	left:48%;
+	top:48%;
+	display:table-cell;
+	vertical-align:middle;
+	width:180px;
+	height:40px;
+	border:2px solid #74b2e2;
+	background-color:#FFFFFF;
+}
+.ajaxStatus span img{
+	top:7px;
+	z-index:99994; 
+	position:relative;
+}
+.ajaxStatus span label{
+	top:10px;
+	z-index:99993; 
+	position:relative;
+	color:black;
+	font-weight:bold;
+}
+/*加载图片样式结束*/
+/*字体大小*/
+.fontSize_1 {font-size:0.5em;}

@@ -1,0 +1,50 @@
+<configuration>
+    
+  <conversionRule conversionWord="coloredLevel" converterClass="play.api.Logger$ColoredLevel" />
+	
+	<appender name="DAILYFILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<Prudent>true</Prudent> 
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<FileNamePattern>${application.home}/logs/application-%d{yyyy-MM-dd}.log</FileNamePattern>
+			<!-- keep 60 days worth of history --> 
+			<MaxHistory>60</MaxHistory>
+		</rollingPolicy>
+		
+		<layout class="ch.qos.logback.classic.PatternLayout">
+			<Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %message%n%xException{5}</Pattern>
+		</layout>
+	</appender>
+  
+<!--   <appender name="ROLLING" class="ch.qos.logback.core.rolling.RollingFileAppender">  
+    <file>${application.home}/logs/tempLogger.txt</file>  
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">  
+      rollover daily  
+      <fileNamePattern>${application.home}/logs/application-%d{yyyy-MM-dd_HH-mm}.%i.log</fileNamePattern>  
+      <maxHistory>5</maxHistory>   
+      <timeBasedFileNamingAndTriggeringPolicy  
+            class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">  
+        <maxFileSize>10MB</maxFileSize>  
+      </timeBasedFileNamingAndTriggeringPolicy>  
+    </rollingPolicy>  
+    <encoder>  
+      <pattern>%date %level [%thread] %logger{36} [%file : %line] %msg%n</pattern>  
+    </encoder>  
+  </appender>  -->
+
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%coloredLevel %logger{15} - %message%n%xException{5}</pattern>
+    </encoder>
+  </appender>
+  
+  <logger name="play" level="INFO" />
+  <logger name="application" level="INFO" />
+  <logger name="com.jolbox" level="DEBUG"></logger>
+
+  <root level="ERROR">
+    <appender-ref ref="STDOUT" />
+    <appender-ref ref="DAILYFILE" />
+    <!-- <appender-ref ref="ROLLING"/> -->
+  </root>
+  
+</configuration>

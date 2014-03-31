@@ -1,0 +1,212 @@
+@(name:String) @main("PackProductStock Report"){
+<div ng-controller="PackProductStockCtrl">
+	<div class="breadcrumb">
+		<li style="">Current Location: Pack Product Stock Report</li>
+	</div>
+	<div alert ng-repeat="alert in alerts" type="alert.type"
+		close="closeAlert($index)" template-url="/template/alert/alert.html">{{alert.msg}}</div>
+	<!-- 鏌ヨ鏉′欢 -->
+	<form  class="form-horizontal" id="myfrom" name="myfrom" novalidate="true">
+		<table>
+			<tr>
+				<td>
+					<div class="control-group">
+						<label id="piStatus" class="control-label">Date Time From</label>
+						<div class="controls">
+							<input type="datetime-local" name="dateTimeFrom" ng-model="serchVo.dateTimeFrom"  >
+						</div>
+					</div>
+				</td>
+				<td>
+					<div class="control-group">
+						<label class="control-label">Date Time To:</label>
+						<div class="controls">
+							<input type="datetime-local" name="dateTimeTo" ng-model="serchVo.dateTimeTo">
+						</div>
+					</div>
+				</td>
+				<td>
+						
+				</td>
+			</tr>
+			<tr>
+			<td>
+					<div class="control-group">
+						<label id="piStatus" class="control-label">PI No</label>
+						<div class="controls">
+							<input type="text" ng-model="serchVo.piNo" name="piNo"
+							>
+						</div>
+					</div>
+				</td>
+				<td>
+					<div class="control-group">
+						<label class="control-label">PI Type:</label>
+						<div class="controls">
+							<select ng-model="serchVo.localOrExport" name="localOrExport" >
+								<option selected="selected" value="">All</option>
+								<option value="Local">Local</option>
+								<option value="Export">Export</option>
+							</select>
+							&nbsp;<input type="checkbox" name="isNca" ng-model="serchVo.isNca"/>NCA
+						</div>
+					</div>
+				</td>
+				<td>
+					<div class="control-group">
+						<label class="control-label"></label>
+						<div class="controls">
+							<input class="btn btn-primary btn-small" type="submit" value="Search" ng-click="searchVoList(serchVo)"> 
+							<input class="btn btn-primary btn-small" type="submit" value="Report"  onclick="submitForm()">
+						</div>
+					</div>
+				</td>
+			</tr>
+		</table>
+	</form>
+	<!-- PItable -->
+	<table class="table   table-bordered   table-condensed">
+		<thead>
+			<tr>
+				<th>PI Type</th>
+				<th>PI No.</th>
+				<th>Material Description</th>
+				<th>Net Weight(KG)</th>
+				<th>Destination</th>
+				<th>Opening</th>
+				<th>Receive</th>
+				<th>Issue</th>
+				<th>Sample</th>
+				<th>Blend</th>
+				<th>Others</th>
+				<th>Closing</th>
+				<th>UOM</th>
+				<th>Total</th>
+				 <th>UOM</th>
+				<th>First Prod Date</th>
+				<th>Batch No.</th>
+				<th>Contract No.</th>
+				<th>Material Code</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr ng-repeat="pack in packs">
+				<td>{{pack.piType}}</td>
+				<td>{{pack.pi}}</td>
+				<td>{{pack.commodity}}</td>
+				<td>{{pack.kg|number:2}}</td>
+				<td>{{pack.destination}}</td>
+				<td>{{pack.opening}}</td>
+				<td>{{pack.receive}}</td>
+				<td>{{pack.issue}}</td>
+				<td>{{pack.sample}}</td>
+				<td>{{pack.blend}}</td>
+				<td>{{pack.others}}</td>
+				<td>{{pack.closing}}</td>
+				<td>{{pack.sku}}</td>
+				<td>{{pack.total|number:2}}</td>
+				<td>{{pack.uom}}</td>
+				<td>{{pack.proDate|date:'dd/MM/yyyy'}}</td>
+				<td>{{pack.batchs}}</td>
+				<td>{{pack.refNo}}</td>
+				<td>{{pack.materialCode}}</td>
+				<td>{{pack.isNca}}</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
+
+}{
+<script type="text/javascript" charset="utf-8">
+	function submitForm() {  
+   	 with (document.getElementById("myfrom")) {  
+       	 method = "post";  
+	        action = "/report/packProductStock/download";  
+	        submit();  
+   	 	}  
+	}  
+	//var CloudWMS = angular.module('CloudWMS', [ 'ui', 'ui.bootstrap' ]);
+	CloudWMS.controller('PackProductStockCtrl', function($scope, $http,
+			$timeout, $filter, $window) {
+		$scope.serchVo = {
+			reportDate : $filter('date')(new Date, 'yyyy-MM-dd'),
+			isNca:true
+		};
+		$scope.alerts = [];
+		//鏍规嵁鏉′欢瀵规暟鎹簱杩涜涓�鏌ヨ	        
+		$scope.searchVoList = function(serchVo) {
+			document.getElementById("submitDiv").style.display = "inline";
+			try {
+				$http.post('/report/packProductStock/list',
+						JSON.stringify(serchVo)).success(
+								
+						function(data, status, headers, config) {
+							document.getElementById("submitDiv").style.display = "none";
+							$scope.packs = data;
+						}).error(function(data, status, headers, config) {
+							document.getElementById("submitDiv").style.display = "none";
+					$scope.alerts.push({
+						type : 'error',
+						msg : data
+					});
+					$timeout($scope.clearAlerts, 3000);
+				});
+			} catch (err) {
+				alert(err);
+			}
+		};
+		//鏍规嵁鏉′欢涓嬭浇excel妯℃澘
+		$scope.download = function(serchVo) {
+			var date = new Date(serchVo.reportDate).getTime();
+			$window.location.href = "/report/packProductStock/download/"
+					+ serchVo.localOrExport + "/" + date;
+		}
+
+		var addAlert = function(types, msgs) {
+			$scope.alerts.push({
+				type : types,
+				msg : msgs
+			});
+			$timeout($scope.clearAlerts, 5000);
+		};
+		$scope.closeAlert = function(index) {
+			$scope.alerts.splice(index, 1);
+		};
+		$scope.clearAlerts = function() {
+			$scope.alerts = [];
+		};
+		$timeout($scope.clearAlerts, 5000);
+		//鍒濆鍖栭〉闈㈡煡璇㈡潯浠�
+
+		$scope.dlgOpts = {
+			backdropFade : true,
+			dialogFade : false,
+		};
+	});
+</script>
+<style type="text/css">
+.css-form select[required].ng-invalid {
+	background-color: #FFEEFF;
+}
+
+.css-form input[required].ng-invalid {
+	background-color: #FFEEFF;
+}
+
+.css-form input[type='number'].ng-invalid {
+	background-color: #FFEEFF;
+}
+
+.css-form select[required].ng-valid {
+	background-color: #DEFFFF;
+}
+
+.css-form input[required].ng-valid {
+	background-color: #DEFFFF;
+}
+
+.css-form input[type='number'].ng-valid {
+	background-color: #DEFFFF;
+}
+</style>
+}

@@ -1,0 +1,758 @@
+@(name:String) @main("Direct PI Transfer"){
+<div ng-controller="PITransferCtrl">
+	<div class="breadcrumb">
+		<li>Current Location:</li>
+		<li>Direct PI Transfer</li>
+		<li><div class="span2 offset1"></div></li>
+	</div>
+	<!-- 鏂版棫pi鐨勮緭鍏ュ湴鏂�-->
+		<form name="newAndOkd"  novalidate class="css-form">
+		<table  >
+			<tbody>   
+				<tr>
+					<td align="right"><label>PI No From:</label></td> 
+					<td>
+					<input class="input-small"  name="pif" type="text"  ng-model="directtransfer.pif"    ng-change="viaPIGetQty(directtransfer.pif,true)" required />
+				    <span style="color: red;">*</span>
+					</td>			 
+					<td width="260px" align="right"><label>Total Qty Before Transfer(F):</label></td>
+					<td>   
+					 <input class="input-small" type="text" disabled="true" ng-model="directtransfer.pifBQty"/>Kg
+					</td>
+					<td align="right" width="260px"><label>Total Qty After Transfer(F):</label></td>
+					<td>   
+					 <input class="input-small" type="text" disabled="true" ng-model="directtransfer.pifAQty"/>Kg
+					</td>
+			 </tr>
+			 	<tr>
+					<td align="right"><label>PI No To:</label></td> 
+					<td>
+					<input class="input-small"  name="pit" type="text"  ng-model="directtransfer.pit"    ng-change="viaPIGetQty(directtransfer.pit,false)"   required />
+				    <span style="color: red;">*</span>
+					</td>			 
+					<td align="right"><label>Total Qty Before Transfer(T):</label></td>
+					<td>   
+					 <input class="input-small" type="text" disabled="true" ng-model="directtransfer.pitBQty"/>Kg
+					</td>
+					<td align="right"><label>Total Qty After Transfer(T):</label></td>
+					<td>   
+					 <input class="input-small" type="text" disabled="true" ng-model="directtransfer.pitAQty"/>Kg
+					</td>
+			    </tr>
+			  	<tr>
+					<td align="right"><label> Qty For Transfer:</label></td>
+					<td>   
+					 <input class="input-small" type="text"  ng-model="directtransfer.transferQty" ng-change="changeAfterQty(directtransfer.transferQty)"/>Kg<span style="color: red;">*</span>
+					</td>
+			 </tr>
+			</tbody>
+		</table>
+		</form>
+	<table id="stocktable"   class="table  table-bordered   table-condensed">
+ 
+	<thead>
+	<th width="30px">
+	<button class="btn btn-primary btn-mini" ng-click="openSelectDlg(stocks)" title="Select">
+				<i class="icon-check"></i>
+			</button>
+			<br/>
+	<input type="checkbox"  ng-model ="selectTodo" ng-change="selectStocks(selectTodo)"/></th>
+	<th>#</th>
+	<th>batchNo</th>
+	<th>Prod Date</th>
+	<th>Storage Type</th>
+	<th>Storage Area</th>
+	<th>Storage Bin</th>
+	<th>Qty(SKU)</th>
+	<th>Forklift Driver</th>
+	<th>Slip Printed</th>
+	<th>Operation
+	<input type="submit" class="btn btn-primary btn-small" ng-disabled='isExecuted' ng-click="addStocks()" value="AddPallet" /> 
+	<input type="submit" class="btn btn-primary btn-small" ng-disabled='isExecuted'  ng-click="showEditSelectStockView(null,null)" value="EditAll" />
+	<input type="submit" class="btn btn-primary btn-small" ng-disabled='isExecuted'  ng-click="printStockAll()" value="PrintAll" />
+    <input  type="submit" class="btn btn-primary btn-small" ng-disabled='isExecuted'  ng-click="executeAll()" value="ExecuteAll" />
+	</th>
+	</thead>
+	<tbody>
+	<tr ng-repeat="stock in stocks" >
+	<td><input type="checkbox"  ng-model ="stock.todo" ng-change="selectStock()"/></td>
+	<td>{{stock.palletNo='T'+($index+1)}}</td>
+	<td>{{stock.batchNo}}</td>
+	<td>{{stock.proDate}}</td>
+	<td>{{stock.storageType.descripton}}</td>
+	<td>{{stock.area.descripton}}</td>
+	<td>{{stock.bin.descripton}}</td>
+	<td>{{stock.qty}}</td>
+	<td>{{stock.employee.descripton}}</td>
+	<td>{{stock.isPrint}}</td>
+	<td>
+	<input type="submit" class="btn btn-primary btn-small"   ng-disabled='isExecuted' ng-click="showEditSelectStockView($index,stock)" value="Edit" /> 
+	<input type="submit" class="btn btn-primary btn-small" ng-disabled='isExecuted'  ng-click="printStock(stock)" value="Print" />
+	<!--  
+    <input  type="submit" class="btn btn-danger btn-small" ng-disabled='isExecuted'  ng-click="showDeletedView($index)" value="Deleted" />-->
+	</td>
+	</tr>
+	</tbody>
+	</table>
+<!-- Edit select stock view -->
+<div modal="editStockDlg" close="cancelEditStockDlg()" options="dlgOpts">
+	<div class="modal-header">
+		<h4>Edit Pallet</h4>
+	</div>
+	<div class="modal-body">
+		<form name="addPallet" novalidate class="css-form">
+			<table >
+			    <tr>
+			    <td align="right"><label>Prod Date:</label></td>
+			    <td><input type="date"  ng-model="currentStock.proDate"  required><span style="color: red;">*</span></td>
+			    </tr>
+			    <tr>
+			    <td align="right"><label>Batch No:</label></td>
+			    <td><input type="text"  ng-model="currentStock.batchNo"  required><span style="color: red;">*</span></td>
+			    </tr>
+				<tr>
+					<td align="right"><label>Storage Type:</label></td>
+					<td><select type="text" name="storageType" ng-model="currentStock.storageType"
+						ng-options="s as s.descripton for s in initStorageTypeList"
+						ng-change="changeStoryType(currentStock.storageType.key)" required>
+					</select><span style="color: red;">*</span></td>
+				</tr>
+				<tr>
+					<td align="right"><label>Storage Area:</label></td>
+					<td><select type="text" name="storageAreaTo" ng-model="currentStock.area"
+						ng-options="areaToVo as areaToVo.descripton for areaToVo in initAreaList"
+						ng-change="changeArea(currentStock.area.key)" required>
+					</select><span style="color: red;">*</span></td>
+				</tr>
+				<tr>
+					<td align="right"><label>Storage Bin:</label></td>
+					<td><select type="text" name="storageBinTo" ng-model="currentStock.bin"
+						ng-options="binToVo as binToVo.descripton for binToVo in initBinList" required>
+					</select><span style="color: red;">*</span></td>
+				</tr>
+				<tr>
+					<td align="right"><label>Forklift Driver:</label></td>
+					<td><select type="text" ng-model="currentStock.employee" name="forkliftDriver"
+						ng-options="forkLiftDriverVo as forkLiftDriverVo.descripton for forkLiftDriverVo in forkLiftDriverVos"
+						required>
+					</select><span style="color: red;">*</span></td>
+				</tr>
+			</table>
+		</form>
+	</div>
+	<div class="modal-footer">
+		<input type="submit" class="btn btn-primary btn-small ok" ng-click="editSelectStocks(currentStock)" value="OK" /> <input
+			type="submit" class="btn btn-warning btn-small cancel" ng-click="cancelEditStockDlg()" value="Cancel" />
+	</div>
+</div>
+ 
+ <div modal="deleteDlg" close="closeDeleteDlg()" options="dlgOpts">
+		<div class="modal-header">
+			<h4>Delete Stock</h4>
+		</div>
+		<div class="modal-body">
+			<form novalidate class="form-horizontal">
+				<table>
+					<tbody>Are you sure to delete ?
+					</tbody>
+				</table>
+			</form>
+		</div>
+				<div class="modal-footer">
+					<button class="btn btn-primary btn-small ok" ng-click="deleted()">YES</button>
+					<button class="btn btn-warning btn-small cancel" ng-click="closeDeleteDlg()">NO</button>
+				</div>
+	</div>
+ 
+ 
+ <span>@views.html.common.selectDlg("")</span>
+
+</div>
+}{
+<script src="@routes.Assets.at("/public", "javascripts/loading.js")" type="text/javascript"></script>
+<script src="@routes.Assets.at("/public", "javascripts/printStyles/whshipped.js")" type="text/javascript"></script>
+<script type="text/javascript" charset="utf-8">
+//var CloudWMS = angular.module('CloudWMS', ['ui','ui.bootstrap']);
+var INT_REGEXP=/^[1-9]*[1-9][0-9]*$/;
+var FLOAT_REGEXP =/^[0-9]+\.{0,1}[0-9]{0,2}$/;
+CloudWMS.controller('PITransferCtrl', function($scope, $http, $timeout,$filter,$window ){
+	 $scope.directtransfer = {};
+	 $scope.tempDirecttransfer = {transferQty:'0',pit:''};
+	 $scope.editStockDlg = false;
+	 $scope.deleteDlg = false;
+	 $scope.selectTodo = false;
+	 $scope.isExecuted = false;
+	 $scope.stockEditIndex = -1;
+	 $scope.stocks =[];
+	 $scope.to = {tototalQty:0,rate:0,qtyPerPallet:0};
+	 $scope.from = {tototalQty:0,rate:0,qtyPerPallet:0};
+	 $http.get('/common/initPiNo').success( 
+   	      function(data, status, headers, config) {
+   	    	$scope.PIfs = JSON.parse(JSON.stringify(data)); 
+   	        $scope.PIts = JSON.parse(JSON.stringify(data)); 
+   	        $scope.PIs = JSON.parse(JSON.stringify(data)); 
+   	    }).error(
+   	      function(data, status, headers, config) {
+   	        $scope.status = status
+   	    });
+$http.get('/common/initstorytype').success(function(data, status, headers, config) {					 
+	$scope.initStorageTypeList = data; 
+   }).error(function(data, status, headers, config) {
+       $scope.status = status
+   });
+
+ //寰楀埌缂栬緫鐣岄潰涓殑鍛樺伐
+$http.get('/common/initemployee').success(function(data, status, headers, config) {					 
+		    	  $scope.forkLiftDriverVos = data;  
+		    }).error(function(data, status, headers, config) {
+		        $scope.status = status
+		    });
+	 
+/*
+ * 閫氳繃pi鑾峰彇鍒拌繖涓猵i涓媠tock鐨剄ty(kg)锛屽拰rate(1carton=20kg)
+ */
+$scope.viaPIGetQty = function(pino,isFrom) {
+    var flag = false;
+	isExecutedFun($scope.isExecuted);
+	for ( var i = 0; i < $scope.PIs.length; i++) {
+		if (pino == $scope.PIs[i]) {
+			flag = true;
+			break;
+		}
+	}
+	if(isFrom){
+		 $scope.directtransfer.pifBQty=$scope.directtransfer.pifAQty =null;
+	}else{
+		 $scope.directtransfer.pitBQty = $scope.directtransfer.pitAQty = null;  	
+	}
+	$scope.directtransfer.transferQty = null;
+	if(flag){
+		$http.post('/transfer/directpitransfer/viapigetqty', JSON.stringify(pino)).success(function(data, status, headers, config) {
+			 var myDate = alertMessage(data);
+		     if(isFrom){
+		    	 $scope.from = myDate;
+		    	 $scope.directtransfer.pifBQty = JSON.parse(JSON.stringify(myDate.totalQty));  
+		    	 $scope.directtransfer.pifAQty = JSON.parse(JSON.stringify(myDate.totalQty));  
+		     }else{
+		      $scope.to = myDate;	
+		      $scope.directtransfer.pitBQty = JSON.parse(JSON.stringify(myDate.totalQty));  
+		      $scope.directtransfer.pitAQty = JSON.parse(JSON.stringify(myDate.totalQty)); 
+		     }
+		}).error(function(data, status, headers, config) {
+			$scope.status = status
+		});
+	}
+	
+}
+/*
+ * Quantity For Transfer  杈撳叆妗嗕腑杈撳叆鐩稿簲鐨勬暟瀛楁椂璋冪敤姝ゆ柟娉�
+ */
+$scope.changeAfterQty = function(transferQty){
+	   isExecutedFun($scope.isExecuted);
+		if (transferQty == undefined||transferQty=="") {
+			return;
+		}
+		if($scope.directtransfer.pifBQty==undefined||$scope.directtransfer.pifBQty==null){
+			alert("First, enter the correct From pi");
+			$scope.directtransfer.transferQty = null;
+			return;
+		}
+		if($scope.directtransfer.pitBQty==undefined||$scope.directtransfer.pitBQty==null){
+			alert("First, enter the correct To pi");
+			$scope.directtransfer.transferQty = null;
+			return;
+		}
+		if (!FLOAT_REGEXP.test(transferQty) || transferQty <= 0) {
+				alert("Please enter a number greater than 0");
+				$scope.directtransfer.transferQty = $scope.tempQty;
+				return;
+				}
+		var qty = parseFloat(transferQty)  
+		if(qty >$scope.directtransfer.pifBQty){
+			alert("Please enter a number less than or equal Total Quantity Before Transfer(F)");
+			$scope.directtransfer.transferQty = $scope.tempQty;
+			return;
+		}
+		$scope.tempQty = transferQty;
+		$scope.directtransfer.pifAQty = $scope.directtransfer.pifBQty - qty;
+		$scope.directtransfer.pitAQty = $scope.directtransfer.pitBQty + qty;
+		if($scope.isExecuted){
+			$scope.stocks = [];
+			$scope.isExecuted = false;
+		}
+}
+
+/*
+ * 鐐瑰嚮Add鎸夐挳鐨勬椂鍊欒皟鐢ㄦ鏂规硶
+ */
+ $scope.addStocks = function() {
+		var flag = false;
+		var lengthflg = false;
+		var message = "First, enter the correct ";
+		if ($scope.directtransfer.pifBQty == undefined || $scope.directtransfer.pifBQty == null) {
+			message = message + "From pi, "
+			flag = true;
+		}
+		if ($scope.directtransfer.pitBQty == undefined || $scope.directtransfer.pitBQty == null) {
+			message = message + " To pi, "
+			flag = true;
+		}
+		if ($scope.directtransfer.transferQty == undefined || $scope.directtransfer.transferQty == null) {
+			message = message + " Transfer Qty"
+			flag = true;
+		}
+		if (flag) {
+			alert(message);
+			return;
+		}
+		if ($scope.directtransfer.pif == $scope.directtransfer.pit) {
+			alert("From pi and To pi should not  the same")
+			return;
+		}
+		if (parseFloat($scope.directtransfer.pifBQty) < parseFloat($scope.directtransfer.transferQty)) {
+			alert("Quantity For Transfer is bigger From pi Qty");
+			return;
+		}
+		var qty = parseFloat($scope.directtransfer.transferQty);
+		if ($scope.stocks != null && $scope.stocks.length > 0 && parseFloat($scope.tempDirecttransfer.transferQty) < parseFloat($scope.directtransfer.transferQty)
+				&& $scope.tempDirecttransfer.pit == $scope.directtransfer.pit) {
+			lengthflg = false;
+		}else if($scope.stocks != null && $scope.stocks.length > 0 && parseFloat($scope.tempDirecttransfer.transferQty) == parseFloat($scope.directtransfer.transferQty)
+				&& $scope.tempDirecttransfer.pit == $scope.directtransfer.pit){
+			return;
+		}else {
+			lengthflg = true;
+			$scope.stocks = [];
+		}
+
+		qty = qty / $scope.to.rate;
+		var length = Math.ceil(qty / ($scope.to.qtyPerPallet));
+		var lastQty = 0;
+		var lastflag = false;
+		if (qty % ($scope.to.qtyPerPallet) != 0) {
+			lastQty = Math.round((qty % ($scope.to.qtyPerPallet)) * 10) / 10;
+			lastflag = true;
+		}
+		if (lengthflg) {
+			helpAddStocks($scope.stocks, 0, length, lastflag,lastQty,false)
+		} else {
+			helpAddStocks($scope.stocks, $scope.stocks.length - 1, length, lastflag,lastQty,true)
+		}
+		$scope.tempDirecttransfer = JSON.parse(JSON.stringify($scope.directtransfer));
+	}
+
+/*
+ * 鐐瑰嚮table涓〃澶碿heckBox鏃惰皟鐢�
+ */	
+$scope.selectStocks = function(selectTodo){
+   	  for(var i = 0 ;i<$scope.stocks.length;i++){
+   		  $scope.stocks[i].todo=selectTodo;
+
+   		  }
+ }	
+ 
+/*
+ * 鐐瑰嚮table涓璫heckBox鏃惰皟鐢�
+ */
+$scope.selectStock = function(){
+    var flag = false;
+     for(var i = 0;i<$scope.stocks.length;i++){
+ 	     if($scope.stocks[i].todo == false){
+ 	     flag = true;
+ 	    	break;
+     	      }
+		}
+		if(flag){
+			$scope.selectTodo = false;
+			}else{
+			$scope.selectTodo = true;
+				}
+}
+
+/*
+ * 寮瑰嚭缂栬緫椤甸潰锛岀紪杈戝涓崟涓兘鐢ㄨ繖涓柟娉�
+ */
+$scope.showEditSelectStockView=function(index,stock){
+	 $scope.currentStock ={};
+	if(index==null){// 缂栬緫閫変腑鐨�
+	  if(select($scope.stocks)){
+	     alert("Have not selected any stock");
+	     return
+		 }
+	}else{// 鍗曚釜缂栬緫
+		 $scope.stockEditIndex = index;
+		 $scope.currentStock = JSON.parse(JSON.stringify(stock));
+		 
+	}
+	$scope.editStockDlg = true;
+}
+
+/*
+ * 鍏抽棴缂栬緫鐨勫璇濇
+ */
+$scope.cancelEditStockDlg=function(){
+	$scope.stockEditIndex = -1;
+	$scope.editStockDlg = false;
+}
+
+/*
+ *鍦ㄧ紪杈戝璇濇涓偣鍑籵k鐨勬椂鍊欒皟鐢�
+ */
+$scope.editSelectStocks=function(currentStock){
+	var flag = true;
+	var message = "";
+	if (currentStock.proDate == null || currentStock.proDate == "") {
+		message = message + "Production Date, ";
+		flag = false;
+	}
+	if (currentStock.batchNo == null || currentStock.batchNo == "") {
+		message = message + "Batch No, ";
+		flag = false;
+	}
+	if (currentStock.storageType == null || currentStock.storageType == "") {
+		message = message + "Storage Type,  ";
+		flag = false;
+	}
+	if (currentStock.area == null || currentStock.area == "") {
+		message = message + "Storage Area,  ";
+		flag = false;
+	}
+	if (currentStock.bin == null || currentStock.bin == "") {
+		message = message + "Storage Bin,  ";
+		flag = false;
+	}
+	if (currentStock.employee == null || currentStock.employee == "") {
+		message = message + "Forklift Driver  ";
+		flag = false;
+	}
+	 
+	if (!flag) {
+		alert(message + " cann't be null ! ");
+		return;
+	}
+	if($scope.stockEditIndex != -1){
+		copyPropertyToStock(currentStock,$scope.stocks[$scope.stockEditIndex]);
+	}else{
+		for(var i =0,len = $scope.stocks.length;i<len ;i++){
+			if($scope.stocks[i].todo){
+			copyPropertyToStock(currentStock,$scope.stocks[i]);	
+			}
+		}
+	}
+	$scope.cancelEditStockDlg();
+}
+
+/*
+ * 鏍规嵁StoryType id ,鎵惧埌area
+ */
+$scope.changeStoryType =function(id){
+	  $http.get('/common/initarea/'+id).success(function(data, status, headers, config) { 
+		  $scope.initAreaList = data 
+	   }).error(function(data, status, headers, config) {
+	    alert(status);
+	       $scope.status = status
+	   });	
+}
+$scope.changeArea=function(id){
+		  $http.get('/common/initbin/'+id).success(function(data, status, headers, config) {
+			$scope.initBinList = data;  
+		 }).error(function(data, status, headers, config) {
+		alert(status);
+		$scope.status = status
+		});
+	    
+   };
+   
+/*
+ * 鐐瑰嚮琛ㄥご鐨凟xecute All鎸夐挳鏃惰皟鐢�
+ */
+$scope.executeAll=function(){
+ var flag = false;
+ var message = "Data ";
+ if($scope.stocks==null||$scope.stocks.length==0){
+	 alert("There are no stock");
+	 return;
+ }
+ var tempStocks = JSON.parse(JSON.stringify($scope.stocks));
+ for(var i= 0 ;i<tempStocks.length;i++){
+	 if((tempStocks[i].batchNo==null||tempStocks[i].batchNo=="")){
+		 message=message+" "+tempStocks[i].palletNo;
+		 flag = true;
+	 }
+ }
+ if(flag){
+	 alert(message+" fields empty, please edit the relevant data");
+	 return;
+ }
+ for(var i= 0 ;i<tempStocks.length;i++){
+	 if(tempStocks[i].isPrint=='N'){
+		 message=message+" "+tempStocks[i].palletNo;
+		 flag = true;
+	 }
+ }
+ if(flag){
+	 alert(message+" does not print, please print the relevant data");
+	 return;
+ }
+ var stock=new Object();
+ stock.todo = false;
+ stock.batchNo = null;
+ stock.storageType = null;
+ stock.area = null;
+ stock.bin = null;
+ stock.employee = null;
+ stock.piNo = $scope.tempDirecttransfer.pif;
+ stock.qty = $scope.tempDirecttransfer.transferQty;
+ stock.rate = $scope.from.rate;
+ tempStocks.push(stock);
+$http.post('/transfer/directpitransfer/executeall',JSON.stringify(tempStocks)).success(function(data, status, headers, config) {					 
+	if(isOk(data)){
+		$scope.isExecuted = true;
+	} 
+  }).error(function(data, status, headers, config) {
+      $scope.status = status
+  });
+}
+/*
+ * 
+ */
+$scope.showDeletedView=function(index){
+	$scope.deleteDlg = true;
+	$scope.$deleteIndex = index;
+}
+/*
+ * 
+ */
+$scope.closeDeleteDlg=function(){
+	$scope.deleteDlg = false;
+}
+/*
+ * 
+ */
+$scope.deleted=function(){
+	$scope.stocks.splice($scope.$deleteIndex,1);
+	$scope.closeDeleteDlg();
+}
+$scope.printStock=function(stock){
+	 if(stock.batchNo==null||stock.batchNo==""){
+	  alert("Datefields empty, please edit the relevant data");
+	  return;
+	 }
+	stock.isPrint='Y'
+	print(stock);
+}
+$scope.printStockAll=function(){
+	 var flag = false;
+	 var tempStocks = JSON.parse(JSON.stringify($scope.stocks))
+	 var message = "Data ";   
+	 if(select(tempStocks)){
+		alert("Have not selected any stock");
+	 }
+	 for(var i= 0 ;i<tempStocks.length;i++){
+		 if(tempStocks[i].todo&&(tempStocks[i].batchNo==null||tempStocks[i].batchNo=="")){
+			 message=message+" "+tempStocks[i].palletNo;
+			 flag = true;
+		 }
+	 }
+	 if(flag){
+		 alert(message+" fields empty, please edit the relevant data");
+		 return;
+	 }
+	for(var i= 0 ;i<$scope.stocks.length;i++){
+		if($scope.stocks[i].todo){
+		$scope.stocks[i].isPrint='Y'
+	    print($scope.stocks[i]);	
+		}
+	}
+}
+
+
+
+$scope.selectDlg = false;
+/*
+ * 鎵撳紑閫夋嫨鍝釜pallet 鐨勫璇濇
+ */
+$scope.openSelectDlg = function(arr){
+	if(isEmptyArr(arr)){
+		alert("No pallet select");
+		return ;
+	}
+	$scope.selectVo =null;
+	$scope.selectDlg = true;
+}
+/*
+ * 鍏抽棴閫夋嫨瀵硅瘽妗�
+ */
+$scope.closeSelectDlg = function(){
+	$scope.selectDlg = false;	
+}	
+/*
+ * selectVo 鍙戠敓鏀瑰彉鐨勬椂鍊欒皟鐢�
+ */
+$scope.selectChange = function(selectVo){
+  calculateNo(selectVo, $scope.stocks,true);
+}
+/*
+ * 鎵ц閫夋嫨
+ */
+$scope.doSelect = function(selectVo){
+	if(baseFromToSelectQty(selectVo,$scope.stocks,true)){
+	$scope.selectStock();
+	$scope.closeSelectDlg();
+	}
+}
+
+
+
+
+
+
+
+
+//==============================================宸ュ叿鏂规硶===========================================
+/*
+ * 鐪嬫湁娌℃湁閫変腑
+ */
+function select(array) {
+	var flag = true;
+	for ( var i = 0; i < array.length; i++) {
+		if (array[i].todo == true) {
+			flag = false;
+			break;
+		}
+	}
+	return flag;
+}
+/*
+ * 鎶婄紪杈戝璇濇涓殑灞炴�璧嬪�缁檚tock
+ */
+function copyPropertyToStock(currentStock,stock){
+	  stock.batchNo = currentStock.batchNo;
+		stock.proDate = currentStock.proDate;
+		stock.storageType =currentStock.storageType;
+		stock.area = currentStock.area;
+		stock.bin = currentStock.bin;
+		stock.employee = currentStock.employee;
+		stock.isPrint = 'N';
+}
+/*
+ * 杩欎釜鏂规硶鏄妸AddStocks鏂规硶涓殑鍏叡閮ㄥ垎鎶藉彇鍑烘潵
+ */
+function helpAddStocks(arr,start,length,lastflag,lastQty,flag){
+	for(var i =start;i<length;i++){
+		   var stock = new Object();
+		   stock.todo = false;
+		   stock.isPrint = 'N';
+		   stock.piNo = $scope.directtransfer.pit;
+		   stock.batchNo = null;
+		   stock.storageType = null;
+		   stock.area = null;
+		   stock.bin = null;
+		   stock.employee = null;
+		   stock.rate = null;
+		   if(i!=length-1){
+		   stock.qty = $scope.to.qtyPerPallet;
+		   }else{
+			   if(lastflag){
+			stock.qty= lastQty;	   
+			   }else{
+				   stock.qty = $scope.to.qtyPerPallet;	   
+			   }
+		   }
+		   if(flag&&i==start){
+			   arr.splice(start,1);
+		   }
+		   arr.push(stock);
+		}
+}
+/*
+ * 鍒ゆ柇鏄惁涓虹┖
+ */
+function isNull(currentStock,message){
+	var flag = true;
+	if (currentStock.proDate == null || currentStock.proDate == "") {
+		message = message + "Production Date  ";
+		flag = false;
+	}
+	if (currentStock.batchNo == null || currentStock.batchNo == "") {
+		message = message + "Batch No";
+		flag = false;
+	}
+	if (currentStock.storageType == null || currentStock.storageType == "") {
+		message = message + "Storage Type  ";
+		flag = false;
+	}
+	if (currentStock.area == null || currentStock.area == "") {
+		message = message + "Storage Area  ";
+		flag = false;
+	}
+	if (currentStock.bin == null || currentStock.bin == "") {
+		message = message + "Storage Bin  ";
+		flag = false;
+	}
+	if (currentStock.employee == null || currentStock.employee == "") {
+		message = message + "Forklift Driver  ";
+		flag = false;
+	}
+	return flag;
+}
+/*
+ * 鍒ゆ柇鏄惁鎵ц杩囧鏋滄墽琛岃繃娓呯┖stocks
+ */
+function isExecutedFun(flag){
+	if(flag){
+		 $scope.isExecuted = false;
+		 $scope.selectTodo = false;
+		 $scope.stocks=[];
+	}
+}
+/*
+ * 
+ */
+function print(stock) {
+		var printData = new Object();
+		printData.piNo = stock.piNo;
+		printData.batchNo = stock.batchNo;;
+		printData.packing = $scope.to.rate;
+		printData.qty = stock.qty;
+		printData.receivingDate = $filter('date')(new Date(), 'mediumDate');
+		printData.storageLocation = stock.area.descripton + '-' + stock.bin.descripton;
+		printData.description =$scope.to.mat;
+		printData.barCode = printData.piNo + '-' + printData.batchNo;
+		try {
+			LODOP = getLodop(document.getElementById('LODOP_OB'), document.getElementById('LODOP_EM'));
+			printPickData(printData);
+		} catch (err) {
+			alert(err);
+		}
+	}
+//鐢ㄤ簬鐐瑰嚮榛戣壊鏃朵笉鍏抽棴瀵硅瘽妗�
+$scope.dlgOpts = {
+	    backdropFade: true,
+	    dialogFade:false,
+	    backdropClick:false
+	  };	 
+	 
+	 
+	 
+	 
+	 
+	 
+	 
+	 
+	 
+	 
+	 
+	 
+	 
+	 
+	 
+	 
+	 
+	 
+	 
+	 
+});
+</script>
+
+}

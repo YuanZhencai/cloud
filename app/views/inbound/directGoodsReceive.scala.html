@@ -1,0 +1,956 @@
+@(name: String)
+@main("Direct Goods Receive"){
+<div ng-controller="DirectGoodReceive">
+<div class="breadcrumb">
+	<li style="">Current Location:Direct Goods Receive</li>
+</div>
+<div alert ng-repeat="alert in alerts" type="alert.type" close="closeAlert($index)" template-url="/template/alert/alert.html">{{alert.msg}}</div>
+	<!-- PI Add -->
+<form name="pif" novalidate class="form-horizontal">
+	<table>
+		<tr>
+			<td class="column0">
+				<label>PI No.</label>
+			</td>
+			<td>
+				<input class="input-medium" type="text" name="piNo" ng-model="piVo.piNo"><span style="color: red">*</span>
+			</td>
+			<td class="column0">
+				<label>PI Source</label>
+			</td>
+			<td>
+				<select ng-model="piVo.sourceType" class="span2">
+					<option value="T002">Manual</option>
+					<option value="T003">Return</option>
+				</select>
+			</td>
+			<!-- <td class="column1">
+				<label>PI Status</label>
+			</td>
+			<td class="column2">
+				<select ng-model="pISearchVo.piStatus" class="span2" ng-options="os.code_key as os.code_name for os in orderStatuses|orderBy:'code_key'">
+					<option value="">ALL</option>
+				</select>
+			</td> -->
+		</tr>
+		<tr>
+			<td></td>
+			<td colspan="3">
+				<span ng-show="pif.piNo.notNull" style="color: red">can't be null !</span> 
+				<span ng-show="pif.piNo.less40" style="color: red">length can't be more than 40 !</span>
+			</td>
+		</tr>
+		<tr>
+			<td class="column0">Material</td>
+			<td colspan="3">
+				<input type="text" style="width: 403px;"
+					name="material" autocomplete="off"
+					ng-model="piVo.materialVo.codeAndDesc"
+					typeahead="m.codeAndDesc as m.codeAndDesc for m in materials | filter:$viewValue"
+					ng-change="setMaterialCode(piVo.materialVo)">
+					<span style="color: red">*</span>
+			</td>
+		</tr>
+		<tr>
+			<td></td>
+			<td colspan="3">
+				<span ng-show="pif.materialCheck" style="color: red">can't be null or not match!</span>
+			</td>
+		</tr>
+		<tr>
+			<td class="column0">Quantity</td>
+			<td colspan="3">
+				<input type="text" ng-model="piVo.piQty" name="piQty"
+				style="width: 60px;" float floatnull><span
+				style="color: red">*</span> <select ng-model="piVo.uomVo.id"
+				ng-options="mu.id as mu.uomCode for mu in materialUoms"
+				style="width: 75px;" ng-change="setMaterialUomCode(piVo.uomVo)"
+				name="piQtyUom"></select><span style="color: red">*</span>
+			</td>
+		</tr>
+		<tr>
+			<td></td>
+			<td colspan="3">
+				<span ng-show="pif.piQty.notNumber" style="color: red">Not a valid number !</span>
+				<span ng-show="pif.piQty.notNull" style="color: red">can't be null !</span>
+			</td>
+		</tr>
+		<tr>
+			<td class="column0">Qty/Pallet</td>
+			<td colspan="3">
+				<input style="width: 60px;" type="text"
+					ng-model="piVo.qtyPerPallet" name="qtyPerPallet" float floatnull><span
+					style="color: red">*</span> <select
+					ng-model="piVo.qtyPerPalletUom.id"
+					ng-options="mu.id as mu.uomCode for mu in materialUoms"
+					style="width: 75px;"
+					ng-change="setMaterialUomCode(piVo.qtyPerPalletUom)"></select><span
+					style="color: red">*</span>
+			</td>
+		</tr>
+		<tr>
+			<td></td>
+			<td colspan="3">
+				<span ng-show="pif.qtyPerPallet.notNumber"
+					style="color: red">Not a valid number !</span> 
+				<span ng-show="pif.qtyPerPallet.notNull" style="color: red">can't be null !</span>
+			</td>
+		</tr>
+		<tr>
+			<td class="column0">Remarks</td>
+			<td colspan="3">
+				<textarea type="text" ng-model="piVo.remarks"
+					name="remarks" style="width: 429px;"></textarea>
+			</td>
+		</tr>
+	</table>
+	<br/>
+	<!-- storage info table -->
+	<table class="table table-striped table-bordered table-hover table-condensed">
+		<thead>
+			<th>
+				<!-- <a class="btn btn-primary btn-small" style="display: {{ifAddShow}};" ng-click="openSelectDlg()">Select</a>
+				<br/> -->
+				<input type="checkbox" ng-model="selectedAll" ng-change="selectAll()">
+			</th>
+			<th>Pallet No.</th>
+			<th>Received Date</th>
+			<th>Batch No.</th>
+			<th>Storage Area</th>
+			<th>Storage Bin</th>
+			<th>Quantity/Pallet
+				<br/>
+				(<span class="{{classType}}">{{currentUsedSKU|number:2}}</span>/{{currentAllSKU|number:2}})
+			</th>
+			<th>Slip Printed</th>
+			<th>Operation
+				<a class="btn btn-primary btn-small" style="text-align: right;" ng-click="savePiInfo(piVo)">Add Pallet</a>
+				<a class="btn btn-primary btn-small" style="text-align: right;" ng-click="openEditDlg(-1)">EditAll</a>
+				<a class="btn btn-primary btn-small" style="text-align: right;" ng-click="printDlg({},-1)">PrintAll</a>
+				<a class="btn btn-primary btn-small" style="text-align: right;" ng-click="doExecute()">ExecuteAll</a><!-- openExecuteDlg() -->
+			</th>
+		</thead>
+		<tbody>
+			<tr ng-repeat="itemDetailVo in itemDetailList">
+				<th><input type="checkbox" ng-disabled="itemDetailVo.isExecuted" ng-model="itemDetailVo.isSelected" ng-change="changeSelect()"></th>
+				<td class="noNewLine">{{itemDetailVo.palletNo}}</td>
+				<td class="noNewLine">{{itemDetailVo.receiveDate|date:'dd/MM/yyyy'}}</td>
+				<td class="noNewLine">{{itemDetailVo.batchNo}}</td>
+				<td class="noNewLine">{{itemDetailVo.areaName}}</td>
+				<td class="noNewLine">{{itemDetailVo.binName}}</td>
+				<td class="noNewLine">{{itemDetailVo.palletQty|number:2}}</td>
+				<td class="noNewLine">{{itemDetailVo.isPrinted}}</td>
+				<td>
+					<a class="btn btn-primary btn-small" ng-disabled="itemDetailVo.isExecuted" style="text-align: right;" ng-click="openEditDlg($index)">Edit</a>
+					<a class="btn btn-info btn-small" ng-disabled="itemDetailVo.isExecuted" style="text-align: right;" ng-click="printDlg(itemDetailVo, $index)">Print</a>
+					<!-- <a class="btn btn-danger btn-small" ng-disabled="itemDetailVo.isExecuted" style="text-align: right;" ng-click="openDeletDlg(itemDetailVo, itemDetailVo.isExecuted, $index)">Delete</a>
+ -->				</td>
+			</tr>
+		</tbody>
+	</table>
+</form>
+	<!-- 榛樿淇敼鍏ㄩ儴 -->
+	<div modal="editPalletDlg" close="closePalletCacheDlg()" options="dlgOpts">
+		<div class="modal-header">
+			<h4>Default Pallet</h4>
+		</div>
+		<div class="modal-body">
+		<form name="def" novalidate class="form-horizontal">
+			<table>
+				<tbody>
+					<tr>
+						<td>
+							<label class="control-label">Batch No :&nbsp;</label>
+						</td>
+						<td>
+							<input type="text" name="batchNo" ng-model="palletItem.batchNo" ng-change="changeDef(palletItem)"/>
+							<span style="color: red">*</span>
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<span ng-show="palletItem.defBatchNo" style="color: red">Can not be null!</span>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<label class="control-label">Area :&nbsp;</label>
+						</td>
+						<td>
+							<select ng-model="palletItem.areaId" ng-options="a.id as a.nameKey for a in areaVoList" ng-change="areaChange(palletItem)">
+							</select>
+							<span style="color: red">*</span>
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<span ng-show="palletItem.defareaId" style="color: red">Please select the Area!</span>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<label class="control-label">Bin :&nbsp;</label>
+						</td>
+						<td>
+							<select ng-model="palletItem.binId" ng-options="a.id as a.nameKey for a in binVoList" ng-change="changeDef(palletItem)">
+							</select>
+							<span style="color: red">*</span>
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<span ng-show="palletItem.defbinId" style="color: red">Please select the Bin!</span>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<label class="control-label">Quantity :&nbsp;</label>
+						</td>
+						<td>
+							<input type="text" name="palletQty" ng-model="palletItem.palletQty"  placeholder="Must be a number!" ng-change="changeDef(palletItem)" float/>
+							<span style="color: red">*</span>
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<span ng-show="palletItem.defpalletQty" style="color: red">Can not be null!</span>
+							<span ng-show="def.palletQty.$error.date" style="color: red">Must be a maximum  14-bit integers, two decimal places positive!</span>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</form>
+		</div>
+		<div class="modal-footer">
+			<button class="btn btn-primary btn-small ok" type="submit" ng-click="doPalletCache(palletItem)">Save</button>
+			<button class="btn btn-warning btn-small cancel" ng-click="closePalletCacheDlg()">Cancel</button>
+		</div>
+	</div>
+	
+	<!-- Execution Dialog -->
+<!-- 	<div modal="executeDlg" close="closeExecuteDlg()" options="dlgOpts">
+		<div class="modal-header">
+			<h4>Execution Information</h4>
+		</div>
+		<div class="modal-body">
+		<form novalidate name="execute">
+			<table>
+				<tbody>
+					<tr>
+						<td align="right">Shift :&nbsp;</td>
+						<td>
+							<input type="text" class="input-medium" name="shift" ng-model="executeVo.shift"/>
+						</td>
+						<td></td>
+						<td></td>
+					</tr>
+					<tr>
+						<td align="right">Remarks :&nbsp;</td>
+						<td colspan="3">
+							<textarea type="text" ng-model="executeVo.remarks" name="remarks" style="width: 429px;"></textarea>
+						</td>
+					</tr>
+					<tr>
+						<td align="right">Reason :&nbsp;</td>
+						<td colspan="3">
+							<textarea type="text" ng-model="executeVo.reason" name="reason" style="width: 429px;"></textarea>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</form>
+		</div>
+		<div class="modal-footer">
+			<button class="btn btn-primary btn-small ok" ng-click="doExecute(executeVo)">Save</button>
+			<button class="btn btn-warning btn-small cancel" ng-click="closeExecuteDlg()">Cancel</button>
+		</div>
+	</div> -->
+	
+		<!-- 鍒犻櫎detail Dialog -->
+	<!-- <div modal="deleteItemDetailDlg" close="closeDeleteDlg()" options="dlgOpts">
+		<div class="modal-header">
+			<h4>Delete Pallet</h4>
+		</div>
+		<div class="modal-body">
+		<form novalidate class="form-horizontal">
+			<table>
+				<tbody>
+					Are you sure to delete ?
+				</tbody>
+			</table>
+		</form>
+		</div>
+		<div class="modal-footer">
+			<button class="btn btn-primary btn-small ok" ng-click="doDeleteDetail(deleteDetailVo)">YES</button>
+			<button class="btn btn-warning btn-small cancel" ng-click="closeDeletDlg()">NO</button>
+		</div>
+	</div> -->
+	<!-- 鎵归噺鍒犻櫎detail Dialog -->
+	<!-- <div modal="deleteAllDetailDlg" close="closeDeleteAllDlg()" options="dlgOpts">
+		<div class="modal-header">
+			<h4>Delete Pallet</h4>
+		</div>
+		<div class="modal-body">
+		<form novalidate class="form-horizontal">
+			<table>
+				<tbody>
+					Are you sure to delete ?
+				</tbody>
+			</table>
+		</form>
+		</div>
+		<div class="modal-footer">
+			<button class="btn btn-primary btn-small ok" ng-click="deleteAll()">YES</button>
+			<button class="btn btn-warning btn-small cancel" ng-click="closeDeleteAllDlg()">NO</button>
+		</div>
+	</div> -->
+	
+</div>
+<style type="text/css">
+.red{background: red;}
+.column0 {text-align: right;width: 125px;}
+.selected{color:red;background:GreenYellow;}
+.errorNum{color:red;}
+.blueNum{color:blue;}
+</style>
+}{
+	<script src="@routes.Assets.at("/public", "javascripts/printStyles/whshipped.js")" type="text/javascript"></script>
+	<script type="text/javascript" charset="utf-8">
+		//var CloudWMS = angular.module('CloudWMS', ['ui','ui.bootstrap']);
+		var NULL_REGEXP=/^\s*$/;
+		CloudWMS.controller('DirectGoodReceive', function($scope, $http, $timeout,$filter){
+			$scope.alerts = [];
+			$scope.itemDetailList = [];
+			$scope.currentUsedSKU = 0.0;
+			$scope.currentAllSKU = 0.0;
+			$scope.sku = 0.0;
+			
+			var addAlert = function(types,msgs) {
+		        $scope.alerts.push({type:types,msg: msgs});
+		        $timeout($scope.clearAlerts, 5000);
+		    };
+	        $scope.closeAlert = function(index) {
+	          $scope.alerts.splice(index, 1);
+	        };
+	        $scope.clearAlerts = function() {
+	          $scope.alerts = [];
+	        };
+	        $timeout($scope.clearAlerts, 5000);
+	        $scope.dlgOpts = {
+    		    backdropFade: true,
+    		    dialogFade:false,
+    		    backdropClick:false
+    		};
+	        
+			$scope.NullTest=function(value){
+		    	  if(value== null)return true;
+		    	  if (NULL_REGEXP.test(value)) {
+		    		 return false;
+		    	  }else{
+		    		  return true;
+		    	  }
+			}
+			
+			$scope.selectedAll = false;
+			//鍏ㄩ�
+			$scope.selectAll = function(){
+				for(var i = 0, len = $scope.itemDetailList.length; i<len;i++){
+					$scope.itemDetailList[i].isSelected = $scope.selectedAll;
+				}
+			};
+			//鍗曢�
+			$scope.changeSelect = function(){
+				var allSelected = true;
+				for(var i = 0, len = $scope.itemDetailList.length; i < len; i++){
+					if(!$scope.itemDetailList[i].isSelected){
+						allSelected = false;
+						$scope.selectedAll = false;
+						continue;
+					}
+				}
+				if(allSelected){
+					$scope.selectedAll = true;
+				}
+			};
+	        
+	        $http.get('/inbound/pi/listMaterial').success(
+  	           function(data, status, headers, config) {
+  	             $scope.materials = data.Data;
+  	         }).error(
+  	           function(data, status, headers, config) {
+  	             $scope.status = status
+  	         });
+	        
+		 	$scope.setMaterialCode=function(materialVo){
+			 	 $scope.hasAdd = false;
+				 for(var i = 0, len = $scope.materials.length; i < len; ++i) {
+			           if($scope.materials[i].codeAndDesc==materialVo.codeAndDesc){
+			        	   materialVo.materialCode=$scope.materials[i].materialCode;
+			        	   materialVo.materialName=$scope.materials[i].materialName;
+			        	   materialVo.netWeight=$scope.materials[i].netWeight;
+			        	   materialVo.materialId=$scope.materials[i].materialId;
+			        	   $scope.hasAdd = true;
+			           }
+			         }
+				 if(!($scope.hasAdd)){
+		        	    materialVo.materialId='';
+			     }
+				$scope.getMaterialUom(materialVo,true);
+	        	return $scope.NullTest(materialVo.materialId);
+			}
+		 	
+	        $scope.getMaterialUom=function(materialVo,add){
+	        	 if(materialVo.materialId){
+	        		 $http.get('/inbound/pi/listMaterialUom/'+materialVo.materialId).success(
+	            	      function(data, status, headers, config) {
+	            	    	 	 if(data.Type=='success'){
+	            	         		$scope.materialUoms = data.Data;
+	            	    	 	 }
+      	                 $scope.piVo.uomVo = JSON.parse(JSON.stringify($scope.materialUoms[0]));
+      	                 $scope.piVo.qtyPerPalletUom = JSON.parse(JSON.stringify($scope.materialUoms[0]));
+          	         }).error(
+          	           function(data, status, headers, config) {
+          	             $scope.status = status
+          	         });
+	        		 
+	        		 $http.get('/inbound/pi/listMaterialUomBase/'+materialVo.materialId).success(
+	           	           function(data, status, headers, config) {
+	           	        	 if(data.Type=='success'){
+	           	             	$scope.materialUomBases = data.Data;
+	           	                 $scope.piVo.netWeightUom =  JSON.parse(JSON.stringify($scope.materialUomBases[0]));
+	           	        	 }
+	           	         }).error(
+	           	           function(data, status, headers, config) {
+	           	             $scope.status = status
+	           	         });
+	        	 }
+	         }
+		 	
+		 	$scope.setMaterialUomCode=function(uomVo){
+				 for(var i = 0, len = $scope.materialUoms.length; i < len; ++i) {
+		           if($scope.materialUoms[i].id==uomVo.id){
+		        	   uomVo.uomCode=$scope.materialUoms[i].uomCode;
+		           }
+			     }
+			} 
+		 	
+			//pi瀵硅薄
+			$scope.piVo = {piNo:"",piStatus:'New',sourceType:'T002',ts:$filter('date')(new Date(), 'yyyy-MM-dd'),materialVo:{}};
+			$scope.params = {};
+			$scope.itemDetailList = [];
+			$scope.savePiInfo=function(piVo){
+				var valid = true;
+				//#################楠岃瘉 start###########################33
+				//楠岃瘉鏈夋晥鎬�
+				if(!piVo.piNo){
+					valid = false;
+					$scope.pif.piNo.notNull = true;
+				}else{
+					valid = true;
+					$scope.pif.piNo.notNull = false;
+					$scope.pif.piNo.less40 = false;
+					if(piVo.piNo.length>40){
+						valid = false;
+						$scope.pif.piNo.less40 = true;
+					}
+				}
+				
+				if(!piVo.materialVo.codeAndDesc){
+					valid = false;
+					$scope.pif.materialCheck = true;
+				}else{
+					valid = true;
+					$scope.pif.materialCheck = false;
+				}
+				
+				if(!piVo.piQty){//鏁伴噺鏍￠獙
+					valid = false;
+					$scope.pif.piQty.notNull = true;
+				}else{
+					valid = true;
+					$scope.pif.piQty.notNull = false;
+					$scope.pif.piQty.notNumber = false;
+					if(isNaN(piVo.piQty)){
+						valid = false;
+						$scope.pif.piQty.notNumber = true;
+					}
+				}
+				
+				if(!piVo.qtyPerPallet){// 鏁伴噺鏍￠獙
+					valid = false;
+					$scope.pif.qtyPerPallet.notNull = true;
+				}else{
+					valid = true;
+					$scope.pif.qtyPerPallet.notNull = false;
+					$scope.pif.qtyPerPallet.notNumber = false;
+					if(isNaN(piVo.piQty)){
+						valid = false;
+						$scope.pif.qtyPerPallet.notNumber = true;
+					}
+				}
+				//##################楠岃瘉 end#################################
+            	if(valid){
+          		    $scope.currentOrder = piVo;
+	       	        var qtyOfBase = $scope.currentOrder.uomVo;
+	       	        var qtyPerPallet = $scope.currentOrder.qtyPerPalletUom;
+	       	        $scope.params.qtyUomId = qtyOfBase.id;
+	       	        $scope.params.palletUomId = qtyPerPallet.id;
+	       	     	$http.post('/inbound/dgreceive/uomConvertRate', JSON.stringify($scope.params)).success(
+						function(data, status, headers, config){
+							if(data.Type == 'success'){
+								$scope.convertRate = data.Data;
+								$scope.itemDetailList = [];
+								$scope.sku = parseFloat($scope.currentOrder.piQty / $scope.convertRate).toFixed(2) ;
+								var palletedQty = 0;
+								var size = parseInt($scope.sku /  $scope.currentOrder.qtyPerPallet);
+								
+								for(var i=0;i<size;i++){
+									var nowPalletedQty = $scope.currentOrder.qtyPerPallet;//parseInt($scope.currentOrder.piQty/size);
+									$scope.itemDetailList.push({"palletNo":i+1,"receiveDate":$filter('date')(new Date(), 'yyyy-MM-dd'),
+										"batchNo":"","area":{},"areaId":"","bin":{},"binId":"","palletQty":nowPalletedQty,
+										"isPrinted":"N","isSelected":false,"isExecuted":false});
+									palletedQty+=parseFloat(nowPalletedQty);
+								}
+								
+								var plusPalletedQty = parseFloat($scope.sku)-parseFloat(palletedQty);
+								if(size==0){
+									plusPalletedQty = $scope.sku;
+								}
+								palletedQty = parseFloat(palletedQty)+parseFloat(plusPalletedQty);
+								//浣欐暟
+								if(plusPalletedQty>0){
+									$scope.itemDetailList.push({"palletNo":size+1,"receiveDate":$filter('date')(new Date(), 'yyyy-MM-dd'),
+										"batchNo":"","area":{},"areaId":"","bin":{},"binId":"","palletQty":plusPalletedQty,
+										"isPrinted":"N","isSelected":false,"isExecuted":false});
+								}
+								$scope.currentUsedSKU = palletedQty;
+								$scope.currentAllSKU = palletedQty;
+							} else {
+								alert(data.Message);
+							}
+					}).error(
+						function(data, status, headers, config){
+							alert(status);
+					});
+            	}
+				//瀛樺偍
+			}
+			
+			//鍔ㄦ�灞曠ずbin
+			$scope.areaChange = function(defPIDetailVo){
+				if(defPIDetailVo.areaId&&defPIDetailVo.areaId != null){
+					document.getElementById("submitDiv").style.display = "inline";
+					defPIDetailVo.defareaId = false;
+					$http.post('/inbound/planmanagement/changeBin', JSON.stringify({"areaId":defPIDetailVo.areaId})).success(
+						function(data, status, headers, config){
+							if(data.Type == 'success'){
+								$scope.binVoList = data.Data;
+							} else {
+								alert(data.Message)
+							}
+							document.getElementById("submitDiv").style.display = "none";
+					}).error(
+						function(data, status, headers, config){
+							document.getElementById("submitDiv").style.display = "none";
+							alert(status);
+					});
+				}
+			};
+			
+			$scope.openEditDlg = function(index){
+				//鎵ц娣诲姞鏃跺幓鎺夋墍鏈夐�鎷╂涓殑閫夋嫨椤�
+				/* $scope.selectedAll = false; */
+				var amount = 0;
+				 
+		    	var contansPrinted = false;
+				for(var i = 0, len = $scope.itemDetailList.length; i<len;i++){
+					if($scope.itemDetailList[i].isSelected){
+						amount++;
+					}
+					if($scope.itemDetailList[i].isPrinted == "Y" //鏄惁鎵撳嵃
+							&& $scope.itemDetailList[i].isSelected){
+						contansPrinted = true;
+						continue;
+					}
+				}
+				$scope.palletItem = {};
+				var itemDetailVo;
+				if(index!=-1){
+					itemDetailVo = $scope.itemDetailList[index];
+					$scope.itemDetailList[index].isSelected = true;
+					$scope.currentIndex = index;
+					amount = 1;
+					$scope.palletItem = $scope.itemDetailList[index];
+				}
+				
+				var b = true;
+				if(amount < 1){//鍒ゆ柇鏄惁鏈夐�鎷�
+					alert("Please select the data !");
+					return;
+				} else {
+					if(contansPrinted){
+						b = confirm("Warning : The data you have selected contains data to be printed, are you sure to continue?");
+					}
+				}
+				
+				if(b){
+					$scope.areaVoList = [];
+					$scope.binVoList = [];
+					//鑾峰緱缂栬緫椤甸潰area闆嗗悎
+					$http.post('/inbound/dgreceive/initArea', JSON.stringify({})).success(
+							function(data, status, headers, config){
+								if(data.Type == 'success'){
+									$scope.areaVoList = data.Data;
+									//鑾峰緱area瀵瑰簲鐨刡in鐨勯泦鍚�
+									if (itemDetailVo&&itemDetailVo.areaId != null && itemDetailVo.areaId != ""){
+										var tmpItemDetailVo = {"areaId":itemDetailVo.areaId};
+										$http.post('/inbound/planmanagement/changeBin', JSON.stringify(tmpItemDetailVo)).success(
+											function(data, status, headers, config){
+												if(data.Type == 'success'){
+													$scope.binVoList = data.Data;
+												} else {
+													alert(data.Message);
+												}
+										}).error(
+											function(data, status, headers, config){
+												alert(status);
+										});
+									}
+									$scope.editPalletDlg = true;
+								} else {
+									alert(data.Message);
+								}
+						}).error(
+							function(data, status, headers, config){
+								alert(status);
+						});
+					}
+			};
+			
+			//鎵ц榛樿淇敼(鏆傛椂缂撳瓨鍦ㄩ〉闈笂)
+			$scope.doPalletCache = function(palletItem){
+				var isValidate = true;
+				var s = JSON.stringify(palletItem);
+				PIDetailVo = JSON.parse(s);
+				if(!PIDetailVo.batchNo){
+					isValidate = false;
+					palletItem.defBatchNo = true ;
+				}else{
+					palletItem.defBatchNo = false ;
+				}
+
+				if(!PIDetailVo.areaId){
+					isValidate = false;
+					palletItem.defareaId = true;
+				}else{
+					palletItem.defareaId = false;
+				}
+				if(!PIDetailVo.binId){
+					isValidate = false;
+					palletItem.defbinId = true;
+				}else{
+					palletItem.defbinId = false;
+				}
+				
+				if(!PIDetailVo.palletQty){
+					isValidate = false;
+					palletItem.defpalletQty = true;
+				}else{
+					palletItem.defpalletQty = false;
+					if(isNaN(PIDetailVo.palletQty)){
+						isValidate = false;
+						$scope.def.palletQty.$error.date = true;
+					}
+				}
+				
+				if(isValidate){
+					
+					if(palletItem.areaId != null){
+						for(var i = 0, len = $scope.areaVoList.length; i<len;i++){
+							if($scope.areaVoList[i].id == palletItem.areaId){
+								palletItem.area = $scope.areaVoList[i];
+								palletItem.areaName = $scope.areaVoList[i].nameKey;
+							}
+						}
+					}
+					if(palletItem.binId != null){
+						for(var i = 0, len = $scope.binVoList.length; i<len;i++){
+							if($scope.binVoList[i].id == palletItem.binId){
+								palletItem.bin = $scope.binVoList[i];
+								palletItem.binName = $scope.binVoList[i].nameKey;
+							}
+						}
+					}
+					document.getElementById("submitDiv").style.display = "inline";
+					for(var i = 0, len = $scope.itemDetailList.length; i < len; i++){
+						if($scope.itemDetailList[i].isSelected){
+							$scope.itemDetailList[i].batchNo = palletItem.batchNo;
+							$scope.itemDetailList[i].areaId = palletItem.areaId;
+							$scope.itemDetailList[i].area = palletItem.area;
+							$scope.itemDetailList[i].areaName = palletItem.area.nameKey;
+							$scope.itemDetailList[i].binId = palletItem.binId;
+							$scope.itemDetailList[i].bin = palletItem.bin;
+							$scope.itemDetailList[i].binName = palletItem.bin.nameKey;
+							$scope.itemDetailList[i].palletQty = palletItem.palletQty;
+							$scope.itemDetailList[i].isSelected = false;
+						}
+					}
+					$scope.sumSKU($scope.itemDetailList);
+					document.getElementById("submitDiv").style.display = "none";
+					$scope.editPalletDlg = false;
+				}
+			};
+			
+			//鍏抽棴榛樿淇敼妗�
+			$scope.closePalletCacheDlg = function(){
+				$scope.editPalletDlg = false;
+			};
+			
+/* 			$scope.openExecuteDlg = function(){
+				var countNum = 0;
+				var printAllFlag = true;
+				for(var i = 0,len = $scope.itemDetailList.length; i<len; i++){
+					 if($scope.itemDetailList[i].isSelected){
+						 countNum++;
+					}
+					if($scope.itemDetailList[i].isPrinted=='N'){
+						printAllFlag = false;
+					}
+				}
+				
+				if(countNum!=$scope.itemDetailList.length){
+					alert("Please select all data to execute!");
+					return;
+				}
+				
+				if(!printAllFlag){
+					alert("Please print Pallet carton slip before execute!");
+					return;
+				}
+				$scope.executeVo = {shift : '', remarks : '', reason : ''};
+				$scope.executeDlg = true;
+			};
+			
+			$scope.closeExecuteDlg = function(){
+				$scope.executeDlg = false;
+			}; */
+			//鎵цexecute
+			$scope.doExecute = function(){//executeVo
+				//###########楠岃瘉鏁版嵁鏈夋晥鎬�start##################################
+				var countNum = 0;
+				var printAllFlag = true;
+				for(var i = 0,len = $scope.itemDetailList.length; i<len; i++){
+					 if($scope.itemDetailList[i].isSelected){
+						 countNum++;
+					}
+					if($scope.itemDetailList[i].isPrinted=='N'){
+						printAllFlag = false;
+					}
+				}
+				
+				if(countNum!=$scope.itemDetailList.length){
+					alert("Please select all data to execute!");
+					return;
+				}
+				
+				if(!printAllFlag){
+					alert("Please print Pallet carton slip before execute!");
+					return;
+				}
+				
+				var c = true;
+				if($scope.currentUsedSKU>$scope.currentAllSKU){
+					c = confirm("Actual Executed Qty is bigger than Plan Qty. Are you sure to continue?!");
+				}
+				//###########楠岃瘉鏁版嵁鏈夋晥鎬�end##################################
+				
+				if(c){
+					//閹靛綊鍣�
+					$scope.currentExecutionList = [];
+					for(var i = 0,len = $scope.itemDetailList.length; i<len; i++){
+						if($scope.itemDetailList[i].isSelected == true){
+							$scope.itemDetailList[i].piNo = $scope.piVo.piNo;
+							/* $scope.itemDetailList[i].shift = executeVo.shift;
+							$scope.itemDetailList[i].remarks = executeVo.remarks;
+							$scope.itemDetailList[i].reason = executeVo.reason; */
+							/* $scope.itemDetailList[i].proDate = $scope.itemDetailList[i].receiveDate; */
+							/* public MapVo area;
+							public MapVo bin; */
+							/* $scope.itemDetailList[i].qty = $scope.itemDetailList[i].palletQty; */
+							
+							$scope.currentExecutionList.push($scope.itemDetailList[i]);
+						}
+					}
+					document.getElementById("submitDiv").style.display = "inline";
+					$http.post('/inbound/pi/save',JSON.stringify($scope.piVo)).success(function(data, status, headers, config){
+						if(data.Type == 'success'){
+							$http.post('/inbound/dgreceive/executeGoodReceive', JSON.stringify($scope.currentExecutionList)).success(
+								function(data, status, headers, config){
+									if(data.Type == 'success'){
+										for(var j = 0; j < $scope.itemDetailList.length; j++){
+											for(var i = 0; i < $scope.currentExecutionList.length; i++){
+												if($scope.itemDetailList[j].isSelected&& 
+														$scope.itemDetailList[j].stockno == $scope.currentExecutionList[i].stockno){
+													$scope.currentExecutionList[i].isSelected = false;
+													$scope.currentExecutionList[i].isExecuted = true;
+													$scope.itemDetailList.splice(j, 1, $scope.currentExecutionList[i]);
+												}
+											}
+										}
+										/* $scope.selectedAll = false; */
+										$scope.executeDlg = false;
+										alert("Congratulations : Execute all successfully!");
+										window.location.reload();
+									} else {
+										alert(data.Message);
+									}
+									document.getElementById("submitDiv").style.display = "none";
+							}).error(
+								function(data, status, headers, config){
+									document.getElementById("submitDiv").style.display = "none";
+									alert(status);
+							});
+						}else{
+							document.getElementById("submitDiv").style.display = "none";
+							alert(data.Message);
+						}
+					});
+				}
+				
+				
+			};
+			
+			//鎵撳紑鍒犻櫎妗�
+/* 			$scope.openDeletDlg = function(itemDetailVo, isExecuted, index){
+				//鎵ц娣诲姞鏃跺幓鎺夋墍鏈夐�鎷╂涓殑閫夋嫨椤�
+				$scope.selectedAll = false;
+				$scope.currentIndex = index;
+				for(var i = 0, len = $scope.itemDetailList.length; i<len;i++){
+					$scope.itemDetailList[i].isSelected = false;
+				}
+				if(!isExecuted){
+					$scope.deleteItemDetailDlg = true;
+					$scope.deleteDetailVo = itemDetailVo;
+				}
+			};
+			
+			//鍒犻櫎detail
+			$scope.doDeleteDetail = function(deleteDetailVo){
+				$scope.itemDetailList.splice($scope.currentIndex, 1);
+				$scope.deleteItemDetailDlg = false;
+			};
+			
+			$scope.closeDeleteDlg = function(){
+				$scope.deleteItemDetailDlg = false;
+			} */
+			
+			function getPrintData(itemDetailVo){
+				var printData = new Object();
+				printData.piNo = $scope.piVo.piNo;
+				printData.batchNo = itemDetailVo.batchNo;
+				printData.packing = $scope.convertRate;
+				printData.qty = itemDetailVo.palletQty;
+				printData.receivingDate = itemDetailVo.receiveDate;
+				printData.storageLocation = itemDetailVo.areaName + '-' + itemDetailVo.binName;
+				printData.description = $scope.piVo.materialVo.materialName;
+				printData.barCode = $scope.piVo.piNo + '-' + itemDetailVo.batchNo;
+				printData.palletNo = itemDetailVo.palletNo;
+				return printData;
+			}
+			
+			function isFilledAllData(itemDetailVo){
+				if((itemDetailVo.area&&null==itemDetailVo.area||itemDetailVo.area =="")
+					||(itemDetailVo.bin&&null==itemDetailVo.bin|| itemDetailVo.bin =="") 
+					||null==itemDetailVo.batchNo || itemDetailVo.batchNo == '' 
+					||null==itemDetailVo.receiveDate || itemDetailVo.receiveDate == ''){
+					return false;
+				}
+				return true;
+			}
+			
+			//鍗曟潯鎵撳嵃
+			$scope.printDlg = function(itemDetailVo, index){
+				//document.getElementById("submitDiv").style.display = "inline";
+				var needPrintItemList = [];
+				var isAllFilled = true;
+				if(index==-1){
+					var c = 0;
+					for(var i = 0,len=$scope.itemDetailList.length; i < len; i++){
+						if($scope.itemDetailList[i].isSelected){
+							c++;
+							needPrintItemList.push(getPrintData($scope.itemDetailList[i]));
+							isAllFilled = isFilledAllData($scope.itemDetailList[i]);
+							if(!isAllFilled){
+								break;
+							}
+						}
+					}
+					if(c==0){
+						alert("Please select the pallet to print!");
+						return;
+					}
+				}else{
+					needPrintItemList.push(getPrintData(itemDetailVo));
+					isAllFilled = isFilledAllData(itemDetailVo);
+				}
+				
+				if(!isAllFilled){
+					alert("ERROR : Please fill all the data!");
+					return;
+				}else{
+					/* $scope.currentIndex = index; */
+					try{
+				    	LODOP=getLodop(document.getElementById('LODOP_OB'),document.getElementById('LODOP_EM'));
+				    	for(var j=0,len=needPrintItemList.length;j<len;j++){
+				    		printPickData(needPrintItemList[j]);
+				    		var index = parseInt(needPrintItemList[j].palletNo)-1;
+				    		$scope.itemDetailList[index].isPrinted ="Y";
+							$scope.itemDetailList.splice(index, 1,$scope.itemDetailList[index]);
+				    	}
+				    }catch(err){
+						alert(err);
+					}
+				}
+			};
+			
+			//閸掓繂顬婇崠鏍ㄧ叀鐠囶晼i status
+/* 			 $http.get('/inbound/executionmanagement/listPiStatus').success(
+               function(data, status, headers, config) {
+            	   if(data.Type == 'success'){
+	            	  $scope.orderStatuses=data.Data;
+            	   } else {
+            		   alert(data.Message);
+            	   }
+             }).error(
+               function(data, status, headers, config) {
+            	  alert(status)
+             }); */
+			
+			//闁鑵戦崥搴ｆ畱閺嶅嘲绱￠柅澶嬪
+			$scope.getClass = function(ind){
+				if(ind === $scope.selecedIndex){
+					return "selected";
+				} else {
+					return "";
+				}
+			};
+			//鐠侊紕鐣籶alletQty閹粯鏆�
+			$scope.sumSKU = function(itemDetailList){
+				var amount = 0;
+				for(i = 0, len = itemDetailList.length; i < len; i++){
+					 amount = Number(amount) + Number(itemDetailList[i].palletQty);
+				}
+				$scope.currentUsedSKU = amount;
+				if($scope.currentUsedSKU > $scope.currentAllSKU){
+					$scope.classType = 'errorNum';
+				} else {
+					$scope.classType = '';
+				}
+			};
+		});
+	</script>
+}

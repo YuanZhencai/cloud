@@ -1,0 +1,347 @@
+@(name:String)
+<div class="modal-header">
+	<h4>Update Order</h4>
+    <div  style="display: none;">{{currentOrder.brand}}</div>
+</div>
+<form name="update">
+	<div class="modal-body">
+		<table cellpadding="0" cellspacing="0" border="0" id="example"
+			width="100%">
+			<legend>
+				<h5>PI Info</h5>
+			</legend>
+			<tr>
+				<td align="right">PI Source</td>
+				<td style="padding-left: 4px;">
+					{{currentOrder.piSource}}
+					<!-- <select ng-model="currentOrder.sourceType" class="span2" ng-disabled="true">
+						<option value="T002">Manual</option>
+						<option value="T003">Return</option>
+					</select> -->
+				</td>
+				<td align="right">Reference No.</td>
+				<td>
+					<input type="text" ng-model="currentOrder.referenceNo"
+						name="referenceNo" class="input-medium" ng-disabled="true">
+				</td>
+			</tr>
+			<tr>
+				<td align="right">PI No.</td>
+				<td width="170px;"><input class="input-medium" type="text" ng-model="currentOrder.piNo" name="piNo" ng-disabled="onlyView" null /><span style="color: red">*</span></td>
+				<td align="right">PI Status</td>
+				<td><input type="text" ng-model="currentOrder.piStatus"
+					name="piStatus" class="input-medium" ng-disabled="true"></td>
+			</tr>
+			<tr>
+				<td align="right">PI Type</td>
+				<td colspan="3">
+					<select ng-model="currentOrder.piType" class="span2">
+						<option value="Local">Local</option>
+						<option value="Export">Export</option>
+					</select>
+				</td>
+			</tr>
+			<tr>
+				<td></td>
+				<td><span ng-show="update.piNo.$error.date" style="color: red">can't
+						be null !</span> <span ng-show="piNolengthUp" style="color: red">length
+						can't be more than 40 !</span></td>
+			</tr>
+
+			<tr>
+				<td align="right">Material</td>
+				<td colspan="3"><input type="text" style="width: 403px;"
+					name="material" autocomplete="off" ng-disabled="onlyView"
+					ng-model="currentOrder.materialVo.codeAndDesc"
+					typeahead="m.codeAndDesc as m.codeAndDesc for m in materials | filter:$viewValue"
+					ng-change="materialCheckUp=setMaterialCode(currentOrder.materialVo,false)" ><span
+					style="color: red">*</span></td>
+			</tr>
+
+			<tr>
+				<td></td>
+				<td colspan="3"><span ng-show="materialCheckUp"
+					style="color: red">can't be null or not match!</span></td>
+			</tr>
+
+			<tr>
+				<td align="right">PI Qty</td>
+				<td><input type="text" ng-model="currentOrder.piQty" name="piQty"
+					style="width: 60px;"  float floatnull><span
+					style="color: red">*</span> <select ng-model="currentOrder.uomVo.id"
+					ng-options="mu.id as mu.uomCode for mu in materialUoms" ng-disabled="onlyView"
+					style="width: 75px;"  ng-change="setMaterialUomCode(currentOrder.uomVo)"
+					name="piQtyUom"></select><span style="color: red">*</span></td>
+				<td align="right">PI Date</td>
+				<td>
+					<input type="date" class="input-medium" ng-disabled="true" 
+						ng-model="currentOrder.ts" name="ts">
+				</td>
+			</tr>
+			<tr>
+				<td></td>
+				<td><span ng-show="update.piQty.$error.date" style="color: red">Not
+						a valid number !</span><span ng-show="update.piQty.$error.datef"
+					style="color: red">can't be null !</span></td>
+				<td></td>
+				<td></td>
+			</tr>
+			
+			<tr>
+				<td align="right">Extra Qty</td>
+				<td><input type="text" ng-model="currentOrder.extraQty" 
+					name="extraQty" style="width: 60px;" float /> <select
+					ng-model="currentOrder.uomVo.id" ng-disabled="onlyView"
+					ng-options="mu.id as mu.uomCode for mu in materialUoms"
+					style="width: 75px;" ng-change="setMaterialUomCode(currentOrder.uomVo)"></select>
+				</td>
+				<td align="right">Tolerance(%)</td>
+				<td><input type="text" ng-model="currentOrder.minPercent" 
+					name="minPercent" class="input-mini" float>~<input
+					type="text" ng-model="currentOrder.maxPercent" name="maxPercent" 
+					class="input-mini" float></td>
+			</tr>
+			<tr>
+				<td></td>
+				<td>
+					<span ng-show="update.extraQty.$error.date" style="color: red">Not
+						a valid number !</span>
+				</td>
+				<td></td>
+				<td><span ng-show="update.minPercent.$error.date"
+				style="color: red"> Not a valid number !</span> <span
+				ng-show="update.maxPercent.$error.date" style="color: red">Not
+					a valid number !</span></td>
+			</tr>
+			
+
+			<tr>
+				<td align="right">Qty/Pallet</td>
+				<td><input style="width: 60px;" type="text" 
+					ng-model="currentOrder.qtyPerPallet" name="qtyPerPallet" float floatnull><span
+					style="color: red">*</span> <select
+					ng-model="currentOrder.qtyPerPalletUom.id" 
+					ng-options="mu.id as mu.uomCode for mu in materialUoms"
+					style="width: 75px;" ng-disabled="onlyView"
+					ng-change="setMaterialUomCode(currentOrder.qtyPerPalletUom)"></select><span
+					style="color: red">*</span></td>
+				<td align="right">Melting Point</td>
+				<td><input type="text" ng-model="currentOrder.meltingPointfrom" 
+					name="meltingPointfrom" class="input-mini" float>~<input
+					type="text" ng-model="currentOrder.meltingPointTo" name="meltingPointTo" 
+					class="input-mini" float></td>
+			</tr>
+			
+			<tr>
+				<td></td>
+				<td><span ng-show="update.qtyPerPallet.$error.date"
+					style="color: red">Not a valid number !</span> <span
+					ng-show="update.qtyPerPallet.$error.datef" style="color: red">can't
+						be null !</span></td>
+				<td></td>
+				<td><span ng-show="update.meltingPointfrom.$error.date"
+					style="color: red"> Not a valid number !</span> <span
+					ng-show="update.meltingPointTo.$error.date" style="color: red">Not
+						a valid number !</span></td>
+			</tr>
+			<!-- <tr>
+			<td align="right">Blending Tank</td>
+				<td><input type="text" ng-model="currentOrder.blendingTank"  
+					name="blendingTank" class="input-medium"></td>
+			</tr> -->
+			<tr>
+				<td align="right">Remarks</td>
+				<td colspan="3"><textarea type="text" ng-model="currentOrder.remarks"
+						name="remarks" style="width: 429px;" ></textarea></td>
+			</tr>
+			<tr>
+				<td colspan="4"><legend>
+						<h5>Additional Info</h5>
+					</legend>
+				<td>
+			</tr>
+			<tr>
+				<td align="right">Contract No<!-- SG PI No. --></td>
+				<td><input class="input-medium" type="text" 
+					ng-model="currentOrder.contractNo" name="contractNo" null>
+					<!-- <span style="color: red;">*</span> -->
+				</td>
+				<td align="right">Supplier</td>
+				<td><input class="input-medium" type="text" ng-model="currentOrder.supplier"  name="supplier"/></td>
+			</tr>
+			
+			<tr>
+				<td></td>
+				<td>
+					<!-- <span ng-show="update.contractNo.$error.date"
+					style="color: red">can't be null!</span>  -->
+					<span ng-show="contractNolengthUp" style="color: red">length can't
+						be more than 40 !</span>
+				</td>
+				<td></td>
+				<td></td>
+			</tr>
+
+			<tr>
+				<td align="right">Sales Contract Date</td>
+				<td><input type="date" ng-model="currentOrder.salescontractdate" 
+					name="salescontractdate" class="input-medium"></td>
+				<td align="right">Brand</td>
+				<td><input type="text" ng-model="currentOrder.brand" 
+					name="brand" class="input-medium"></td>
+			</tr>
+			
+			<tr>
+				<td align="right">Purchase Contract</td>
+				<td><input type="text" ng-model="currentOrder.purchaseContract" 
+					name="purchaseContract" class="input-medium"></td>
+				<td align="right">Net Weight</td>
+				<td><input type="text" ng-model="currentOrder.netWeight"
+					name="netWeight" style="width: 60px;"   float><select
+					ng-model="currentOrder.netWeightUom.id"
+					ng-options="mu.id as mu.uomCode for mu in materialUomBases"
+					style="width: 75px;" 
+					ng-change="setMaterialUomCode(currentOrder.netWeightUom)"></select></td>
+			</tr>
+			<tr>
+				<td></td>
+				<td><span ng-show="update.netWeight.$error.date"
+					style="color: red">Not a valid number !</span></td>
+				<td></td>
+				<td></td>
+			</tr>
+			
+			<tr>
+				<td align="right">Packing Index</td>
+				<td><input type="text" ng-model="currentOrder.packingIndex" 
+					name="packingIndex" class="input-medium"></td>
+				<td></td><td></td>
+			</tr>
+			
+			<tr>
+				<td align="right">Packing</td>
+				<td colspan="3"><textarea type="text" ng-model="currentOrder.packing" style="width: 429px;"
+						name="packing" class="input-medium" ></textarea></td>
+			</tr>
+			
+			<tr>
+				<td align="right">SG Material</td>
+				<td><input class="input-medium" type="text" 
+					ng-model="currentOrder.sgMaterialCode" name="sgMaterialCode"></td>
+				<td align="right">Shipment Basis</td>
+				<td><input type="text" ng-model="currentOrder.shipmentBasis" 
+					name="shipmentBasis" class="input-medium"></td>
+			</tr>
+			
+			<tr>
+				<td align="right">Commodity</td>
+				<td colspan="3"><textarea type="text" name="commodity" 
+						ng-model="currentOrder.commodity" style="width: 429px;"></textarea></td>
+			</tr>
+			<tr>
+			<td align="right">Buyer Product Desc</td>
+				<!-- prodDesc -->
+				<td colspan="3"><input type="text" ng-model="currentOrder.buyerproddesc"
+					name="buyerproddesc" class="input-medium"   style="width: 429px;"></td>
+			</tr>
+			<tr>
+				<td align="right">Contract Quantity</td>
+				<td><input type="text" ng-model="currentOrder.salesContractQty"
+					name="salesContractQty" style="width: 60px;"   float><select
+					ng-model="currentOrder.salesContractQtyUom.id"
+					ng-options="mu.id as mu.uomCode for mu in materialUoms"
+					style="width: 75px;" 
+					ng-change="setMaterialUomCode(currentOrder.salesContractQtyUom)"></select>
+				</td>
+				<td align="right">Required Shipment Date</td>
+				<td><input type="date" class="input-medium" 
+					ng-model="currentOrder.reqShipmentDate" name="reqShipmentDate"></td>
+			</tr>
+			<tr>
+				<td></td>
+				<td><span
+					ng-show="update.salesContractQty.$error.date" style="color: red">Not
+						a valid number !</span></td>
+				<td></td><td></td>
+			</tr>
+			
+			<tr>
+				<td align="right">Quantity to be Shipped</td>
+				<td><input type="text" ng-model="currentOrder.qtyToBeShip"
+					name="qtyToBeShip" style="width: 60px;"   float><select
+					ng-model="currentOrder.qtyToBeShipUom.id"
+					ng-options="mu.id as mu.uomCode for mu in materialUoms"
+					style="width: 75px;" 
+					ng-change="setMaterialUomCode(currentOrder.qtyToBeShipUom)"></select></td>
+				<td align="right">Load Port</td>
+				<td><input type="text" ng-model="currentOrder.loadPort"
+					name="loadPort" class="input-medium" ></td>
+			</tr>
+			<tr>
+				<td></td>
+				<td><span ng-show="update.qtyToBeShip.$error.date"
+					style="color: red">Not a valid number !</span></td>
+				<td></td>
+				<td></td>
+			</tr>
+			
+			<tr>
+				<td align="right">Total No of Packages</td>
+				<td><input type="text" ng-model="currentOrder.totalNoOfPackage"
+					name="totalNoOfPackage" class="input-medium" ></td>
+				<td align="right">Destination Port</td><!-- Destination -->
+				<td><input type="text" ng-model="currentOrder.destinationport"
+					name="destinationport" class="input-medium" ></td>
+			</tr>
+			
+			<tr>
+				<td align="right">No.of Container</td>
+				<td><input type="text" ng-model="currentOrder.containerNo"
+					name="containerNo" class="input-medium" ></td>
+				<td align="right">BL Consignee</td><!-- blconsignee -->
+				<td><textarea type="text" ng-model="currentOrder.blcon"
+						name="blcon" class="input-medium" ></textarea></td>
+			</tr>
+			
+			<tr>
+				<td align="right">BL Notify Party</td>
+				<td><input type="text" ng-model="currentOrder.noti"
+					name="noti" class="input-medium" ></td>
+				<td align="right">Surveyor</td>
+				<td><textarea type="text" ng-model="currentOrder.surveyor"
+						name="surveyor" class="input-medium" ></textarea></td>
+			</tr>
+			
+			<tr>
+				<td align="right">Marking</td>
+				<td colspan="3"><textarea type="text" name="marking"
+						ng-model="currentOrder.marking" style="width: 429px;" ></textarea></td>
+			</tr>
+			
+			<tr>
+				<td align="right">SG PI Remarks</td>
+				<td colspan="3"><textarea type="text" name="sgRemarks"
+						ng-model="currentOrder.sgRemarks" style="width: 429px;" ></textarea></td>
+			</tr>
+			
+			<tr>
+				<td align="right">Special Requirement</td>
+				<td colspan="3"><textarea type="text" name="specialRequirement"
+						ng-model="currentOrder.specialRequirement" style="width: 429px;" ></textarea></td>
+			</tr>
+			
+			<tr>
+				<td align="right">Prepared By</td>
+				<td><input type="text" ng-model="currentOrder.preparedby"
+					name="preparedby" class="input-medium" ></td>
+				<td></td><td></td>
+			</tr>
+		</table>
+	</div>
+</form>
+<div class="modal-footer">
+	<input type="submit" value="Save" class="btn btn-primary btn-small"
+		ng-click="updateOrder(currentOrder)"> 
+	<input type="submit" value="Cancel" class="btn btn-warning btn-small"
+		ng-click="closeUpdateOrderDlg()">
+</div>

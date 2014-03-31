@@ -1,0 +1,420 @@
+@(name: String)
+@main("employee"){
+<div ng-controller="EmployeeCtrl">
+<div class="breadcrumb">
+	<li style=""> Current Location: Employee Setup</li>
+</div>
+<div alert ng-repeat="alert in alerts" type="alert.type" close="closeAlert($index)" template-url="/template/alert/alert.html">{{alert.msg}}</div>
+	<!-- 查询条件 -->
+	<form novalidate>
+		<table>
+			<tr>
+				<td class="column0">
+					<label>Company:</label>
+				</td>
+				<td class="column2">
+					<select ng-model="employeeVo.companyVo.id" ng-options="c.id as c.nameKey for c in plantList" ng-change="setPlant(employeeVo.companyVo)"></select>
+				</td>
+				<!-- <td class="column0">
+					<label>Active?:</label>
+				</td>
+				<td class="column2">
+					<select ng-model="employeeVo.active">
+					        <option value="">All</option>
+							<option value="false">Yes</option>
+							<option value="true">No</option>
+					</select>
+				</td> -->
+				<td class="column0">
+					<label>Employee Name:</label>
+				</td>
+				<td class="column2">
+					<input type="text" ng-model="employeeVo.employeeName">
+				</td>
+				<td class="column0">
+					<label>Employee Roles:</label>
+				</td>
+				<td class="column2">
+					<select ng-model="employeeVo.employeeTypeVo.id" ng-options="et.id as et.nameKey for et in employeeTypeList | orderBy:'nameKey'" ng-change="setEmployeeType(employeeVo.employeeTypeVo)">
+						<option value="">All</option>
+					</select>
+				</td>
+				<td>
+					<div style="text-align: right;">
+						<input type="submit" id="submit" value="Search" class="btn btn-primary btn-small" ng-click="searchList(employeeVo)" >
+					</div>
+				</td>
+			</tr>
+		</table>
+	</form>
+	
+	<table cellpadding="0" cellspacing="0" border="0"
+		class="table table-striped table-bordered table-hover table-condensed" id="example" width="100%">
+		<thead>
+			<tr>
+				<th>Company</th>
+				<th>Warehouse</th>
+				<th>Employee Name</th>
+				<th>Employee Code</th>
+				<th>Employee Roles</th>
+				<th>Last update date</th>
+				<th>Operation<a href="" class="btn btn-primary btn-small" id="new" ng-click="showEmployeeDlgMethod()">Add</a>
+				</th>
+			</tr>
+		</thead>
+
+		<tbody>
+			<tr ng-repeat="employee in employeeList" >
+				<td>{{employee.companyVo.nameKey}}</td>
+				<td>{{employee.warehouseVo.nameKey}}</td>
+				<td>{{employee.employeeName}}</td>
+				<td>{{employee.employeeCode}}</td>
+				<td>{{employee.employeeTypeVo.nameKey}}</td>
+				<td>{{employee.updateAt}}</td>
+				<th class="center">
+					<span class="btn btn-primary btn-small" ng-click="showEmployeeEditDlgMethd(employee)"> Edit</span>
+					<input type="button" ng-disabled="employee.delete" class="btn btn-danger btn-small" ng-click="showDeleteEmployeeDlg($index,employee)" value="Delete">
+				</th>
+			</tr>
+		</tbody>
+	</table>
+<!-- 	add Employee Dlg -->
+<div modal="showEmployeeDlg" close="closeEmployeeDlg()" options="dlgOpts">
+   <div class="modal-header">
+      <h4>Add Employee</h4>
+   </div>
+  <div class="modal-body">
+  <form name="addEmployeeForm">
+  <table>
+  <tr>
+  <td class="column0" >Company:</td>
+  <td><select type="text" ng-model="employeeAdd.companyVo.id" ng-options="c.id as c.nameKey for c in plantList" ng-change="employeeAdd.column0=setPlant(employeeAdd.companyVo)">
+  </select></td>
+  <td><span style="color: red">*</span><span ng-show="employeeAdd.column0" style="color: red">can't be null</span></td>
+  </tr>
+  <tr>
+  <td class="column0">Warehouse:</td>
+  <td><select type="text"  ng-model="employeeAdd.warehouseVo.id" ng-options="w.id as w.nameKey for w in warehouseList" ng-change="employeeAdd.column1=setWarehouse(employeeAdd.warehouseVo)">
+  </select></td>
+  <td><span style="color: red">*</span><span ng-show="employeeAdd.column1" style="color: red">can't be null</span></td>
+  </tr>
+  <tr>
+  <td class="column0">employee Name:</td>
+  <td><input type="text" ng-model="employeeAdd.employeeName" ng-change="employeeAdd.column2=NullTest(employeeAdd.employeeName)" ></td>
+  <td><span style="color: red">*</span><span ng-show="employeeAdd.column2" style="color: red">can't be null</span></td>
+  </tr>
+  
+  <tr>
+  <td class="column0">employee Code:</td>
+  <td><input type="text" ng-model="employeeAdd.employeeCode" ng-change="employeeAdd.column3=NullTest(employeeAdd.employeeCode)"></td>
+  <td><span style="color: red">*</span><span ng-show="employeeAdd.column3" style="color: red">can't be null</span></td>
+  </tr>
+  
+   <tr>
+   <td class="column0">employee Roles:</td>
+  <td><select type="text"  ng-model="employeeAdd.employeeTypeVo.id" ng-options="et.id as et.nameKey for et in employeeTypeList | orderBy:'nameKey'" ng-change="employeeAdd.column4=setEmployeeType(employeeAdd.employeeTypeVo)">
+  </select></td>
+  <td><span style="color: red">*</span><span ng-show="employeeAdd.column4" style="color: red">can't be null</span></td></tr>
+  
+  </table>
+  </form>
+  </div>
+  <div class="modal-footer">
+  		<a href=""  class="btn btn-primary btn-small" data-toggle="modal" ng-click="saveOrUpdateEmployee(employeeAdd)">OK</a>
+		<a href=""  class="btn btn-warning btn-small" data-toggle="modal" ng-click="closeEmployeeDlg()">Cancel</a>
+  </div>
+</div>
+<!-- 	edit Employee Dlg -->
+<div modal="showEmployeeEditDlg" close="closeEmployeeEditDlg()" options="dlgOpts">
+   <div class="modal-header">
+      <h4>Edit Employee</h4>
+   </div>
+  <div class="modal-body">
+  <form name="addEmployeeForm">
+  <table>
+  <tr>
+  <td class="column0" >Company:</td>
+  <td><select type="text" ng-model="employeeEdit.companyVo.id" ng-options="c.id as c.nameKey for c in plantList" ng-change="employeeEdit.column0=setPlant(employeeEdit.companyVo)">
+  </select></td>
+  <td><span style="color: red">*</span><span ng-show="employeeEdit.column0" style="color: red">can't be null</span></td>
+  </tr>
+  <tr>
+  <td class="column0">Warehouse:</td>
+  <td><select type="text"  ng-model="employeeEdit.warehouseVo.id" ng-options="w.id as w.nameKey for w in warehouseList" ng-change="employeeEdit.column1=setWarehouse(employeeEdit.warehouseVo)">
+  </select></td>
+  <td><span style="color: red">*</span><span ng-show="employeeEdit.column1" style="color: red">can't be null</span></td>
+  </tr>
+  <tr>
+  <td class="column0">employee Name:</td>
+  <td><input type="text" ng-model="employeeEdit.employeeName" ng-change="employeeEdit.column2=NullTest(employeeEdit.employeeName)" ></td>
+  <td><span style="color: red">*</span><span ng-show="employeeEdit.column2" style="color: red">can't be null</span></td>
+  </tr>
+  
+  <tr>
+  <td class="column0">employee Code:</td>
+  <td><input type="text" ng-model="employeeEdit.employeeCode" ng-change="employeeEdit.column3=NullTest(employeeEdit.employeeCode)"></td>
+  <td><span style="color: red">*</span><span ng-show="employeeEdit.column3" style="color: red">can't be null</span></td>
+  </tr>
+  
+   <tr>
+   <td class="column0">employee Roles:</td>
+  <td><select type="text"  ng-model="employeeEdit.employeeTypeVo.id" ng-options="et.id as et.nameKey for et in employeeTypeList | orderBy:'nameKey'" ng-change="employeeEdit.column4=setEmployeeType(employeeEdit.employeeTypeVo)">
+  </select></td>
+  <td><span style="color: red">*</span><span ng-show="employeeEdit.column4" style="color: red">can't be null</span></td></tr>
+  
+  </table>
+  </form>
+  </div>
+  <div class="modal-footer">
+  		<a href=""  class="btn btn-primary btn-small" data-toggle="modal" ng-click="saveOrUpdateEmployee(employeeEdit)">OK</a>
+		<a href=""  class="btn btn-warning btn-small" data-toggle="modal" ng-click="closeEmployeeEditDlg()">Cancel</a>
+  </div>
+
+</div>
+	 <!-- 删除对话框detail Dialog -->
+	<div modal="deleteEmployeeDlg" close="closeDeleteEmployeeDlg()">
+		<div class="modal-header">
+			<h4>Delete Employee</h4>
+		</div>
+		<div class="modal-body">
+			<form novalidate class="form-horizontal">
+				<table>
+					<tbody>
+						Are you sure to delete ?
+					</tbody>
+				</table>
+			</form>
+		</div>
+		<div class="modal-footer">
+			<button class="btn btn-primary btn-small ok" ng-click="employeeDelete(Index,deleteEmployeeVo)">YES</button>
+			<button class="btn btn-warning btn-small cancel" ng-click="closeDeleteEmployeeDlg()">NO</button>
+		</div>
+	</div>
+</div>
+<style type="text/css">
+.red{background: red;}
+.column0 {text-align: right;width: 125px;}
+.column1 {text-align: right;width: 165px;}
+.column2 {text-align: left;width: 9px;}
+</style>
+}{
+<script type="text/javascript" charset="utf-8">
+    //var CloudWMS = angular.module('CloudWMS', ['ui.bootstrap']);
+    var NULL_REGEXP=/^\S{1,15}$/;
+    CloudWMS.controller('EmployeeCtrl', function($scope, $http,$timeout) {
+
+    	$scope.deleteEmployeeDlg = false;
+    	$scope.showEmployeeDlg = false;
+    	$scope.showEmployeeEditDlg = false;
+
+    	  $scope.dlgOpts = {
+      		    backdropFade: true,
+      		    dialogFade:false,
+      		    backdropClick:false
+      		   // dialogClass: [width:'1200px'];
+      		  };
+  		  
+    	 var addAlert = function(types,msgs) {
+    	        $scope.alerts.push({type:types,msg: msgs});
+    	        $timeout($scope.clearAlerts, 5000);
+    	         };
+    	        $scope.closeAlert = function(index) {
+    	        $scope.alerts.splice(index, 1);
+    	        };
+    	        $scope.clearAlerts = function() {
+    	        $scope.alerts = [];
+    	        }
+    	 $timeout($scope.clearAlerts, 5000);
+
+    	$scope.NullTest=function(value){
+		    if (value.length > 0 && value.replace(/(^\s*)|(\s*$)/g,"").length != 0) {
+		    	return false;
+		    }else{
+		    	return true;
+		    }
+		}
+		
+            $http({method: 'GET', url: '/setup/employee/initPlant'}).success(
+                    function(data, status, headers, config) {
+                       $scope.plantList = data;
+                       $scope.employeeVo={companyVo:''}
+                       $scope.employeeVo.companyVo = JSON.parse(JSON.stringify($scope.plantList[0]));
+                  }).error(
+                    function(data, status, headers, config) {
+                      $scope.status = status
+                  });
+
+        	$scope.setPlant=function(plantVo){   //循环遍历company
+				 for(var i = 0, len = $scope.plantList.length; i < len; ++i) {
+			           if($scope.plantList[i].id==plantVo.id){
+			        	   plantVo.nameKey=$scope.plantList[i].nameKey;
+			           }
+			         }
+				}
+
+        	 $http({method: 'GET', url: '/setup/employee/initEmployeeType'}).success(
+                     function(data, status, headers, config) {
+                       $scope.employeeTypeList = data;
+                   }).error(
+                     function(data, status, headers, config) {
+                       $scope.status = status
+                   });
+
+         	$scope.setEmployeeType=function(employeeTypeVo){   //循环遍历EmployeeType
+ 				 for(var i = 0, len = $scope.employeeTypeList.length; i < len; ++i) {
+ 			           if($scope.employeeTypeList[i].id==employeeTypeVo.id){
+ 			        	  employeeTypeVo.nameKey=$scope.employeeTypeList[i].nameKey;
+ 			           }
+ 			         }
+ 				}
+
+         	 $http({method: 'GET', url: '/setup/employee/initWarehouse'}).success(
+                     function(data, status, headers, config) {
+                       $scope.warehouseList = data;
+                   }).error(
+                     function(data, status, headers, config) {
+                       $scope.status = status
+                   });
+
+         	$scope.setWarehouse=function(warehouseVo){   //循环遍历Warehouse
+ 				 for(var i = 0, len = $scope.warehouseList.length; i < len; ++i) {
+ 			           if($scope.warehouseList[i].id==warehouseVo.id){
+ 			        	  warehouseVo.nameKey=$scope.warehouseList[i].nameKey;
+ 			           }
+ 			         }
+ 				}
+ 			
+
+         	 $scope.searchList=function(employeeVo){ //Search Employee
+         		  document.getElementById("submitDiv").style.display = "inline";
+                 $http.post('/setup/employee/list', JSON.stringify(employeeVo)).success(
+                   function(data, status, headers, config) {
+                	   document.getElementById("submitDiv").style.display = "none";
+                      $scope.employeeList = data;
+                	  $scope.status=status;
+                 }).error(
+                   function(data, status, headers, config) {
+                	   document.getElementById("submitDiv").style.display = "none";
+                     $scope.status = status
+                 });
+            };
+
+            $scope.showEmployeeDlgMethod=function(){
+                   $scope.employee='';
+        		   $scope.employeeAdd={companyVo:'',warehouseVo:'',employeeName:'',employeeCode:'',employeeTypeVo:'',delete:false,active:'Yes',column0:undefined,column1:undefined,column2:undefined,column3:undefined,column4:undefined};
+                   $scope.showEmployeeDlg = true;
+                   $scope.employeeAdd.companyVo = JSON.parse(JSON.stringify($scope.plantList[0]));
+                   $scope.employeeAdd.warehouseVo = JSON.parse(JSON.stringify($scope.warehouseList[0]));
+             }
+
+            $scope.closeEmployeeDlg=function(){
+            	  $scope.showEmployeeDlg=false;
+              }
+            
+            $scope.showEmployeeEditDlgMethd=function(employee){
+               	   var s = JSON.stringify(employee);
+        	       $scope.employeeEdit = JSON.parse(s);
+                   $scope.showEmployeeEditDlg = true;
+                }
+
+            $scope.closeEmployeeEditDlg=function(){
+          	  $scope.showEmployeeEditDlg=false;
+            }
+
+            
+            $scope.saveOrUpdateEmployee=function(employee){
+         	   if(typeof employee.column0=='undefined'){
+         		  if(employee.companyVo!=null&&employee.companyVo!=''){
+         			   employee.column0=$scope.NullTest(employee.companyVo.nameKey)
+         		  }else{
+         	  		   employee.column0=true;
+         	  		  }
+	           }
+
+         	  if(typeof employee.column1=='undefined'){
+         		  if(employee.warehouseVo!=null&&employee.warehouseVo!=''){
+         			   employee.column1=$scope.NullTest(employee.warehouseVo.nameKey)
+         		  }else{
+         	  		   employee.column1=true;
+         	  		  }
+	           }
+         	   if(typeof employee.column2=='undefined'){
+         		  employee.column2=$scope.NullTest(employee.employeeName);
+	           }
+
+         	  if(typeof employee.column3=='undefined'){
+         		  employee.column3=$scope.NullTest(employee.employeeCode);
+	           } 
+	           
+         	   if(typeof employee.column4=='undefined'){
+        		  if(employee.employeeTypeVo!=null&&employee.employeeTypeVo!=''){
+        			   employee.column4=$scope.NullTest(employee.employeeTypeVo.nameKey)
+        		  }else{
+        	  		   employee.column4=true;
+        	  		  }
+	           }
+	           if((employee.column0||employee.column1||employee.column2||employee.column3||employee.column4)==false){
+                    if(employee.id==null){
+                    	  document.getElementById("submitDiv").style.display = "inline";
+                      $http.post('/setup/employee/save', JSON.stringify(employee)).success(
+                              function(data, status, headers, config) {
+                            	  document.getElementById("submitDiv").style.display = "none";
+                                $scope.status = status;
+                                $scope.searchList($scope.employeeVo);
+                                addAlert('success','Save Success !')
+                                $scope.showEmployeeDlg=false;
+                            }).error(
+                              function(data, status, headers, config) {
+                            	  document.getElementById("submitDiv").style.display = "none";
+                                  alert(data)
+                                  $scope.searchList($scope.employeeVo);
+                                  $scope.status = status
+                            });
+                        }else{
+                        	  document.getElementById("submitDiv").style.display = "inline";
+                            $http.post('/setup/employee/update', JSON.stringify(employee)).success(
+                                    function(data, status, headers, config) {
+                                    	  document.getElementById("submitDiv").style.display = "none";
+                                      $scope.status = status;
+                                      addAlert('success','Update Success !')
+                                      $scope.searchList($scope.employeeVo);
+                                      $scope.showEmployeeEditDlg=false;
+                                  }).error(
+                                    function(data, status, headers, config) {
+                                    	  document.getElementById("submitDiv").style.display = "none";
+                                  	  alert(data)
+                                  	  $scope.searchList($scope.employeeVo);
+                                      $scope.status = status
+                                  });
+                            }
+                }else{
+                    alert('Data error,Please check !')
+                };
+            }
+            
+            $scope.employeeDelete=function($index,employee){
+         		   $http.get(' /setup/employee/delete/'+employee.id).success(
+         		         function(data, status, headers, config) {
+         		         addAlert('success',data)
+         		         $scope.deleteEmployeeDlg = false;
+         		         $scope.searchList($scope.employeeVo);
+         		         }).error(
+         		         function(data, status, headers, config) {
+             		     alert(data)
+         		         $scope.status = status
+         		         });
+         	  }
+
+            $scope.showDeleteEmployeeDlg = function($index,employee){
+				$scope.Index = $index;
+   				$scope.deleteEmployeeVo = employee;
+				$scope.deleteEmployeeDlg = true;
+			}
+
+			 $scope.closeDeleteEmployeeDlg = function(){
+				 $scope.deleteEmployeeDlg = false;
+			 }
+			  document.getElementById("submitDiv").style.display = "none";
+          });
+    </script> 
+}

@@ -1,0 +1,106 @@
+@(name:String) 
+@main("Goods Receive Details"){
+<div ng-controller="ReceiveDetailsCtrl">
+	<div class="breadcrumb">
+		<li style="">Current Location: Goods Receive Details</li>
+	</div>
+	<form  class="form-horizontal" id="myfrom" name="myfrom"  novalidate="true">
+		<table>
+			<tr>
+				<td>
+					<div class="control-group">
+						<label id="piStatus" class="control-label">Date Time From:</label>
+						<div class="controls">
+							<input type="datetime-local" name="dateTimeFrom" ng-model="serchVo.dateTimeFrom" class="input-medium">
+						</div>
+					</div>
+				</td>
+				<td>
+					<div class="control-group">
+						<label class="control-label">Date Time To:</label>
+						<div class="controls">
+							<input type="datetime-local" name="dateTimeTo" ng-model="serchVo.dateTimeTo" class="input-medium">
+						</div>
+					</div>
+				</td>
+				<td>
+					<div class="control-group">
+						<label class="control-label"></label>
+						<div class="controls">
+							<input class="btn btn-primary btn-small" type="submit" value="Search" ng-click="searchVoList(serchVo)"> 
+							<input class="btn btn-primary btn-small" type="submit" value="Report"  onclick="submitForm()">
+						</div>
+					</div>
+				</td>
+			</tr>
+		</table>
+	</form>
+	<!-- PItable -->
+	<table class="table   table-bordered   table-condensed">
+		<thead>
+			<tr>
+				<th>Planned Prod Date</th>
+				<th>Prod Line</th>
+				<th>PI No.</th>
+				<th>Material Description</th>
+				<th>Transaction Date-time</th>
+				<th>Received Qty</th>
+				<th>UOM</th>
+				<th>Prod Qty</th>
+				<th>UOM</th>
+				<th>PI SKU</th>
+				<th>UOM</th>
+				<th>Plan Status</th>
+				<th>PI Status</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr ng-repeat="recdetail in receiveDetails">
+				<td>{{recdetail.productiondate}}</td>
+				<td>{{recdetail.prdline}}</td>
+				<td>{{recdetail.pino}}</td>
+				<td>{{recdetail.materialdesc}}</td>
+				<td>{{recdetail.executedtime}}</td>
+				<td>{{recdetail.receiveqty|number:2}}</td>
+				<td>{{recdetail.uom}}</td>
+				<td>{{recdetail.productionqty|number:2}}</td>
+				<td>{{recdetail.produom}}</td>
+				<td>{{recdetail.pisku|number:2}}</td>
+				<td>{{recdetail.uom}}</td>
+				<td>{{recdetail.planreceiveqty|number:2}}/{{recdetail.productionqty|number:2}}</td>
+				<td>{{recdetail.pireceivedqty|number:2}}/{{recdetail.piqty|number:2}}</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
+
+}{
+<script type="text/javascript" charset="utf-8">
+	function submitForm() {  
+   	 with (document.getElementById("myfrom")) {  
+       	 method = "post";  
+	        action = "/respot/receiveReport/download";  
+	        submit();  
+   	 	}  
+	}  
+
+	CloudWMS.controller('ReceiveDetailsCtrl', function($scope, $http,
+			$timeout, $filter, $window) {
+		$scope.serchVo = {};
+		$scope.searchVoList = function(serchVo) {
+			try {
+				$http.post('/report/receiveReport/search',
+						JSON.stringify(serchVo)).success(function(data, status, headers, config) {
+							$scope.receiveDetails = data;
+						}).error(function(data, status, headers, config) {
+				});
+			} catch (err) {
+				alert(err);
+			}
+		};
+		$scope.download = function() {
+			$window.location.href = "/respot/receiveReport/download";
+		}
+	});
+</script>
+}

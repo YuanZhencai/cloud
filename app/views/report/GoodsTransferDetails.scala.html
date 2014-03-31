@@ -1,0 +1,161 @@
+@(name:String) @main("GoodsTransferDetails Report"){
+<div ng-controller="GoodsTransferDetailsCtrl">
+	<div class="breadcrumb">
+		<li style="">Current Location: Goods Transfer Details</li>
+	</div>
+	<div alert ng-repeat="alert in alerts" type="alert.type"
+		close="closeAlert($index)" template-url="/template/alert/alert.html">{{alert.msg}}</div>
+	 
+	<form  class="form-horizontal" id="myfrom" name="myfrom">
+		<table>
+			<tr>
+				<td>
+					<div class="control-group">
+						<label id="piStatus" class="control-label">Date Time From</label>
+						<div class="controls">
+							<input type="datetime-local" name="dateTimeFrom" ng-model="serchVo.dateTimeFrom"
+								>
+						</div>
+					</div>
+				</td>
+				<td>
+					<div class="control-group">
+						<label class="control-label">Date Time To:</label>
+						<div class="controls">
+							<input type="datetime-local" name="dateTimeTo" ng-model="serchVo.dateTimeTo" >
+						</div>
+					</div>
+				</td>
+				<td>
+					<div class="control-group">
+						<label class="control-label"></label>
+						<div class="controls">
+							<input class="btn btn-primary btn-small" type="submit" value="Search" ng-click="searchVoList(serchVo)"> 
+							<input class="btn btn-primary btn-small" type="submit" value="Report"  onclick="submitForm()">
+						</div>
+					</div>
+				</td>
+			</tr>
+			 
+		</table>
+	</form>
+	<!-- PItable -->
+	<table class="table   table-bordered   table-condensed">
+		<thead>
+			<tr>
+				<th>PI No</th>
+				<th>Batch No</th>
+				<th>Material Desc</th>
+				<th>Pallet No</th>
+				<th>From storage bin</th>
+				<th>To storage bin</th>
+				<th>Qty/pallet</th>
+				<th>UOM</th>
+				<th>Execution date</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr ng-repeat="detail in details">
+				<td>{{detail.piNo}}</td>
+				<td>{{detail.batchNo}}</td>
+				<td>{{detail.matDesc}}</td>
+				<td>{{detail.palletNo}}</td>
+				<td>{{detail.from}}</td>
+				<td>{{detail.to}}</td>
+				<td>{{detail.qty|number:2}}</td>
+				<td>{{detail.uom}}</td>
+				<td>{{detail.exeDate|date:'dd/MM/yyyy'}}</td>
+			 
+			</tr>
+		</tbody>
+	</table>
+</div>
+
+}{
+<script src="@routes.Assets.at("/public", "javascripts/loading.js")" type="text/javascript"></script>
+<script type="text/javascript" charset="utf-8">
+	function submitForm() {  
+   	 with (document.getElementById("myfrom")) {  
+       	 method = "post";  
+	        action = "/report/goodstransferdetails/download";  
+	        submit();  
+   	 	}  
+	}  
+	//var CloudWMS = angular.module('CloudWMS', [ 'ui', 'ui.bootstrap' ]);
+	CloudWMS.controller('GoodsTransferDetailsCtrl', function($scope, $http,
+			$timeout, $filter, $window) {
+		$scope.serchVo = {};
+		$scope.alerts = [];
+	    /*
+	    *
+	    */
+		$scope.searchVoList = function(serchVo) {
+			document.getElementById("submitDiv").style.display = "inline";
+			try {
+				$http.post('/report/goodstransferdetails/list',
+						JSON.stringify(serchVo)).success(	
+						function(data, status, headers, config) {
+							document.getElementById("submitDiv").style.display = "none";
+							$scope.details = data;
+						}).error(function(data, status, headers, config) {
+							document.getElementById("submitDiv").style.display = "none";
+				});
+			} catch (err) {
+				alert(err);
+			}
+		};
+		//閺嶈宓侀弶鈥叉娑撳娴噀xcel濡剝婢�
+		$scope.download = function(serchVo) {
+			var date = new Date(serchVo.reportDate).getTime();
+			$window.location.href = "/report/packProductStock/download/"
+					+ serchVo.localOrExport + "/" + date;
+		}
+
+		var addAlert = function(types, msgs) {
+			$scope.alerts.push({
+				type : types,
+				msg : msgs
+			});
+			$timeout($scope.clearAlerts, 5000);
+		};
+		$scope.closeAlert = function(index) {
+			$scope.alerts.splice(index, 1);
+		};
+		$scope.clearAlerts = function() {
+			$scope.alerts = [];
+		};
+		$timeout($scope.clearAlerts, 5000);
+		//閸掓繂顬婇崠鏍�闂堛垺鐓＄拠銏℃蒋娴狅拷
+
+		$scope.dlgOpts = {
+			backdropFade : true,
+			dialogFade : false,
+		};
+	});
+</script>
+<style type="text/css">
+.css-form select[required].ng-invalid {
+	background-color: #FFEEFF;
+}
+
+.css-form input[required].ng-invalid {
+	background-color: #FFEEFF;
+}
+
+.css-form input[type='number'].ng-invalid {
+	background-color: #FFEEFF;
+}
+
+.css-form select[required].ng-valid {
+	background-color: #DEFFFF;
+}
+
+.css-form input[required].ng-valid {
+	background-color: #DEFFFF;
+}
+
+.css-form input[type='number'].ng-valid {
+	background-color: #DEFFFF;
+}
+</style>
+}

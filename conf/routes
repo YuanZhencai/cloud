@@ -1,0 +1,413 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+GET     /                           controllers.Application.index()
+
+# Home page
+GET     /inbound/pi                        controllers.inbound.OrderController.index()
+POST    /inbound/pi/save                   controllers.inbound.OrderController.save()
+GET     /inbound/pi/delete/:id             controllers.inbound.OrderController.delete(id:String)
+POST     /inbound/pi/list                  controllers.inbound.OrderController.list()
+POST    /inbound/pi/update                 controllers.inbound.OrderController.update()
+POST     /inbound/pi/plan/save             controllers.inbound.OrderController.savePlan()
+POST     /inbound/pi/timing/save           controllers.inbound.OrderController.saveTiming()
+POST     /inbound/pi/download               controllers.inbound.OrderController.download()
+GET     /inbound/pi/planItem/list/:id       controllers.inbound.OrderController.listPlan(id:String)
+GET     /inbound/pi/timing/list/:id         controllers.inbound.OrderController.listTiming(id:String)
+GET     /inbound/pi/initStorageType          controllers.inbound.OrderController.initStorageType()
+POST     /inbound/pi/getPiSku            	 controllers.inbound.OrderController.getPiSku()
+GET     /inbound/pi/delelePlan/:id           controllers.inbound.OrderController.deletePlan(id:String)
+GET     /inbound/pi/initLine                 controllers.inbound.OrderController.initproduciontLine()
+GET      /inbound/pi/deleteTiming/:id        controllers.inbound.OrderController.deleteTiming(id:String)
+GET      /inbound/pi/listMaterial             controllers.inbound.OrderController.listMaterial()
+GET      /inbound/pi/listMaterialUom/:id       controllers.inbound.OrderController.listMaterialUom(id:String)
+GET      /inbound/pi/listAllMaterialUom        controllers.inbound.OrderController.listAllMaterialUom()
+GET      /inbound/pi/listMaterialUomBase/:id   controllers.inbound.OrderController.listMaterialUomBase(id:String)
+GET      /inbound/pi/listPiStatus              controllers.inbound.OrderController.initPiStatus()
+GET 	/inbound/pi/receivedQty/:id				controllers.inbound.OrderController.getTotalReceivedQty(id:String)
+
+#Direct Goods Receive
+GET 	/inbound/dgreceive/list					controllers.inbound.DirectGoodsReceiveController.index()												
+POST 	/inbound/dgreceive/uomConvertRate		controllers.inbound.DirectGoodsReceiveController.uomConvertRate()	
+POST 	/inbound/dgreceive/initArea				controllers.inbound.DirectGoodsReceiveController.initArea()	
+POST 	/inbound/dgreceive/executeGoodReceive	controllers.inbound.DirectGoodsReceiveController.executeGoodReceive()	
+
+#Tansfer Plan  
+ 
+GET     /transfer/transferplan  				controllers.transfer.TransferPlanController.index()
+POST     /transfer/transferplan/list             controllers.transfer.TransferPlanController.list()
+POST    /transfer/transferplan/save             controllers.transfer.TransferPlanController.save()
+GET    /transfer/transferplan/delete/:id            controllers.transfer.TransferPlanController.delete(id:String)
+POST    /transfer/transferplan/update           controllers.transfer.TransferPlanController.update()
+POST    /transfer/transferplan/print           controllers.transfer.TransferPlanController.print()
+GET     /transfer/transferplan/pallets/list/:id     controllers.transfer.TransferPlanController.listPallets(id:String) 
+GET     /transfer/transferplan/stocks/list/:id     controllers.transfer.TransferPlanController.listStocks(id:String) 
+POST    /transfer/transferplan/pallets/save     controllers.transfer.TransferPlanController.savePallets() 
+POST    /transfer/transferplan/pallets/getbatch    controllers.transfer.TransferPlanController.getBatchsByPiNo()
+POST    /transfer/transferplan/pallets/getbatchforedit    controllers.transfer.TransferPlanController.getBatchsByPiNoForEdit()
+POST    /transfer/transferplan/pallets/getbatchdetail    controllers.transfer.TransferPlanController.getBatchDetail()
+
+GET    /transfer/transferplan/pallets/getfromareas/:batchId    controllers.transfer.TransferPlanController.getFromAreas(batchId:String)
+GET    /transfer/transferplan/pallets/gettoareas   controllers.transfer.TransferPlanController.getToAreas()
+GET    /transfer/transferplan/pallets/getemployee    controllers.transfer.TransferPlanController.getEmployee()
+GET    /transfer/transferplan/pallets/getfrombins/:areaNameKey    controllers.transfer.TransferPlanController.getFromBins(areaNameKey:String)
+GET    /transfer/transferplan/pallets/gettobins/:areaNameKey    controllers.transfer.TransferPlanController.getTomBins(areaNameKey:String)
+POST    /transfer/transferplan/pallets/getstocks    controllers.transfer.TransferPlanController.getStocks()
+POST    /transfer/transferplan/pallets/deletepallet  controllers.transfer.TransferPlanController.deletePallet()
+#POST    /transfer/transferplan/pallets/update   controllers.transfer.TransferPlanController.updatePallets(...) 
+
+ 
+ 
+#Goods Transfer
+GET          /transfer/goodstransfer                   	controllers.transfer.GoodsTransferController.index()
+POST         /transfer/goodstransfer/list              	controllers.transfer.GoodsTransferController.list()
+GET          /transfer/goodstransfer/pallets/list/:id  	controllers.transfer.GoodsTransferController.listpallets(id:String) 
+POST        /transfer/goodstransfer/pallets/execute 		controllers.transfer.GoodsTransferController.execute() 
+   
+#Pallet Arrangement
+GET     /arrangement/palletarrangement  					controllers.arrangement.PalletArrangementController.index()
+POST 	/arrangement/palletarrangement/list 				controllers.arrangement.PalletArrangementController.list()
+GET 	/arrangement/palletarrangement/pallets/list/:id 	controllers.arrangement.PalletArrangementController.listPallets(id:String)
+POST 	/arrangement/palletarrangement/combine 				controllers.arrangement.PalletArrangementController.combine()
+POST 	/arrangement/palletarrangement/dismantle 			controllers.arrangement.PalletArrangementController.dismantle()
+POST 	/arrangement/palletarrangement/doexecution 			controllers.arrangement.PalletArrangementController.doExecution()
+GET 	/arrangement/palletarrangement/print/:piNo 			controllers.arrangement.PalletArrangementController.print(piNo:String)
+POST 	/arrangement/palletarrangement/caculatenewstock 			controllers.arrangement.PalletArrangementController.caculateNewStock()
+
+#Plan Management
+GET		/inbound/planmanagement							controllers.inbound.PlanManagementController.index()
+GET		/inbound/planmanagement/listPiStatus			controllers.inbound.PlanManagementController.initPiStatus()
+GET		/inbound/planmanagement/initBin					controllers.inbound.PlanManagementController.initBin()
+GET		/inbound/planmanagement/initWare				controllers.inbound.PlanManagementController.initWarehouse()
+POST	/inbound/planmanagement/initArea				controllers.inbound.PlanManagementController.initArea()
+POST	/inbound/planmanagement/changeBin				controllers.inbound.PlanManagementController.changeBin()
+POST	/inbound/planmanagement/getPiSku				controllers.inbound.PlanManagementController.getPiSku()
+POST	/inbound/planmanagement/saveSpiltPlan			controllers.inbound.PlanManagementController.saveSpiltPlan()
+POST	/inbound/planmanagement/deletePlan				controllers.inbound.PlanManagementController.deletePlan()
+POST	/inbound/planmanagement/editPlan				controllers.inbound.PlanManagementController.editPlan()
+POST	/inbound/planmanagement/sumPIQty				controllers.inbound.PlanManagementController.sumPIQty()
+GET		/inbound/planmanagement/initProductionLine		controllers.inbound.PlanManagementController.initProductionLine()
+GET		/inbound/planmanagement/initPAworker			controllers.inbound.PlanManagementController.initPAworker()
+GET		/inbound/planmanagement/initDriver				controllers.inbound.PlanManagementController.initDriver()
+GET		/inbound/planmanagement/initLeader				controllers.inbound.PlanManagementController.initLeader()
+GET		/inbound/planmanagement/list					controllers.inbound.PlanManagementController.list()
+POST	/inbound/planmanagement/searchPiList			controllers.inbound.PlanManagementController.searchPiList()
+POST	/inbound/planmanagement/get						controllers.inbound.PlanManagementController.get()
+POST	/inbound/planmanagement/detail/defaultAddDetail	controllers.inbound.PlanManagementController.defaultAddDetail()
+POST	/inbound/planmanagement/detail/add				controllers.inbound.PlanManagementController.addDetail()
+POST	/inbound/planmanagement/detail/default			controllers.inbound.PlanManagementController.defaultDetail()
+POST	/inbound/planmanagement/detail/delete			controllers.inbound.PlanManagementController.deleteDetail()
+POST	/inbound/planmanagement/detail/deleteall		controllers.inbound.PlanManagementController.deleteAll()
+POST	/inbound/planmanagement/detail/print			controllers.inbound.PlanManagementController.printDetail()
+POST	/inbound/planmanagement/detail/update			controllers.inbound.PlanManagementController.updateDetail()
+POST	/inbound/planmanagement/detail/printall			controllers.inbound.PlanManagementController.printAllDetail()
+
+#Execution Management
+GET		/inbound/executionmanagement					controllers.inbound.ExecutionManagementController.index()
+GET		/inbound/executionmanagement/listPiStatus		controllers.inbound.ExecutionManagementController.initPiStatus()
+GET		/inbound/executionmanagement/initBin			controllers.inbound.ExecutionManagementController.initBin()
+GET		/inbound/executionmanagement/list				controllers.inbound.ExecutionManagementController.list()
+POST	/inbound/executionmanagement/searchPiList		controllers.inbound.ExecutionManagementController.searchPiList()
+POST	/inbound/executionmanagement/get				controllers.inbound.ExecutionManagementController.get()
+POST	/inbound/executionmanagement/sumPIQty			controllers.inbound.ExecutionManagementController.sumPIQty()
+POST	/inbound/executionmanagement/execute			controllers.inbound.ExecutionManagementController.execute()
+POST	/inbound/executionmanagement/executeAll			controllers.inbound.ExecutionManagementController.executeAll()
+
+#Receive From Return
+GET		/inbound/receiveFromReturn							controllers.inbound.ReceiveFromReturnController.index()
+GET		/inbound/receiveFromReturn/listPiStatus				controllers.inbound.ReceiveFromReturnController.initPiStatus()
+GET		/inbound/receiveFromReturn/initBin					controllers.inbound.ReceiveFromReturnController.initBin()
+GET		/inbound/receiveFromReturn/initWare					controllers.inbound.ReceiveFromReturnController.initWarehouse()
+POST	/inbound/receiveFromReturn/initArea					controllers.inbound.ReceiveFromReturnController.initArea()
+POST	/inbound/receiveFromReturn/changeBin				controllers.inbound.ReceiveFromReturnController.changeBin()
+POST	/inbound/receiveFromReturn/getPiSku					controllers.inbound.ReceiveFromReturnController.getPiSku()
+POST	/inbound/receiveFromReturn/sumPIQty					controllers.inbound.ReceiveFromReturnController.sumPIQty()
+POST	/inbound/receiveFromReturn/saveSpiltPlan			controllers.inbound.ReceiveFromReturnController.saveSpiltPlan()
+GET		/inbound/receiveFromReturn/initProductionLine		controllers.inbound.ReceiveFromReturnController.initProductionLine()
+GET		/inbound/receiveFromReturn/initPAworker				controllers.inbound.ReceiveFromReturnController.initPAworker()
+GET		/inbound/receiveFromReturn/initDriver				controllers.inbound.ReceiveFromReturnController.initDriver()
+GET		/inbound/receiveFromReturn/initLeader				controllers.inbound.ReceiveFromReturnController.initLeader()
+GET		/inbound/receiveFromReturn/list						controllers.inbound.ReceiveFromReturnController.list()
+POST	/inbound/receiveFromReturn/searchPiList				controllers.inbound.ReceiveFromReturnController.searchPiList()
+POST	/inbound/receiveFromReturn/get						controllers.inbound.ReceiveFromReturnController.get()
+POST	/inbound/receiveFromReturn/detail/defaultAddDetail	controllers.inbound.ReceiveFromReturnController.defaultAddDetail()
+POST	/inbound/receiveFromReturn/detail/add				controllers.inbound.ReceiveFromReturnController.addDetail()
+POST	/inbound/receiveFromReturn/detail/default			controllers.inbound.ReceiveFromReturnController.defaultDetail()
+POST	/inbound/receiveFromReturn/detail/delete			controllers.inbound.ReceiveFromReturnController.deleteDetail()
+POST	/inbound/receiveFromReturn/detail/deleteall			controllers.inbound.ReceiveFromReturnController.deleteAll()
+POST	/inbound/receiveFromReturn/detail/print				controllers.inbound.ReceiveFromReturnController.printDetail()
+POST	/inbound/receiveFromReturn/detail/update			controllers.inbound.ReceiveFromReturnController.updateDetail()
+POST	/inbound/receiveFromReturn/detail/printall			controllers.inbound.ReceiveFromReturnController.printAllDetail()
+POST	/inbound/receiveFromReturn/execute					controllers.inbound.ReceiveFromReturnController.execute()
+POST	/inbound/receiveFromReturn/executeAll				controllers.inbound.ReceiveFromReturnController.executeAll()
+
+#Stock Adjustment
+GET		/adjustment/stockadjust					controllers.adjustment.StockAdjustController.index()
+GET		/adjustment/stockadjust/initWarehouse	controllers.adjustment.StockAdjustController.initWarehouse()
+POST	/adjustment/stockadjust/changeStoType	controllers.adjustment.StockAdjustController.changeStorageType()
+POST	/adjustment/stockadjust/changeArea		controllers.adjustment.StockAdjustController.changeArea()
+POST	/adjustment/stockadjust/changeBin		controllers.adjustment.StockAdjustController.changeBin()
+POST	/adjustment/stockadjust/collectByLoc	controllers.adjustment.StockAdjustController.searchStockCollectByLocation()
+POST	/adjustment/stockadjust/collectByBtc	controllers.adjustment.StockAdjustController.searchStockCollectByBatch()
+POST	/adjustment/stockadjust/getStockList	controllers.adjustment.StockAdjustController.getStockList()
+POST	/adjustment/stockadjust/getStockListBt	controllers.adjustment.StockAdjustController.getStockListBt()
+POST	/adjustment/stockadjust/execution		controllers.adjustment.StockAdjustController.execution()
+
+#Stock AdjustmentLocation
+GET		/adjustment/stockadjustlocation					controllers.adjustment.StockAdjustLocationController.index()
+POST		/adjustment/stockadjustlocation/list			controllers.adjustment.StockAdjustLocationController.list()
+POST		/adjustment/stockadjustlocation/transfer			controllers.adjustment.StockAdjustLocationController.transferStock()
+
+ 
+ 
+
+
+#cargoplan
+GET     /outbound/cargoplan        	        controllers.outbound.CargoPlanController.index()
+GET   	 /outbound/cargoplan/plan/get/:id    	    controllers.outbound.CargoPlanController.getPlan(id:String)
+POST    /outbound/cargoplan/list  	    		controllers.outbound.CargoPlanController.list()
+POST    /outbound/cargoplan/save    			controllers.outbound.CargoPlanController.save()
+GET    /outbound/cargoplan/delete/:id	    		controllers.outbound.CargoPlanController.delete(id:String)
+POST    /outbound/cargoplan/update    			controllers.outbound.CargoPlanController.update()
+POST    /outbound/cargoPlan/plans/save/:id    		controllers.outbound.CargoPlanController.savePlans(id:String)
+GET    /outbound/cargoplan/plan/uom/:id	    		controllers.outbound.CargoPlanController.listUOM(id:String)
+GET    /outbound/cargoplan/plan/skuuom/:id	    		controllers.outbound.CargoPlanController.listSKUUOM(id:String)
+GET    /outbound/cargoplan/pilist  	    		controllers.outbound.CargoPlanController.listPI()
+GET   /outbound/cargoplan/plan/batch/:id  	    		controllers.outbound.CargoPlanController.listBatch(id:String)
+GET   /outbound/cargoplan/plan/baseData/:id  	    		controllers.outbound.CargoPlanController.listBaseData(id:String)
+GET   /outbound/cargoplan/plan/stockQty/:id  	    		controllers.outbound.CargoPlanController.sumStockQty(id:String)
+POST  /outbound/cargoplan/plan/compute 	    		controllers.outbound.CargoPlanController.compute()
+POST  /outbound/cargoplan/upload 	    		controllers.outbound.CargoPlanController.upload()
+GET   /outbound/cargoplan/StatusList              controllers.outbound.CargoPlanController.StatusList()
+GET   /outbound/cargoplan/Mould						controllers.outbound.CargoPlanController.Mould()
+GET   /outbound/cargoplan/plan/totalQty/:batch/:id    controllers.outbound.CargoPlanController.getBatchQty(id:String,batch:String)
+POST  /outbound/cargoplan/report/:type            controllers.outbound.CargoPlanController.report(type:String)
+
+#Goods Stuffing
+GET     /outbound/goodsStuffing                   			 controllers.outbound.GoodsStuffingController.index()
+POST    /outbound/goodsStuffing/list              			 controllers.outbound.GoodsStuffingController.list()
+POST     /outbound/goodsStuffing/Details/list  			 controllers.outbound.GoodsStuffingController.detailsList()
+POST    /outbound/goodsStuffing/Save              			 controllers.outbound.GoodsStuffingController.save()
+POST   	/outbound/goodsStuffing/ExecutDetails/list   	 controllers.outbound.GoodsStuffingController.exectionDatial()
+POST    /outbound/goodsStuffing/Out				 			controllers.outbound.GoodsStuffingController.out()
+POST    /outbound/goodsStuffing/getStockList				 controllers.outbound.GoodsStuffingController.findStockList()
+POST    /outbound/goodsStuffing/getBatchList				 controllers.outbound.GoodsStuffingController.findBatchList()
+POST    /outbound/goodsStuffing/saveStuffing					controllers.outbound.GoodsStuffingController.SaveStuffing()
+POST    /outbound/goodsStuffing/deleted					controllers.outbound.GoodsStuffingController.deleteDetial()
+POST   /outbound/goodsStuffing/SimpleSave					controllers.outbound.GoodsStuffingController.Simplesave()
+
+#Transaction Query	
+GET     /query/TransactionQuery        	    	controllers.query.TransactionQueryController.index()
+GET     /query/TransactionQuery/TypeList        controllers.query.TransactionQueryController.TypeList()
+POST     /query/TransactionQuery/list            controllers.query.TransactionQueryController.list()
+POST     /query/TransactionQuery/report          controllers.query.TransactionQueryController.report()
+
+#Warehouse Query
+GET      /query/WarehouseQuery        	    	controllers.query.WarehouseQueryController.index()
+POST     /query/WarehouseQuery/list             controllers.query.WarehouseQueryController.list()
+GET      /query/WarehouseQuery/initBin             controllers.query.WarehouseQueryController.initBin()
+GET      /query/WarehouseQuery/initArea             controllers.query.WarehouseQueryController.initArea()
+GET      /query/WarehouseQuery/initStorageType             controllers.query.WarehouseQueryController.initStorageType()
+GET      /query/WarehouseQuery/initWarehouse             controllers.query.WarehouseQueryController.initWarehouse()
+
+#StockCount
+GET      /stockcount/StockCount                       controllers.stockcount.StockCountController.index()
+GET      /stockcount/StockQuery                       controllers.stockcount.StockCountController.queryIndex()
+POST      /stockcount/StockQuery/getStocks         controllers.stockcount.StockCountController.getStocks()
+GET      /stockcount/StockCount/prodLineList		  controllers.stockcount.StockCountController.getLines()
+POST   	 /stockcount/StockCount/list/:type            controllers.stockcount.StockCountController.list(type:String)
+POST  	 /stockcount/StockCount/report/:type            controllers.stockcount.StockCountController.report(type:String)
+GET      /stockcount/StockCount/initBin             controllers.stockcount.StockCountController.initBin()
+GET      /stockcount/StockCount/initArea             controllers.stockcount.StockCountController.initArea()
+GET      /stockcount/StockCount/initStorageType             controllers.stockcount.StockCountController.initStorageType()
+GET      /stockcount/StockCount/initWarehouse             controllers.stockcount.StockCountController.initWarehouse()
+POST  	 /stockcount/StockCount/SaveStockCount/:type            controllers.stockcount.StockCountController.SaveStockCount(type:String)
+
+#Direct goodsIssue
+GET      /auxilliary/DirectGoodsIssue                       controllers.auxilliary.DirectGoodsIssueController.index()
+POST      /auxilliary/DirectGoodsIssue/getStocks         controllers.auxilliary.DirectGoodsIssueController.getStocks()
+POST   	 /auxilliary/DirectGoodsIssue/list            controllers.auxilliary.DirectGoodsIssueController.list()
+GET      /auxilliary/DirectGoodsIssue/getIssueType        controllers.auxilliary.DirectGoodsIssueController.getIssueType()
+POST      /auxilliary/DirectGoodsIssue/execution        controllers.auxilliary.DirectGoodsIssueController.exection()
+
+#Login
+GET      /login                            		controllers.login.LoginController.index()
+GET      /login/warehouse                       controllers.login.LoginController.initWarehouse()
+POST     /login/login                           controllers.login.LoginController.login()
+GET      /login/logout							controllers.login.LoginController.logout()
+GET     /login/warehouse/list					controllers.login.LoginController.getWarehouseList()
+GET     /login/warehouse/get					controllers.login.LoginController.getWarehouse()
+GET     /login/change/:id						controllers.login.LoginController.changeWarehouse(id:String)
+GET  	/chrome/download						controllers.login.LoginController.downloadChrome()
+
+# Setup
+GET     /setup/business         controllers.setup.BusinessController.index()
+GET     /setup/business/list    controllers.setup.BusinessController.list()
+POST    /setup/business/save    controllers.setup.BusinessController.save()
+GET     /setup/business/:id     controllers.setup.BusinessController.get(id: String)
+
+#permission setup
+GET		/setup/permission         controllers.setup.PermissionController.index()
+
+
+#Employee setup
+GET     /setup/employee                         controllers.setup.EmployeeController.index()
+POST    /setup/employee/list                    controllers.setup.EmployeeController.list()
+GET     /setup/employee/initPlant               controllers.setup.EmployeeController.initPlant()
+GET     /setup/employee/initEmployeeType        controllers.setup.EmployeeController.initEmployeeType()
+GET     /setup/employee/initWarehouse            controllers.setup.EmployeeController.initWarehouse()
+POST    /setup/employee/save                    controllers.setup.EmployeeController.save()
+POST    /setup/employee/update                  controllers.setup.EmployeeController.update()
+GET     /setup/employee/delete/:id              controllers.setup.EmployeeController.delete(id:String)
+
+#User setup
+GET     /setup/user                         controllers.setup.UserController.index()
+POST    /setup/user/list                    controllers.setup.UserController.list()
+GET     /setup/user/listRoles               controllers.setup.UserController.initRoles()
+GET     /setup/user/initWarehouse           controllers.setup.UserController.initWarehouse()
+GET     /setup/user/initCompany             controllers.setup.UserController.initCompany()
+POST    /setup/user/save                    controllers.setup.UserController.save()
+POST    /setup/user/update                  controllers.setup.UserController.update()
+GET     /setup/user/delete/:id              controllers.setup.UserController.delete(id:String)
+
+#Warehouse setup
+GET		/setup/warehouse						controllers.setup.WarehouseController.index()
+GET		/setup/warehouse/get					controllers.setup.WarehouseController.get()
+POST	/setup/warehouse/list					controllers.setup.WarehouseController.list()
+GET		/setup/warehouse/initPlantName			controllers.setup.WarehouseController.initPlantName()
+GET		/setup/warehouse/initWarehouse			controllers.setup.WarehouseController.initWarehouse()
+GET		/setup/warehouse/initStorageType		controllers.setup.WarehouseController.initStorageType()
+POST	/setup/warehouse/active					controllers.setup.WarehouseController.activeOrNot()
+POST	/setup/warehouse/addWarehouse			controllers.setup.WarehouseController.addWarehouse()
+POST	/setup/warehouse/editWarehouse			controllers.setup.WarehouseController.editWarehouse()
+POST	/setup/warehouse/upload					controllers.setup.WarehouseController.upload()
+
+#Material Master setup
+GET		/setup/materialMaster			controllers.setup.MaterialMasterController.index()
+POST	/setup/materialMaster/list		controllers.setup.MaterialMasterController.list()
+POST		/setup/materialMaster/saveorupdate			controllers.setup.MaterialMasterController.saveOrUpdate()
+GET     /setup/materialMaster/delete/:id     controllers.setup.MaterialMasterController.delete(id: String)
+POST     /setup/materialMaster/upload       controllers.setup.MaterialMasterController.upload()
+GET     /setup/materialMaster/updateall       controllers.setup.MaterialMasterController.updateAll()
+GET     /setup/materialMaster/getcuteoms/:id     controllers.setup.MaterialMasterController.getCuteoms(id: String)
+POST	/setup/materialMaster/uom/saveorupdate		controllers.setup.MaterialMasterController.saveOrUpdateUom()
+GET	/setup/materialMaster/uom/list/:id		controllers.setup.MaterialMasterController.listUom(id: String)
+GET	/setup/materialMaster/uom/delete/:id		controllers.setup.MaterialMasterController.deleteUom(id: String)
+
+#Code setup
+GET     /setup/code         controllers.setup.CodeController.index()
+POST     /setup/code/list    controllers.setup.CodeController.list()
+POST    /setup/code/saveorupdate    controllers.setup.CodeController.saveOrUpdate()
+POST    /setup/code/upload    controllers.setup.CodeController.upload()
+GET     /setup/code/delete/:id     controllers.setup.CodeController.delete(id: String)
+
+#Sequence setup
+GET      /setup/sequence         controllers.setup.SequenceController.index()
+POST     /setup/sequence/list    controllers.setup.SequenceController.list()
+POST    /setup/sequence/saveorupdate    controllers.setup.SequenceController.saveOrUpdate()
+GET     /setup/sequence/delete/:id     controllers.setup.SequenceController.delete(id: String)
+
+#Config setup
+GET     /setup/config         controllers.setup.ConfigController.index()
+POST    /setup/config/list    controllers.setup.ConfigController.list()
+POST    /setup/config/saveorupdate    controllers.setup.ConfigController.saveOrUpdate()
+GET     /setup/config/delete/:id     controllers.setup.ConfigController.delete(id: String)
+
+#Display
+GET     /display/stuffing           controllers.display.LEDDisplayStuffingController.index()
+GET     /display/stuffing/list      controllers.display.LEDDisplayStuffingController.list()
+
+GET     /display/receiving           controllers.display.LEDDisplayReceivingController.index()
+GET     /display/receiving/list      controllers.display.LEDDisplayReceivingController.list()
+#Report
+#Tempering Control Report
+GET      /report/TemperingReport                    controllers.report.TemperingReportController.index()
+POST   	 /report/TemperingReport/list             controllers.report.TemperingReportController.list()
+POST  	 /report/TemperingReport/report           controllers.report.TemperingReportController.report()
+
+#TemperingRoom  Report
+GET     /report/temperingroom         controllers.report.TemperingRoomController.index()
+POST     /report/temperingroom/list         controllers.report.TemperingRoomController.list()
+GET     /report/temperingroom/download/:inOrOut/:executeDate         controllers.report.TemperingRoomController.download(inOrOut:String,executeDate:Long)
+
+#StuffingRecapitulation   Report
+GET     /report/stuffingrecapitulation         controllers.report.StuffingRecapitulationController.index()
+POST     /report/stuffingrecapitulation/list         controllers.report.StuffingRecapitulationController.list()
+GET     /report/stuffingrecapitulation/download/:inOrOut/:executeDate         controllers.report.StuffingRecapitulationController.download(inOrOut:String,executeDate:Long)
+
+
+#ProductionSchedule Report
+GET		/report/productionSchedule				controllers.report.ProductionScheduleController.index()
+POST	/report/productionSchedule/list			controllers.report.ProductionScheduleController.list()
+GET	/report/productionSchedule/download/:executeDate  			controllers.report.ProductionScheduleController.download(executeDate:Long )
+
+
+#PackProductStock Report
+GET      /report/packProductStock                                        controllers.report.PackProductStockController.index()
+POST     /report/packProductStock/list                                   controllers.report.PackProductStockController.list()
+POST      /report/packProductStock/download         						 controllers.report.PackProductStockController.download()
+
+#StuffingForPlanning Report
+GET      /report/stuffingForPlanning                                      controllers.report.StuffingForPlanningController.index()
+POST   	 /report/stuffingForPlanning/print									 controllers.report.StuffingForPlanningController.print()
+POST   	 /report/stuffingForPlanning/list									 controllers.report.StuffingForPlanningController.list()
+
+#Pi Status Report
+GET		/report/statusReport											controllers.report.StatusReportController.index()
+POST 	/report/statusReport/search										controllers.report.StatusReportController.search()
+POST 	/respot/statusReport/download									controllers.report.StatusReportController.report()
+
+#Goods Receive Details Report
+GET		/report/receiveReport											controllers.report.ReceiveDetailsReportController.index()
+POST 	/report/receiveReport/search									controllers.report.ReceiveDetailsReportController.search()
+POST 	/respot/receiveReport/download									controllers.report.ReceiveDetailsReportController.report()
+
+
+#Pending Goods Receive Execution Report
+GET		/report/pendingReceiveReport									controllers.report.PendingReceiveReportController.index()
+POST 	/report/pendingReceiveReport/search								controllers.report.PendingReceiveReportController.search()
+POST 	/report/pendingReceiveReport/download							controllers.report.PendingReceiveReportController.report()
+
+#Stock Movement Report	
+GET     /report/stockMovement        	    	controllers.report.StockMovementController.index()
+POST     /report/stockMovement/list            controllers.report.StockMovementController.list()
+POST     /report/stockMovement/report          controllers.report.StockMovementController.report()
+
+
+
+#Direct PI Transfer
+GET     /transfer/directpitransfer				                      controllers.transfer.DirectPITransferController.index()
+POST     /transfer/directpitransfer/viapigetqty				          controllers.transfer.DirectPITransferController.viaPIGetQty()
+POST     /transfer/directpitransfer/executeall				          controllers.transfer.DirectPITransferController.executeAll()
+#common
+GET      /common/initpistatus                                          controllers.common.CommonController.initPiStatus()
+GET      /common/initplanstatus                                        controllers.common.CommonController.initPlanStatus()
+GET      /common/initPiNo                                              controllers.common.CommonController.initPiNo()
+GET		/common/initstorytype 			                               controllers.common.CommonController.initStoryType()
+GET		/common/initarea/:id			                               controllers.common.CommonController.initArea(id:String)
+GET		/common/initareanotype			                               controllers.common.CommonController.initAreaNoType()
+GET		/common/initbin/:id			                                   controllers.common.CommonController.initBin(id:String)
+GET		/common/initemployee			                               controllers.common.CommonController.initEmployee()
+
+#Sql
+GET     /delete/planItemById/:pi/:type                                      controllers.setup.BusinessController.deletePlan(pi:String,type:String)
+
+#uploadPI
+GET     /manual_update_pi                                              controllers.setup.BusinessController.updatePi()
+
+
+#PackProductDetailsController
+GET		/report/packproductdetails			                               controllers.report.PackProductDetailsController.index()
+POST		/report/packproductdetails/list			                               controllers.report.PackProductDetailsController.list()
+POST		/report/packproductdetails/download			                               controllers.report.PackProductDetailsController.downLoad()
+#\GoodsTransferDetailsController
+GET		    /report/goodstransferdetails			                               controllers.report.GoodsTransferDetailsController.index()
+POST		/report/goodstransferdetails/list			                               controllers.report.GoodsTransferDetailsController.list()
+POST		/report/goodstransferdetails/download			                               controllers.report.GoodsTransferDetailsController.downLoad()
+
+
+# Map static resources from the /public folder to the /assets URL path
+GET     /assets/*file               controllers.Assets.at(path = "/public", file)
+GET     /files/*file               controllers.Assets.at(path = "/public/files", file)
+GET     /template/*file             controllers.Assets.at(path = "/public/template", file)
+GET     /PrintLodop/*file     controllers.Assets.at(path = "/public/PrintLodop",file)

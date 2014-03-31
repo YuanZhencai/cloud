@@ -1,0 +1,653 @@
+@(name: String)
+@main("Goods Receive"){
+<div ng-controller="ExecutionManagement">
+<div class="breadcrumb">
+	<li style="">Current Location: Receive Execution</li>
+</div>
+<div alert ng-repeat="alert in alerts" type="alert.type" close="closeAlert($index)" template-url="/template/alert/alert.html">{{alert.msg}}</div>
+	<!-- 鏌ヨ鏉′欢 -->
+	<form novalidate ng-submit="searchPiList(pISearchVo)">
+		<table>
+			<tr>
+				<td class="column0">
+					<label>PI No:</label>
+				</td>
+				<td>
+					<input class="input-medium" type="text" name="PI_No" ng-model="pISearchVo.piNo">
+				</td>
+				<td class="column1">
+					<label >Sales Contract No:</label>
+				</td>
+				<td class="column2">
+					<input class="input-medium" type="text" name="SG_PI_No" ng-model="pISearchVo.sgPiNo">
+				</td>
+				<td class="column1">
+					<label>PI Status:</label>
+				</td>
+				<td class="column2">
+					<select ng-model="pISearchVo.piStatus" class="span2" ng-options="os.code_key as os.code_name for os in orderStatuses|orderBy:'code_key'">
+						<option value="">ALL</option>
+					</select>
+				</td>
+			</tr>
+			<tr>
+				<td class="column0">
+					<label>Production Line:</label>
+				</td>
+				<td class="column2">
+					<select class="span2" ng-model="pISearchVo.productionLine">
+						<option value="">ALL</option>
+						<option ng-repeat="binVo in binList" value="{{binVo.id}}">{{binVo.nameKey}}</option>
+					</select>
+				</td>
+				<td class="column1">
+					<label>Production Date(From):</label>
+				</td>
+				<td class="column2">
+					<input class="input-medium" type="date" ng-model="pISearchVo.fromDate">
+				</td>
+				<td class="column1">
+					<label>Production Date(To): </label>
+				</td>
+				<td class="column2">
+					<input class="input-medium" type="date" ng-model="pISearchVo.toDate">
+				</td>
+			</tr>
+			<tr>
+				<td colspan="6">
+				</td>
+				<td>
+					<div style="text-align: right;">
+						<input class="btn btn-primary" type="submit" value="Search">
+					</div>
+				</td>
+			</tr>
+		</table>
+	</form>
+	<!-- PItable -->
+	<table id="pitable" class="table table-bordered table-condensed">
+		<thead>
+			<tr>
+				<th></th>
+				<th>Prod Date</th>
+				<th>Prod Line</th>
+				<th>PI No</th>
+				<th>Material Description</th>
+				<th>Prod Qty</th>
+				<th>UOM</th>
+				<th>PI SKU</th>
+				<th>UOM</th>
+				<th>Plan Status</th>
+				<th>PI Status</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr ng-repeat="planItemVo in planItemVoList" ng-class="getClass($index)">
+				<th><input type="radio" name="choice" ng-click="setPlanItemDetails(planItemVo, $index)"/></th>
+				<td class="noNewLine">{{planItemVo.productionDate|date:'dd/MM/yyyy'}}</td>
+				<td class="noNewLine">{{planItemVo.productionLine}}</td>
+				<td class="noNewLine">{{planItemVo.piNo}}</td>
+				<td class="noNewLine">{{planItemVo.materialDescription}}</td>
+				<td class="noNewLine">{{planItemVo.productionqty|number:2}}</td>
+				<td class="noNewLine">{{planItemVo.productionuom}}</td>
+				<td class="noNewLine">{{planItemVo.piSKU|number:2}}</td>
+				<td class="noNewLine">{{planItemVo.skuUOM}}</td>
+				<td class="noNewLine">(<span class="{{planItemVo.styleClass}}">{{planItemVo.receivedQty|number:2}}</span>/{{planItemVo.productionqty|number:2}})</td>
+				<td class="noNewLine">(<span class="{{planItemVo.piStyleClass}}">{{planItemVo.piReceivedQty|number:2}}</span>/{{planItemVo.piqyt|number:2}})</td>
+			</tr>
+		</tbody>
+	</table>
+	<br/>
+	<!-- piDetail table -->
+	<table class="table table-striped table-bordered table-hover table-condensed">
+		<thead>
+			<th>
+				<button class="btn btn-primary btn-mini" style="display: {{ifAddShow}};" ng-click="openSelectDlg()"><i class="icon-check"></i></button>
+				<!-- <a class="btn btn-primary btn-small" style="display: {{ifAddShow}};" ng-click="openSelectDlg()">Select</a>  -->
+				<br/>
+				<input type="checkbox" style="display: {{ifAddShow}};" ng-model="checkSelect" ng-change="selectAll(checkSelect)">
+			</th>
+			<th>No</th>
+			<th>Prod Date</th>
+			<th>Prod Line</th>
+			<th>Batch No.</th>
+			<th>Blending Tank</th>
+			<th>Storage Area</th>
+			<th>Storage Bin</th>
+			<th>PA Worker</th>
+			<th>Forklift Driver</th>
+			<th>Leader Shift</th>
+			<th>Qty/Pallet
+				<br/>
+				(<span class="{{classType}}">{{currentUsedSKU|number:2}}</span>/{{currentAllSKU|number:2}})
+			</th>
+			<th>Print</th>
+			<th>Execute</th>
+			<th>Operation
+				<a class="btn btn-primary btn-small" style="text-align: right;display: {{ifAddShow}};" ng-click="executeOpenDlg(a, b, c, false)">ExecuteAll</a>
+			</th>
+			<th>Last Update Date</th>
+		</thead>
+		<tbody>
+			<tr ng-repeat="planItemDetailVo in piDetailVoList">
+				<th><input type="checkbox" ng-disabled="planItemDetailVo.ifExecution" style="display: {{ifAddShow}};" ng-model="planItemDetailVo.ifSelect" ng-change="changeSelect()"></th>
+				<td class="noNewLine">{{planItemDetailVo.stockno}}</td>
+				<td class="noNewLine">{{planItemDetailVo.productionDate|date:'dd/MM/yyyy'}}</td>
+				<td class="noNewLine">{{planItemDetailVo.productionLine}}</td>
+				<td class="noNewLine">{{planItemDetailVo.batchNo}}</td>
+				<td class="noNewLine">{{planItemDetailVo.blendingTank}}</td>
+				<td class="noNewLine">{{planItemDetailVo.area}}</td>
+				<td class="noNewLine">{{planItemDetailVo.bin}}</td>
+				<td class="noNewLine">{{planItemDetailVo.paworker}}</td>
+				<td class="noNewLine">{{planItemDetailVo.driver}}</td>
+				<td class="noNewLine">{{planItemDetailVo.leader}}</td>
+				<td class="noNewLine">{{planItemDetailVo.palletQty|number:2}}</td>
+				<td class="noNewLine">{{planItemDetailVo.status}}</td>
+				<td class="noNewLine">{{planItemDetailVo.executionOrNo}}</td>
+				<td>
+					<a class="btn btn-primary btn-small" ng-disabled="planItemDetailVo.ifExecution" style="text-align: right;" ng-click="executeOpenDlg(planItemDetailVo, planItemDetailVo.ifExecution, $index, true)">Execute</a>
+				</td>
+				<td class="fontSize_1">{{planItemDetailVo.modifiedby}} {{planItemDetailVo.modifiedat|date:'dd/MM/yyyy HH:mm'}}</td>
+			</tr>
+		</tbody>
+	</table>
+	@views.html.common.selectDlg("")
+	<!-- Execution Dialog -->
+	<div modal="executeDlg" close="closeExecuteDlg()" options="dlgOpts">
+		<div class="modal-header">
+			<h4>Execution Information</h4>
+		</div>
+		<div class="modal-body">
+		<form novalidate name="execute">
+			<table>
+				<tbody>
+					<tr>
+						<td align="right">Shift :&nbsp;</td>
+						<td>
+							<input type="text" class="input-medium" name="shift" ng-model="executeVo.shift"/>
+						</td>
+						<td></td>
+						<td></td>
+					</tr>
+					<tr>
+						<td align="right">Remarks :&nbsp;</td>
+						<td colspan="3">
+							<textarea type="text" ng-model="executeVo.remarks" name="remarks" style="width: 429px;"></textarea>
+						</td>
+					</tr>
+					<tr>
+						<td align="right">Reason :&nbsp;</td>
+						<td colspan="3">
+							<textarea type="text" ng-model="executeVo.reason" name="reason" style="width: 429px;"></textarea>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</form>
+		</div>
+		<div class="modal-footer">
+			<button class="btn btn-primary btn-small ok" ng-click="doExecute(executeVo)">Save</button>
+			<button class="btn btn-warning btn-small cancel" ng-click="closeExecuteDlg()">Cancel</button>
+		</div>
+	</div>
+</div>
+<style type="text/css">
+.red{background: red;}
+.column0 {text-align: right;width: 125px;}
+.column1 {text-align: right;width: 165px;}
+.column2 {text-align: left;width: 9px;}
+.selected{color:red;background:GreenYellow;}
+.errorNum{color:red;}
+.blueNum{color:blue;}
+</style>
+}{
+	<script src="@routes.Assets.at("/public", "javascripts/selectDlg.js")" type="text/javascript"></script>
+	<script type="text/javascript" charset="utf-8">
+		//var CloudWMS = angular.module('CloudWMS', ['ui','ui.bootstrap']);
+		var FLOAT_REGEXP =/^([0-9]{1,14}|[0-9]{1,14}\.[0-9]{0,2})$/;//鏁存暟浣�4浣嶏紝灏忔暟浣嶄袱浣�
+	    var INT_REGEXP=/^[1-9]{1}[0-9]{0,13}$/;//灏忎簬绛変簬14浣嶇殑姝ｆ暣鏁�
+	   	var ISNULL_REGEXP =/^$/;
+	   	var NULL_REGEXP=/^\w+$/;
+	    CloudWMS.directive('float', function() {
+	          return {
+	            require: 'ngModel',
+	            link: function(scope, elm, attrs, ctrl) {
+	              ctrl.$parsers.unshift(function(viewValue) {
+	                if (FLOAT_REGEXP.test(viewValue)||viewValue=='') {
+	                  ctrl.$setValidity('date', true);
+	                  return viewValue;
+	                } else {
+	                  ctrl.$setValidity('date', false);
+	                  return viewValue;
+	                }
+	              });
+	            }
+	          };
+	    }).directive('isnull', function() {
+	          return {
+	            require: 'ngModel',
+	            link: function(scope, elm, attrs, ctrl) {
+	              ctrl.$parsers.unshift(function(viewValue) {
+	                if (ISNULL_REGEXP.test(viewValue)) {
+	                  ctrl.$setValidity('date', true);
+	                  return viewValue;
+	                } else {
+	                  ctrl.$setValidity('date', false);
+	                  return viewValue;
+	                }
+	              });
+	            }
+	          };
+	    }).directive('int', function() {
+	          return {
+	            require: 'ngModel',
+	            link: function(scope, elm, attrs, ctrl) {
+	              ctrl.$parsers.unshift(function(viewValue) {
+	                if (INT_REGEXP.test(viewValue)||viewValue=='') {
+	                  ctrl.$setValidity('date', true);
+	                  return viewValue;
+	                } else {
+	                  ctrl.$setValidity('date', false);
+	                  return viewValue;
+	                }
+	              });
+	            }
+	          };
+	    }).directive('null', function() {
+	          return {
+	            require: 'ngModel',
+	            link: function(scope, elm, attrs, ctrl) {
+	              ctrl.$parsers.unshift(function(viewValue) {
+	                if (NULL_REGEXP.test(viewValue)) {
+	                  ctrl.$setValidity('date', true);
+	                  return viewValue;
+	                } else {
+	                  ctrl.$setValidity('date', false);
+	                  return viewValue;
+	                }
+	              });
+	            }
+	          };
+	    });
+		CloudWMS.controller('ExecutionManagement', function($scope, $http, $timeout){
+			$scope.piDetailVoList;//Execution鐨勯〉闈㈠睍绀篖ist
+			$scope.binList;//澶存煡璇㈠垵濮嬪寲鐨刡inList
+			$scope.currentPlanItemDetailVo;//execution浣跨敤
+			$scope.currentPlanItemId;//寰楀埌褰撳墠鐨凱lanItem鐨刬d
+			$scope.checkSelect = false;//鏄惁閫変腑鍏ㄩ儴
+			$scope.selectDlg = false;//select椤甸潰榛樿闅愯棌
+			$scope.editPIDetailDlg = false;//缂栬緫妗嗛粯璁ら殣钘�
+			$scope.addPIDetailDlg = false;//娣诲姞妗嗛粯璁ら殣钘�
+			$scope.defPIDetailDlg = false;//鍏ㄩ儴淇敼鐨勬榛樿闅愯棌
+			$scope.executeDlg = false;//execution寮瑰嚭妗嗛粯璁や笉灞曠ず
+			$scope.deletePIDetailDlg = false;//鍒犻櫎妗嗛粯璁ら殣钘�
+			$scope.ifAddShow = "none";//涓嶆樉绀烘坊鍔犳寜閽�
+			$scope.ifNew = false;//鑷姩鐢熸垚鐨刣etail缂栬緫鏃朵笉榛樿閫変腑
+			$scope.selecedIndex = -1;//鍒濆閫変腑琛�
+			$scope.currentAllSKU;//褰撳墠PI鐨凷KU
+			$scope.currentUsedSKU;//宸茬粡澶勭悊鐨凷KU
+			$scope.currentType;//鎵归噺鎴栧崟鏉℃墽琛�
+			$scope.classType = '';
+			$scope.currentIndex;
+			//++++++++++++++++++++++++++++++++++++
+			$scope.alerts = [];
+			var addAlert = function(types,msgs) {
+		        $scope.alerts.push({type:types,msg: msgs});
+		        $timeout($scope.clearAlerts, 5000);
+		    };
+	        $scope.closeAlert = function(index) {
+	          $scope.alerts.splice(index, 1);
+	        };
+	        $scope.clearAlerts = function() {
+	          $scope.alerts = [];
+	        };
+	        $timeout($scope.clearAlerts, 5000);
+	        $scope.dlgOpts = {
+    		    backdropFade: true,
+    		    dialogFade:false,
+    		    backdropClick:false
+    		   // dialogClass: [width:'1200px'];
+    		};
+			//鍒濆鍖栭〉闈�
+			$scope.pISearchVo = {piNo:"",sgPiNo:"",piStatus:"",productionLine:"",fromDate:"",toDate:""};
+			$http({method: 'GET', url: '/inbound/executionmanagement/list'}).success(
+				function(data, status, headers, config){
+					if(data.Type == 'success'){
+						$scope.planItemVoList = data.Data;
+					} else {
+						alert(data.Message);
+					}
+			}).error(
+				function(data, status, headers, config){
+					alert(status);
+			});
+			//鍒濆鍖栨煡璇i status
+			 $http.get('/inbound/executionmanagement/listPiStatus').success(
+               function(data, status, headers, config) {
+            	   if(data.Type == 'success'){
+	            	  $scope.orderStatuses=data.Data;
+            	   } else {
+            		   alert(data.Message);
+            	   }
+             }).error(
+               function(data, status, headers, config) {
+            	  alert(status)
+             });
+			//娣诲姞鏌ヨbin鐨勫垵濮嬪寲
+			$http.get('/inbound/executionmanagement/initBin').success(
+				function(data, status, headers, config){
+					if(data.Type == 'success'){
+						$scope.binList = data.Data;
+					} else {
+						alert(data.Message);
+					}
+			}).error(
+				function(data, status, headers, config){
+					alert(status);
+			});
+			//閫変腑鍚庣殑鏍峰紡閫夋嫨
+			$scope.getClass = function(ind){
+				if(ind === $scope.selecedIndex){
+					return "selected";
+				} else {
+					return "";
+				}
+			};
+			//璁＄畻palletQty鎬绘暟
+			$scope.sumSKU = function(piDetailVoList){
+				var amount = 0;
+				for(i = 0, len = piDetailVoList.length; i < len; i++){
+					 amount = Number(amount) + Number(piDetailVoList[i].palletQty);
+				}
+				$scope.currentUsedSKU = amount;
+				if($scope.currentUsedSKU > $scope.currentAllSKU){
+					$scope.classType = 'errorNum';
+				} else {
+					$scope.classType = '';
+				}
+			};
+			//璁＄畻Pl received qyt
+			$scope.sumPIQty = function(currentPlanItem){
+				$http.post('/inbound/executionmanagement/sumPIQty', JSON.stringify(currentPlanItem)).success(
+					function(data, status, headers, config){
+						if(data.Type == 'success'){
+							currentPlanItem.piReceivedQty = Number(data.Data);
+							if(Number(currentPlanItem.piReceivedQty) > Number(currentPlanItem.piqyt)){
+								currentPlanItem.piStyleClass = "errorNum";
+							} else if(Number(currentPlanItem.piReceivedQty) == Number(currentPlanItem.piqyt)){
+								currentPlanItem.piStyleClass = '';
+							} else {
+								currentPlanItem.piStyleClass = "blueNum";
+							}
+							for(var i = 0, len = $scope.planItemVoList.length; i<len;i++){
+								if($scope.planItemVoList[i].piNo == currentPlanItem.piNo){
+									$scope.planItemVoList[i].piReceivedQty = currentPlanItem.piReceivedQty;
+									$scope.planItemVoList[i].piqyt = currentPlanItem.piqyt;
+									$scope.planItemVoList[i].piStyleClass = currentPlanItem.piStyleClass;
+									$scope.planItemVoList.splice(i, 1, $scope.planItemVoList[i]);
+								}
+							}
+							$scope.planItemVoList.splice($scope.selecedIndex, 1, currentPlanItem);
+						} else {
+							alert(data.Message);
+						}
+				}).error(
+					function(data, status, headers, config){
+						alert(status);
+				});
+			};
+			//澶存煡璇�
+			$scope.searchPiList = function(pISearchVo){
+				document.getElementById("submitDiv").style.display = "inline";
+				$scope.selecedIndex = -1;//鍘绘帀楂樹寒鏄剧ず
+				$scope.ifdate = true;
+				if(pISearchVo.fromDate == ''){
+					pISearchVo.fromDate = null;
+				}
+				if(pISearchVo.toDate == ''){
+					pISearchVo.toDate = null;
+				}
+				if($scope.ifdate){
+					$http.post('/inbound/executionmanagement/searchPiList', JSON.stringify(pISearchVo)).success(
+						function(data, status, headers, config){
+							if(data.Type == "success"){
+								$scope.planItemVoList = data.Data;
+			               	} else {
+								$scope.alerts.push({type : data.Type, msg : data.Message});
+								$timeout($scope.clearAlerts, 3000);
+			               	}
+							$scope.piDetailVoList = null;
+							$scope.ifAddShow = "none";
+							$scope.currentAllSKU = null;
+							$scope.currentUsedSKU = null;
+							document.getElementById("submitDiv").style.display = "none";
+					}).error(
+						function(data, status, headers, config){
+							document.getElementById("submitDiv").style.display = "none";
+					});
+				}
+			};
+			//detail鏌ヨ
+			$scope.setPlanItemDetails = function(planItemVo, index){
+				document.getElementById("submitDiv").style.display = "inline";
+				$scope.checkSelect = false;//鏄惁閫変腑鍏ㄩ儴
+				if($scope.selecedIndex < 0 ){
+					$scope.selecedIndex = index;
+				} else {
+					if(index == $scope.selecedIndex){
+						$scope.selecedIndex = index;
+					} else {
+						$scope.selecedIndex = index;
+					}
+				}
+				//鑻lanItem宸茬粡鎵ц锛屽垯涓嶆樉绀篴dd銆乨efault銆乪xecution鎸夐挳
+				var s = JSON.stringify(planItemVo);
+		    	planVo = JSON.parse(s);
+		    	if(planVo.ifExecution){
+		    		$scope.ifAddShow = "none";
+		    	}else{
+		    		$scope.ifAddShow = "inline";
+		    	}
+				$scope.currentPlanItemId = planItemVo.planItemId;
+				$scope.currentPlanItem = planItemVo;//涓哄悗闈㈢殑default鑰岀敤
+				$scope.currentPISKU = planItemVo.piSKU;
+				$scope.currentAllSKU = planItemVo.piSKU;
+				$http.post('/inbound/executionmanagement/get', JSON.stringify(planItemVo)).success(
+					function(data, status, headers, config){
+						if(data.Type == 'success'){
+							$scope.piDetailVoList = null;
+							$scope.piDetailVoList = data.Data;
+							$scope.sumSKU($scope.piDetailVoList);
+							for(var i = 0, len = $scope.piDetailVoList.length; i<len;i++){
+								$scope.currentWarehouseId = $scope.piDetailVoList[i].warehouseId;
+								break;
+							}
+						} else {
+							alert(data.Message);
+						}
+						document.getElementById("submitDiv").style.display = "none";
+				}).error(
+					function(data, status, headers, config){
+						document.getElementById("submitDiv").style.display = "none";
+				});
+			};
+			//鎵撳紑select椤甸潰
+			$scope.openSelectDlg = function(){
+				$scope.selectVo = {from : null, to : null, number : null, palletSku : null};
+				$scope.checkSelect = false;
+				$scope.selectDlg = true;
+			};
+			//鑷姩楠岃瘉from鍜宼o淇℃伅鐨勬纭�
+			$scope.selectChange = function(selectVo, type){
+				calculateNo(selectVo, $scope.piDetailVoList);
+			};
+			//鎵ц閫夋嫨
+			$scope.doSelect = function(selectVo){
+				baseFromToSelectQty(selectVo, $scope.piDetailVoList);
+				$scope.selectDlg = false;
+			};
+			//鍏抽棴select椤甸潰
+			$scope.closeSelectDlg = function(){
+				$scope.selectDlg = false;
+			};
+			//閫夋嫨鍏ㄩ儴detail淇℃伅
+			$scope.selectAll = function(checkSelect){
+				for(var i = 0, len = $scope.piDetailVoList.length; i<len;i++){
+					if($scope.piDetailVoList[i].executionOrNo == "Y"){
+						$scope.piDetailVoList[i].ifSelect = false;
+					} else {
+						$scope.piDetailVoList[i].ifSelect = checkSelect;
+					}
+				}
+			};
+			//褰撳叏閫夊悗锛屽幓鎺夋煇鏉′笉閫夛紝鍒欏叏閫夋寜閽涓篺alse
+			$scope.changeSelect = function(){
+				var s = true;
+				for(var i = 0, len = $scope.piDetailVoList.length; i < len; i++){
+					if($scope.piDetailVoList[i].ifSelect == false && $scope.piDetailVoList[i].executionOrNo == 'N'){
+						s = false;
+						$scope.checkSelect = false;
+						continue;
+					}
+				}
+				if(s){
+					$scope.checkSelect = true;
+				}
+			};
+			//鍏抽棴executeDlg
+			$scope.closeExecuteDlg = function(){
+				$scope.executeDlg = false;
+			};
+			//寮瑰嚭executeDlg
+			$scope.executeOpenDlg = function(planItemDetailVo, ifExecution, index, type){
+				if(type == true){
+					if(ifExecution == false){
+						//鍗曟潯鎵ц
+						if(planItemDetailVo.status == 'N'){
+							alert("Please print Pallet [ " + planItemDetailVo.stockno + " ] carton slip before execute!");
+						} else {
+							$scope.currentIndex = index;
+							$scope.currentPlanItemDetailVo = planItemDetailVo;
+							$scope.executeDlg = true;
+							$scope.currentType = true;
+						}
+					} else {
+						alert("Pallet [ " + planItemDetailVo.stockno + " ] has executed!");
+					}
+				} else {
+					var s = 0;
+					for(var i = 0,len = $scope.piDetailVoList.length; i<len; i++){
+						if($scope.piDetailVoList[i].ifSelect == true){
+							s++;
+						}
+					}
+					if(s > 0){
+						var number = "";
+						var nullData = false;
+						var exeNumber = "";
+						var exeData = false;
+						for(var i = 0,len = $scope.piDetailVoList.length; i<len; i++){
+							if($scope.piDetailVoList[i].ifSelect == true){
+								if($scope.piDetailVoList[i].status == 'N'){
+									nullData = true;
+									number = number + $scope.piDetailVoList[i].stockno + " ,";
+								}
+								if($scope.piDetailVoList[i].ifExecution == true || $scope.piDetailVoList[i].executionOrNo == "Y"){
+									exeData = true;
+									exeNumber = exeNumber + $scope.piDetailVoList[i].stockno + " ,";
+								}
+							}
+						}
+						if(nullData){
+							number = number.substring(0, number.length -1);
+							alert("Please print Pallet [ " + number + " ] carton slip before execute!");
+						} else {
+							if(exeData){
+								exeNumber = exeNumber.substring(0, number.length -1);
+								alert("Pallet [ " + exeNumber + " ] has executed!");
+							} else {
+								$scope.executeDlg = true;
+								$scope.currentType = false;
+							}
+						}
+					} else {
+						alert("Please select the data to execute!");
+					}
+				}
+				$scope.executeVo = {shift : '', remarks : '', reason : ''};
+			};
+			//鎵цexecute
+			$scope.doExecute = function(executeVo){
+				if($scope.currentType == true){
+					//鍗曟潯
+					document.getElementById("submitDiv").style.display = "inline";
+					$scope.currentPlanItemDetailVo.shift = executeVo.shift;
+					$scope.currentPlanItemDetailVo.remarks = executeVo.remarks;
+					$scope.currentPlanItemDetailVo.reason = executeVo.reason;
+					$http.post('/inbound/executionmanagement/execute', JSON.stringify($scope.currentPlanItemDetailVo)).success(
+						function(data, status, headers, config){
+							if(data.Type == 'success'){
+								$scope.currentPlanItemDetailVo.ifExecution = true;
+								$scope.currentPlanItemDetailVo.executionOrNo = "Y";
+								$scope.currentPlanItemDetailVo.status = "Y";
+								$scope.currentPlanItemDetailVo.ifSelect = false;
+								$scope.piDetailVoList.splice($scope.currentIndex, 1, $scope.currentPlanItemDetailVo);
+								$scope.sumPIQty($scope.currentPlanItem);
+								$scope.executeDlg = false;
+							} else {
+								alert(data.Message);
+							}
+							if(data.Type == 'success'){
+								alert("Congrations : Execute successfully!");
+							}
+							document.getElementById("submitDiv").style.display = "none";
+					}).error(
+						function(data, status, headers, config){
+							document.getElementById("submitDiv").style.display = "none";
+							alert(status);
+					});
+				} else {
+					//鎵归噺
+					$scope.currentExecutionList = [];
+					for(var i = 0,len = $scope.piDetailVoList.length; i<len; i++){
+						if($scope.piDetailVoList[i].ifSelect == true){
+							$scope.piDetailVoList[i].shift = executeVo.shift;
+							$scope.piDetailVoList[i].remarks = executeVo.remarks;
+							$scope.piDetailVoList[i].reason = executeVo.reason;
+							$scope.currentExecutionList.push($scope.piDetailVoList[i]);
+						}
+					}
+					document.getElementById("submitDiv").style.display = "inline";
+					$http.post('/inbound/executionmanagement/executeAll', JSON.stringify($scope.currentExecutionList)).success(
+						function(data, status, headers, config){
+							if(data.Type == 'success'){
+								for(var j = 0; j < $scope.piDetailVoList.length; j++){
+									for(var i = 0; i < $scope.currentExecutionList.length; i++){
+										if($scope.piDetailVoList[j].ifSelect == true && 
+												$scope.piDetailVoList[j].stockno == $scope.currentExecutionList[i].stockno){
+											$scope.currentExecutionList[i].ifSelect = false;
+											$scope.currentExecutionList[i].ifExecution = true;
+											$scope.currentExecutionList[i].executionOrNo = "Y";
+											$scope.currentExecutionList[i].status = "Y";
+											$scope.piDetailVoList.splice(j, 1, $scope.currentExecutionList[i]);
+										}
+									}
+								}
+								$scope.sumPIQty($scope.currentPlanItem);
+								$scope.checkSelect = false;
+								$scope.executeDlg = false;
+								alert("Congrations : Execute successfully!");
+							} else {
+								alert(data.Message);
+							}
+							document.getElementById("submitDiv").style.display = "none";
+					}).error(
+						function(data, status, headers, config){
+							document.getElementById("submitDiv").style.display = "none";
+							alert(status);
+					});
+				}
+			};
+		});
+	</script>
+}

@@ -1,0 +1,533 @@
+@(name:String)
+<style type="text/css">
+ 
+.selected{color:red;background:GreenYellow;}
+.not-match{color:red;background:#FFFF99;}
+ 
+</style>
+<script src="@routes.Assets.at("/public", "javascripts/loading.js")" type="text/javascript"></script>
+<script type="text/javascript" charset="utf-8">
+  //var CloudWMS = angular.module('CloudWMS', ['ui.bootstrap']);
+  
+  var DATE_REGEXP =/((^((1[8-9]\d{2})|([2-9]\d{3}))([-\/\._])(10|12|0?[13578])([-\/\._])(3[01]|[12][0-9]|0?[1-9])$)|(^((1[8-9]\d{2})|([2-9]\d{3}))([-\/\._])(11|0?[469])([-\/\._])(30|[12][0-9]|0?[1-9])$)|(^((1[8-9]\d{2})|([2-9]\d{3}))([-\/\._])(0?2)([-\/\._])(2[0-8]|1[0-9]|0?[1-9])$)|(^([2468][048]00)([-\/\._])(0?2)([-\/\._])(29)$)|(^([3579][26]00)([-\/\._])(0?2)([-\/\._])(29)$)|(^([1][89][0][48])([-\/\._])(0?2)([-\/\._])(29)$)|(^([2-9][0-9][0][48])([-\/\._])(0?2)([-\/\._])(29)$)|(^([1][89][2468][048])([-\/\._])(0?2)([-\/\._])(29)$)|(^([2-9][0-9][2468][048])([-\/\._])(0?2)([-\/\._])(29)$)|(^([1][89][13579][26])([-\/\._])(0?2)([-\/\._])(29)$)|(^([2-9][0-9][13579][26])([-\/\._])(0?2)([-\/\._])(29)$))/;
+  var FLOAT_REGEXP =/^[0-9]+\.{0,1}[0-9]{0,2}$/;
+  var INT_REGEXP=/^[1-9]*[1-9][0-9]*$/;
+  var ISNULL_REGEXP =/^$/;
+  var NULL_REGEXP=/^\S+$/;
+
+  CloudWMS.controller('GoodsTransferCtrl', function($scope, $http) {
+	// boolean for  dialog
+   
+    $scope.palletdetailDlg = false;
+    $scope.deleteTransferPlantDlg = false;
+    $scope.addPalletDlg = false;
+    $scope.editPalletDlg = false;
+    $scope.executeDlg = false;
+    $scope.selectDlg = false;
+    $scope.currentPallet;
+    $scope.searchVo;
+    $scope.tQuantity;
+    $scope.selecedIndex=-1;
+    $scope.executeIndex=-1;
+    $http.get('/common/initPiNo').success( 
+  	      function(data, status, headers, config) {
+  	    	$scope.PIs =null; 
+  	        $scope.PIs = data; 
+  	    }).error(
+  	      function(data, status, headers, config) {
+  	        $scope.status = status
+  	    });
+    $http.get('/common/initpistatus').success( 
+    	      function(data, status, headers, config) { 
+    	        $scope.piStatuss = data; 
+    	    }).error(
+    	      function(data, status, headers, config) {
+    	        $scope.status = status
+    	    });
+      $http.get('/common/initplanstatus').success( 
+    	      function(data, status, headers, config) { 
+    	        $scope.planStatuss = data; 
+    	    }).error(
+    	      function(data, status, headers, config) {
+    	        $scope.status = status
+    	    });
+ 
+
+//goods transfer   function method============================================================================
+//search method^^^^^^^^^^^^^^
+$scope.searchList = function(searchVo,flag) {
+	if(flag){
+	startLoading();
+	}
+	$scope.tempSearchVo = searchVo;
+	$http.post('/transfer/goodstransfer/list', JSON.stringify(searchVo)).success(function(data, status, headers, config) {
+		$scope.transferPlans = alertMessage(data);
+		if(flag){
+		$scope.selecedIndex = -1
+		$scope.palletdetailDlg = false;
+		endLoading();
+		}
+	}).error(function(data, status, headers, config) {
+		$scope.status = status
+		endLoading();
+	});
+}
+//鐐瑰嚮鍗曢�鎸夐挳鏃惰皟鐢�
+$scope.showPalletsView= function(transferPlan,index){
+	   $http.get('/transfer/transferplan/pallets/gettoareas/'+transferPlan.warehouse).success(
+			      function(data, status, headers, config) {					 
+			    	  $scope.areaToVos = alertMessage(data);;  
+			    }).error(
+			      function(data, status, headers, config) {
+			        $scope.status = status
+			    });
+	   $http.get('/transfer/transferplan/pallets/getemployee/'+transferPlan.warehouse).success(
+			      function(data, status, headers, config) {					 
+			    	  $scope.forkLiftDriverVos = alertMessage(data);;  
+			    }).error(
+			      function(data, status, headers, config) {
+			        $scope.status = status
+			    });
+	   $http.get('/transfer/goodstransfer/pallets/list/'+transferPlan.id).success(
+			      function(data, status, headers, config) {					 
+			    	  $scope.pallets = alertMessage(data);;
+			    	  $scope.getTotalQty();
+			    }).error(
+			      function(data, status, headers, config) {
+			        $scope.status = status
+			    });
+	   $scope.currentPallet=null;
+	   $scope.currentTransferPlan=angular.copy(transferPlan);
+	   $scope.palletdetailDlg =true;
+	   $scope.selecedIndex=index
+	   }
+//cancel pallet dialog
+	 $scope.cancelpalledetailView=function(){
+		  $scope.palletdetailDlg =false;
+			      };
+//===================================瀵筽allet鐨勬搷浣�===================================================================================================================
+//閫変腑 鎴栬�鍙栨秷 鎵�湁pallet
+$scope.selectAllPallet = function(showAllPallet){
+		  for(var i = 0 ;i<$scope.pallets.length;i++){
+			  if(!$scope.pallets[i].execute&&!$scope.pallets[i].notMatch){
+			  $scope.pallets[i].todo=showAllPallet;}
+			  }
+		  }
+//褰撳崟鏈烘瘡涓閫夋嫨妗嗘椂璋冪敤		  
+$scope.selectPallet = function() {
+	var flag = false;
+	for ( var i = 0; i < $scope.pallets.length; i++) {
+		if ($scope.pallets[i].todo == false) {
+			flag = true;
+			break;
+		}
+	}
+	if (flag) {
+		$scope.showAllPallet = false;
+	} else {
+		$scope.showAllPallet = true;
+	}
+}
+//鐐瑰嚮缂栬緫鎴栬�淇濆瓨鐨勬椂鍊欒皟鐢�
+$scope.editOrSvave = function(pallet){
+		  var flag = false;
+		  var message = "";
+		  //鐐瑰嚮缂栬緫鎸夐挳
+		  if(pallet.show==true){
+	       if(pallet.areaTo!=null){
+	    	   $scope.changeToArea(pallet.areaTo,false);
+	           }
+	       $scope.tempPallet = JSON.parse(JSON.stringify(pallet));
+			  }
+		  else{
+			  if(pallet.areaTo==null||""==pallet.areaTo){
+				   flag = true;
+				   message = message+ "Storage Area(To) ";
+				  }
+			  if(pallet.binTo==null||""==pallet.arbinToeaTo){
+				   flag = true;
+				   message = message+"Storage Bin(To)  ";
+				  }
+			  if(pallet.forkLiftDriver==null||""==pallet.forkLiftDriver){
+				   flag = true;
+				   message = message+ "forkLiftDriver ";
+				  }
+			 if(flag){
+	          alert(message+" cannnot null");
+	          return;
+				 }
+			  }
+		  pallet.show = !pallet.show;
+		  }
+//鐐瑰嚮cancel鐨勬椂鍊欒皟鐢�
+$scope.cancelPllet=function(index){
+	 $scope.pallets[index]=JSON.parse(JSON.stringify($scope.tempPallet));
+	 $scope.pallets[index].show= true;
+} 			 
+//鐐瑰嚮琛ㄥごEdit鐨勬椂鍊欎娇鐢�
+$scope.showEditSelectPalletView=function(){
+		 var flag = true;
+		  for(var i = 0 ;i<$scope.pallets.length;i++){
+			 if($scope.pallets[i].todo==true){
+				 flag = false;
+				 break;
+				 }
+			  }
+		 if(flag){
+			 alert("Please first select pallet");
+			 return
+			 }
+		 $scope.currentPallet =null;
+		 $scope.currentPallet={warehouse: $scope.currentTransferPlan.warehouse,planItemId:$scope.currentTransferPlan.id};
+		 $scope.addPalletDlg =true;
+	     $scope.binToVos = null;
+	    
+		  }
+$scope.cancelAddpalView = function(){
+	  $scope.addPalletDlg =false;
+	  }
+//鐐瑰嚮缂栬緫瀵硅瘽妗嗙殑ok鎸夐挳鏃惰皟鐢�
+$scope.editSelectPallets=function(currentPallet){
+		   var flag = true;
+			var message = "";    
+			if(currentPallet.areaTo==null||currentPallet.areaTo==""){
+					 message = message+"Storage Area(To)  ";
+					 flag = false;
+			} 
+			if(currentPallet.binTo==null||currentPallet.binTo==""){
+					 message = message+"Storage Bin(To)  ";
+					 flag = false; 
+		   } 
+		  if(currentPallet.forkLiftDriver==null||currentPallet.forkLiftDriver==""){
+					  message =message+ "forkLiftDriver  ";
+					  flag = false;
+					 
+		  }
+	      if(flag){  	 
+		  for(var i = 0 ;i<$scope.pallets.length;i++){
+				 if($scope.pallets[i].todo==true &&$scope.pallets[i].execute==false){
+					 $scope.pallets[i].areaTo= currentPallet.areaTo;
+					 $scope.pallets[i].binTo= currentPallet.binTo;
+					 $scope.pallets[i].forkLiftDriver= currentPallet.forkLiftDriver;
+					 }
+				  }
+		  $scope.addPalletDlg =false;
+	      }else{
+	        alert(message+" cannot null");
+	          }
+		  }
+				 
+
+//change  toArea 涓嬫潵妗嗙殑鏃跺�璋冪敤							    			     
+$scope.changeToArea=function(areaNameKey,add,init){
+	  $http.get('/transfer/transferplan/pallets/gettobins/'+areaNameKey).success(function(data, status, headers, config) {
+					    $scope.binToVos = alertMessage(data);
+			    	    if(add){
+					    	    $scope.addPallet.storageBinTo.$error.date = false;
+				    	    }else{
+					    	    $scope.editPallet.storageBinTo.$error.date = true;
+					    	   }
+			     	    if(init){
+						    $scope.currentPallet.binTo=null;
+							    	    }
+			    }).error(function(data, status, headers, config) {
+				     alert(status);
+			        $scope.status = status
+			    });
+  
+};	
+//plan detail 鍒犻櫎鐨勭郴鍒楁柟娉� 寮瑰嚭纭瀵硅瘽妗嗭紝ok纭鍒犻櫎 锛宯o鍙栨秷鍒犻櫎  
+//寮瑰嚭瀵硅瘽妗�
+$scope.deletePalletView=function(pallet,$index){
+				    $scope.palletIndex = $index;
+					$scope.deletePalletDlg = true;
+					$scope.deletepalletVo = pallet;
+					$scope.palletdetailDlg = false;
+					 };
+//鐐瑰嚮ok璋冪敤							    
+$scope.deletePallet=function(){
+		 if($scope.deletepalletVo.id ==null || $scope.deletepalletVo.id==""){
+		    $scope.pallets.splice($scope.palletIndex,1);
+		    $scope.getTotalQty();
+		 }else{
+			 $http.get('/transfer/transferplan/pallets/deletepallet/'+$scope.deletepalletVo.id).success(
+      	            function(data, status, headers, config) {
+      	              $scope.pallets.splice($scope.palletIndex,1);
+      	         	  $scope.status=status;
+          	          alert(data);
+          	         $scope.getTotalQty();
+      	          }).error(
+      	            function(data, status, headers, config) {
+          	          alert(data)
+      	              $scope.status = status
+      	          });
+			 }
+		    $scope.deletePalletDlg = false;
+			$scope.palletdetailDlg = true;
+		 }
+//no鏃惰皟鐢�
+$scope.closeDeletePalletDlg=function(){
+		 $scope.deletePalletDlg = false;
+			$scope.palletdetailDlg = true;
+			 };	
+	
+//==============================  鎿嶄綔stock鐨勬柟娉� ======================================
+//鏍规嵁plan  鎵惧埌 瀵瑰簲鐨剆tock	骞朵笖寮瑰嚭stock瀵硅瘽妗�			      
+$scope.showStocksView = function(){
+	  		$http.get('/transfer/transferplan/stocks/list/'+$scope.currentTransferPlan.id).success(
+	  		function(data, status, headers, config) {					 
+	  		$scope.stocks = data;
+	  		$scope.stocksView = true;
+	  		$scope.allStokcs = false;
+	  		}).error(function(data, status, headers, config) {
+	  		alert(data);
+	  		$scope.status = status
+	  		});
+	  		}
+//鍏抽棴stock瀵硅瘽妗�
+$scope.cancelStocksView =function(){
+	  			$scope.stocksView = false;
+	  			}
+//鐐瑰嚮stock瀵硅瘽妗嗕腑鐨勮〃澶碿heckbox,璋冪敤	  		
+$scope.selectAllStock = function(){
+             for(var i = 0;i<$scope.stocks.length;i++){
+          	   $scope.stocks[i].todo = $scope.allStokcs;
+  			}
+  		  }
+//鐐瑰嚮stock瀵硅瘽妗嗕腑鐨勮〃涓殑checkbox,璋冪敤	
+$scope.selectStock = function(){
+	            var flag = false;
+	             for(var i = 0;i<$scope.stocks.length;i++){
+	         	      if($scope.stocks[i].todo == false){
+	         	    	flag = true;
+	         	    	break;
+	             	      }
+	  			}
+	  			if(flag){
+	  				$scope.allStokcs = false;
+	  				}else{
+	  				$scope.allStokcs = true;
+	  					}
+	  			}
+//閫変腑stock 鐐瑰嚮 ok鐨勬椂鍊欒皟鐢�
+$scope.copyStocksToPallets = function(){
+	  		var flag = true;
+	  		var flagSelect = false;
+	  		var pallet;	 
+	  		for(var i = 0;i<$scope.stocks.length;i++){
+	  			if($scope.stocks[i].todo == true){
+	  				flagSelect = true;
+	  			}
+	  		}
+	  		if(!flagSelect){
+	  			alert("please first select stock")
+	  			return;
+	  			}
+	  		for(var i = 0;i<$scope.stocks.length;i++){
+	  			flag = true;
+	  	     if($scope.stocks[i].todo == true && $scope.pallets!=null&&angular.isArray($scope.pallets)){
+	                  for(var j=0;i<$scope.pallets.length;j++){
+	          			if($scope.pallets[j].stockId==$scope.stocks[i].id){
+	          				flag = false;
+	          				pallet = $scope.pallets[j];
+	          				break;
+	              			}
+	  			      }
+	  		     if(flag){
+	  	       	 pallet = new Object();
+	  	       	 pallet.vId = $scope.pallets.length+1;
+	  	       	 pallet.execute  = false;	 
+	  	       	 pallet.stockId  = angular.copy($scope.stocks[i].id);	 
+	  	       	 pallet.planItemId  = angular.copy($scope.currentTransferPlan.id);	 
+	  	       	 pallet.warehouse  = angular.copy($scope.stocks[i].warehouse);	 
+	  			     } 
+	  	       	 pallet.areaFrom = angular.copy($scope.stocks[i].area);	 
+	  	       	 pallet.binFrom = angular.copy($scope.stocks[i].bin);	 
+	  	       	 pallet.palletQty = angular.copy($scope.stocks[i].qty);
+	  	       	 pallet.show = true;
+	  	       	 if(flag){
+	  	       	 $scope.pallets.push(pallet);	 
+	  		       	 }
+	  	           	      }
+	  			}
+	  		$scope.getTotalQty();
+	  		$scope.stocksView = false;
+	  		$scope.showAllPallet = false;
+	  	}
+/*
+ * 寮瑰嚭execute瀵硅瘽妗�
+ */
+$scope.shwoExecuteDlg=function(index){
+ var flag = true;
+ if(index!=null){
+	 $scope.executeIndex =index
+ }else{
+//妫�煡鏈夋病鏈夐�涓璸allet
+ for(var i = 0 ;i<$scope.pallets.length;i++){
+	 if($scope.pallets[i].todo && !$scope.pallets[i].execute){
+		 flag = false;
+		 break;
+		 }
+	  }
+ if(flag){
+	 alert("Please first select pallet");
+	 return
+	 } 
+ }
+ $scope.executeVo = {};
+ $scope.executeDlg = true;
+}
+/*
+ * 鍏抽棴execute瀵硅瘽妗�
+ */
+$scope.closeExecuteDlg=function(){
+	 $scope.executeDlg = false;
+	 $scope.executeIndex=-1;
+}
+/*
+ * execute鎸夐挳鐨勬椂鍊欒皟鐢紙鍗曟潯鍜屽鏉★級
+ */
+ $scope.doExecute = function(executeVo) {
+		var flag = false;
+		var flagSlect = true;
+		var array = new Array();
+		var message = "The data ";
+		if ($scope.pallets.length == 0) {
+			alert("pallets is null");
+			return;
+		}
+		// 鍗曟潯鎵ц
+		if ($scope.executeIndex != -1) {
+			if ($scope.pallets[$scope.executeIndex].areaTo == null || "" == $scope.pallets[$scope.executeIndex].areaTo || $scope.pallets[$scope.executeIndex].binTo == null
+					|| "" == $scope.pallets[$scope.executeIndex].arbinToeaTo || $scope.pallets[$scope.executeIndex].forkLiftDriver == null
+					|| "" == $scope.pallets[$scope.executeIndex].forkLiftDriver) {
+				alert("The " + $scope.executeIndex + " data have prolem")
+				return false;
+			}
+			var tempPallet = JSON.parse(JSON.stringify($scope.pallets[$scope.executeIndex]));
+			array.push(copyExecuteToPallet(executeVo, tempPallet));
+		}
+		// 澶氭潯鎵ц
+		else {
+			// 妫�煡姣忎釜pallet涓殑蹇呭～瀛楁鏄惁涓虹┖
+			for ( var i = 0; i < $scope.pallets.length; i++) {
+				if ($scope.pallets[i].areaTo == null || "" == $scope.pallets[i].areaTo || $scope.pallets[i].binTo == null || "" == $scope.pallets[i].arbinToeaTo
+						|| $scope.pallets[i].forkLiftDriver == null || "" == $scope.pallets[i].forkLiftDriver) {
+					flag = true;
+					message = message + $scope.pallets[i].vId + " ";
+				}
+			}
+			if (flag) {
+				alert(message + "have prolem")
+				return false;
+			}
+			// 涓烘墽琛屽噯澶囨暟鎹�婊¤冻涓や釜鏉′欢閫変腑涓旀病鏈夎鎵ц杩�
+			for ( var i = 0, len = $scope.pallets.length; i < len; i++) {
+				if ($scope.pallets[i].todo && $scope.pallets[i].execute == false) {
+					var tempPallet = JSON.parse(JSON.stringify($scope.pallets[i]));
+					array.push(copyExecuteToPallet(executeVo, tempPallet));
+				}
+			}
+		}
+		
+		$http.post('/transfer/goodstransfer/pallets/execute', JSON.stringify(array)).success(function(data, status, headers, config) {
+			$scope.status = status;
+			if (isOk(data.message)) {
+				if ($scope.executeIndex != -1) {
+					$scope.pallets[$scope.executeIndex].execute = true;
+				} else {
+					for ( var i = 0; i < $scope.pallets.length; i++) {
+						if ($scope.pallets[i].todo&&!$scope.pallets[i].execute) {
+									$scope.pallets[i].execute = true;
+							}
+						}
+					if(data.palletNos!=null&&data.palletNos.length>0){
+					for ( var i = 0; i < $scope.pallets.length; i++) {
+						var flag = true;
+						if ($scope.pallets[i].todo&&$scope.pallets[i].execute) {
+							for ( var j = 0; j < data.palletNos.length; j++) {
+								if (flag&&$scope.pallets[i].palletNo == data.palletNos[j]) {
+									$scope.pallets[i].execute = false;
+									flag = false;
+								}
+							}
+						}
+					}
+				}
+			}   
+				$scope.searchList($scope.tempSearchVo, false);
+				$scope.closeExecuteDlg();
+			}
+		}).error(function(data, status, headers, config) {
+			$scope.status = status
+		});
+	};
+
+/*
+ * 鎵撳紑閫夋嫨鍝釜pallet 鐨勫璇濇
+ */
+$scope.openSelectDlg = function(arr){
+	if(!isNotEmptyArr(arr)){
+		alert("No pallet select");
+		return ;
+	}
+	$scope.selectVo =null;
+	$scope.selectDlg = true;
+}
+/*
+ * selectVo 鍙戠敓鏀瑰彉鐨勬椂鍊欒皟鐢�
+ */
+$scope.selectChange = function(selectVo){
+  calculateNo(selectVo, $scope.pallets,false);
+}
+/*
+ * 鎵ц閫夋嫨
+ */
+$scope.doSelect = function(selectVo){
+	if(baseFromToSelectQty(selectVo,$scope.pallets,false)){
+	$scope.selectPallet();
+	$scope.closeSelectDlg();
+	}
+}
+/*
+ * 鍏抽棴閫夋嫨瀵硅瘽妗�
+ */
+$scope.closeSelectDlg = function(){
+	$scope.selectDlg = false;	
+}
+ 
+//------------------------宸ュ叿鏂规硶----------------------------------------------
+$scope.getTotalQty = function() {
+	$scope.totalQty = 0;
+	for ( var i = 0; i < $scope.pallets.length; i++) {
+		$scope.totalQty = $scope.totalQty + $scope.pallets[i].qty
+	}
+	if ($scope.totalQty > $scope.currentTransferPlan.transferQty) {
+		document.getElementById('totalQty').style.color = "red";
+	} else {
+		document.getElementById('totalQty').style.color = "black";
+	}
+};
+//閫変腑鍚庣殑鏍峰紡閫夋嫨
+$scope.getClass = function(ind){
+	if(ind === $scope.selecedIndex){
+		return "selected";
+	} else {
+		return "";
+	}
+};
+$scope.matchclass = function(flag){
+	if(flag){
+		return "not-match"
+	}else{
+		return ""
+	}
+}
+function copyExecuteToPallet(executeVo,pallet){
+	pallet.shift = executeVo.shift;
+	pallet.remarks = executeVo.remarks;
+	pallet.reason = executeVo.reason;
+	return pallet;
+}
+
+  }); </script>

@@ -1,0 +1,86 @@
+@(name:String)
+@main("LED Display Receiving"){
+<div ng-controller="LEDDisplayReceivingCtrl">
+
+
+<table cellpadding="0"  cellspacing="0" border="1"
+		class="table table-striped table-bordered table-hover table-condensed"  width="100%">
+		<thead>
+			<tr style="font-size: 25px;">
+				<th>Prod Line</th>
+				<th>PI No</th>
+				<th colspan="2">Material</th>
+				<th>PI Qty</th>
+				<th>Plan Prod Qty</th>
+				<th>Received Qty</th>
+				<th>No. of Pallet</th>
+			</tr>
+		</thead>
+
+		<tbody ng-repeat="receiving in receivingList|orderBy:'productLine'" >
+			  <tr style="font-size: 25px;">
+				<td rowspan="{{receiving.DisplayReceivingVOs.length+1}}">{{receiving.productLine}}</td>
+			</tr> 
+			<tr ng-repeat="DisplayReciving in receiving.DisplayReceivingVOs">
+				<td>{{DisplayReciving.piNo}}</td>
+				<td colspan="2">{{DisplayReciving.materialCode}}</td>
+				<td align="right">Total:{{DisplayReciving.piQty|number:0}}<br>Remaining:{{(DisplayReciving.piQty-DisplayReciving.receivedQty*DisplayReciving.netWeight)|number:0}}</td>
+				<td align="right">{{DisplayReciving.planQty|number:0}}</td>
+				<td align="right">{{DisplayReciving.receivedQty|number:0}}</td>
+				<td>{{DisplayReciving.receivePallet}}/{{DisplayReciving.totalPallet}}</td>
+			</tr>
+		</tbody>
+		<tfoot>
+			<tr style="font-size: 25px;">
+				<td rowspan="2" colspan="2">PI NO<br>{{lastest.piNo}}</td>
+				<td rowspan="2" colspan="2" align="center">From<br>{{lastest.From}}</td>
+				<td rowspan="2" colspan="2" align="center">To<br>{{lastest.To}}</td>
+				<td rowspan="2" colspan="2">Pallet Quantity<br>{{lastest.Qty}}</td>
+			</tr>
+		</tfoot>
+	</table>
+</div>
+
+}{
+<script type="text/javascript" charset="utf-8">
+    //var CloudWMS = angular.module('CloudWMS', ['ui.bootstrap']);
+    CloudWMS.controller('LEDDisplayReceivingCtrl', function($scope, $http,$timeout) {
+    	
+        var transformReq = function(d){
+            return d;
+        }
+    	
+        var JSON_START = /^\s*(\[|\{[^\{])/,
+        JSON_END = /[\}\]]\s*$/,
+        PROTECTION_PREFIX = /^\)\]\}',?\n/;
+    	var transformResp = function(data){
+    		if (angular.isString(data)) {
+    	        // strip json vulnerability protection prefix
+    	        data = data.replace(PROTECTION_PREFIX, '');
+    	        if (JSON_START.test(data) && JSON_END.test(data))
+    	          data = angular.fromJson(data, true);
+    	    }
+    	    return data;
+    	}
+    	
+    	
+    	$scope.search=function(){
+    	 $http.get('/display/receiving/list',{
+    	        transformRequest:transformReq,
+    	        transformResponse:transformResp        
+    	    }).success(
+           function(data, status, headers, config) {
+        	   debugger;
+          	 $scope.receivingList = data.List;
+          	 $scope.lastest=data.last;
+          	 $timeout($scope.search,6000)
+           }).error(
+           	function(data, status, headers, config) {
+             $scope.status = status
+         	});
+    	}
+    	$scope.search();
+    });
+    
+</script>
+}

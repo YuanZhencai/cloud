@@ -1,0 +1,76 @@
+@(name:String)
+@main("LED Display Stuffing"){
+<div ng-controller="LEDDisplayStuffingCtrl">
+<div class="breadcrumb">
+	<li style=""> Current Location: LED Display >> Stuffing</li>
+</div>
+
+<table cellpadding="0" cellspacing="0" border="0"
+		class="table table-striped table-bordered table-hover table-condensed" id="example" width="100%">
+		<thead>
+			<tr>
+				<th>Storage area</th>
+				<th>PI No</th>
+				<th>PI Qty</th>
+				<th>Transp</th>
+				<th>Commodity Name</th>
+				<th>Feeder/Vessel</th>
+				<th>Stuffing Plan Qty</th>
+				<th>Prod Date</th>
+				<th>Container No</th>
+				<th>Seal No</th>
+				<th>Closed Date/Time</th>
+				<th>Remarks</th>
+				<th>SG PI Remarks</th>
+			</tr>
+		</thead>
+
+		<tbody>
+			<tr ng-repeat="stuffing in stuffingList | orderBy:'atLoadingBay':true" >
+				<td><font color="{{stuffing.classType}}">{{stuffing.loadingBay}}</font></td>
+				<td><font color="{{stuffing.classType}}">{{stuffing.piNo}}</font></td>
+				<td><font color="{{stuffing.classType}}">{{stuffing.piQty|number:2}}</font></td>
+				<td><font color="{{stuffing.classType}}">{{stuffing.transp}}</font></td>
+				<td><font color="{{stuffing.classType}}">{{stuffing.commodityName}}</font></td>
+				<td><font color="{{stuffing.classType}}">{{stuffing.feeder}}</font></td>
+				<td><font color="{{stuffing.classType}}">{{stuffing.stuffingPlanQty|number:2}}({{stuffing.Qty|number:2}})</font></td>
+				<td><font color="{{stuffing.classType}}">{{stuffing.prodDate|date:'dd/MM/yyyy'}}</font></td>
+				<td><font color="{{stuffing.classType}}">{{stuffing.containerNo}}</font></td>
+				<td><font color="{{stuffing.classType}}">{{stuffing.sealNo}}</font></td>
+				<td><font color="{{stuffing.classType}}">{{stuffing.closedDate|date:'dd/MM/yyyy HH:mm'}}</font></td>
+				<td><font color="{{stuffing.classType}}">{{stuffing.remarks}}</font></td>
+				<td><font color="{{stuffing.classType}}">{{stuffing.sgRemarks}}</font></td>
+			</tr>
+		</tbody>
+	</table>
+</div>
+}{
+<script type="text/javascript" charset="utf-8">
+   // var CloudWMS = angular.module('CloudWMS', ['ui.bootstrap']);
+    CloudWMS.controller('LEDDisplayStuffingCtrl', function($scope, $http) {
+    	 $http.get('/display/stuffing/list').success(
+                 function(data, status, headers, config) {
+                   $scope.stuffingList = data;
+                  // alert(data)
+                   for(var i = 0, len = $scope.stuffingList.length; i < len; ++i) {
+			           if($scope.stuffingList[i].atLoadingBay){
+			        	   $scope.stuffingList[i].classType = 'red';
+			           }else{
+			        	   $scope.stuffingList[i].classType='';
+				       }
+			         }
+               }).error(
+                 function(data, status, headers, config) {
+                	 alert(status)
+                   $scope.status = status
+               });
+    });
+
+</script>
+<script type="text/javascript" charset="utf-8">  
+	function refresh()  {  
+		window.location.reload();  
+	}  
+	setTimeout('refresh()',60000); //鎸囧畾60绉掑埛鏂颁竴娆� 
+</script> 
+}

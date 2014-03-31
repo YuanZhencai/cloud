@@ -1,0 +1,698 @@
+@(name:String)
+@main("Warehouse SetUp"){
+<div ng-controller="WarehouseSetUp">
+<div class="breadcrumb">
+	<li style="">Current Location: Warehouse Setup</li>
+</div>
+<div alert ng-repeat="alert in alerts" type="alert.type" close="closeAlert($index)" template-url="/template/alert/alert.html">{{alert.msg}}</div>
+	<!-- 鏌ヨ鏉′欢 -->
+	<form novalidate class="form-horizontal" ng-submit="searchVoList(warehouseSearchVo)">
+		<table>
+			<tr>
+				<td>
+					 <div class="control-group">
+						<label class="control-label">Company :</label>
+						<div class="controls"> 
+							 <select class="span2" ng-model="warehouseSearchVo.plantName" ng-options="c.id as c.nameKey for c in CompanyList">
+							</select>
+					 	</div>
+					</div> 
+				</td>
+				<td>
+					 <div class="control-group">
+						<label class="control-label">Warehouse :</label>
+						<div class="controls"> 
+							<select class="span2" ng-model="warehouseSearchVo.warehouse" ng-options="w.id as w.nameKey for w in warehouseList">
+							</select>
+					 	</div>
+					</div> 
+				</td>
+				<td>
+					 <div class="control-group">
+						<label class="control-label">Storage Type :</label>
+						<div class="controls">
+							<select class="span2" ng-model="warehouseSearchVo.storageType" ng-options="s.name as s.nameKey for s in StorageTypeList">
+								<option value="">All</option>
+							</select>
+					 	</div>
+					</div> 
+				</td>
+			</tr>
+			<tr>
+				<td>
+					 <div class="control-group">
+						<label class="control-label">Active? :</label>
+						<div class="controls"> 
+							<select class="span2" ng-model="warehouseSearchVo.active">
+								<option value="">All</option>
+								<option value="Y">YES</option>
+								<option value="N">No</option>
+							</select>
+					 	</div>
+					</div> 
+				</td>
+				<td>
+				</td>
+				<td>
+					<div style="text-align: right;">
+						<input class="btn btn-primary" type="submit" value="Search">
+					</div>
+				</td>
+			</tr>
+		</table>
+	</form>
+	<!-- PItable -->
+	<table id="pitable" class="table table-striped table-bordered table-hover table-condensed">
+		<thead>
+			<tr>
+				<th>Company</th>
+				<th>Warehouse</th>
+				<th>Storage Type</th>
+				<th>Storage Area</th>
+				<th>Storage Bin</th>
+				<th>Max Capacity</th>
+				<th>Capacity Type</th>
+				<th>Active</th>
+				<th>Last update date</th>
+				<th>Operation
+					<a class="btn btn-primary btn-small" style="text-align: left" ng-click="openAddDlg()"> Add </a>
+					<!--<a class="btn btn-primary btn-small" style="text-align: rigth" ng-click="showUploadView()" >Template</a>  -->
+				</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr ng-repeat="warehouseVo in warehouseVoList">
+				<td>{{warehouseVo.plantName}}</td>
+				<td>{{warehouseVo.warehouse}}</td>
+				<td>{{warehouseVo.storageType}}</td>
+				<td>{{warehouseVo.storageArea}}</td>
+				<td>{{warehouseVo.storageBin}}</td>
+				<td>{{warehouseVo.maximunCapacity|number:2}}</td>
+				<td>{{warehouseVo.capacityType}}</td>
+				<td>{{warehouseVo.activeStr}}</td>
+				<td>{{warehouseVo.lastUpdateDate|date:'dd/MM/yyyy HH:mm'}}</th>
+				<th>
+					<a class="btn btn-info btn-small" title="Active/Inactive" style="text-align: left;" ng-click="openStateDlg(warehouseVo, $index)"> Active? </a>
+					<a class="btn btn-primary btn-small" style="text-align: center;" ng-click="openEditDlg(warehouseVo, $index)"> Edit </a>
+				</th>
+			</tr>
+		</tbody>
+	</table>
+	<br/>
+	<!-- 淇敼active鐘舵� -->
+	<div modal="activeStateDlg" close="closeActiveDlg()" options="dlgOpts">
+		<div class="modal-header">
+			<h4>Modify active state</h4>
+		</div>
+		<div class="modal-body">
+		<form novalidate class="form-horizontal">
+			<table>
+				<tbody>
+					Are you sure to modify  active state ?
+				</tbody>
+			</table>
+			<div class="modal-footer">
+				<button class="btn btn-primary btn-small ok" ng-click="activeOrNot(currentWarehouseVo, currentIndex)">YES</button>
+				<button class="btn btn-warning btn-small cancel" ng-click="closeActiveDlg()">NO</button>
+			</div>
+		</form>
+		</div>
+	</div>
+	<!-- 娣诲姞bin -->
+	<div modal="addDlg" close="closeAddDlg()" options="dlgOpts">
+		<div class="modal-header">
+			<h4>Add bin</h4>
+		</div>
+		<div class="modal-body">
+			<form name="add" novalidate class="form-horizontal">
+				<table>
+					<tbody>
+						<tr>
+							<td>
+								<label class="control-label">Company :&nbsp;</label>
+							</td>
+							<td>
+								<select ng-model="addWarehouseVo.plantNameId" ng-options="c.id as c.nameKey for c in CompanyList" ng-change="changeAdd(addWarehouseVo)">
+								</select>
+								<span style="color: red">*</span>
+							</td>
+						</tr>
+						<tr>
+							<td></td>
+							<td>
+								<span ng-show="addWarehouseVo.addPlantNameId" style="color: red">Please select the Plant Name!</span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<label class="control-label">Warehouse :&nbsp;</label>
+							</td>
+							<td>
+								<select ng-model="addWarehouseVo.warehouseId" ng-options="w.id as w.nameKey for w in warehouseList" ng-change="changeAdd(addWarehouseVo)">
+								</select>
+								<span style="color: red">*</span>
+							</td>
+						</tr>
+						<tr>
+							<td></td>
+							<td>
+								<span ng-show="addWarehouseVo.addWarehouse" style="color: red">Can not be null!</span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<label class="control-label">Storage Type :&nbsp;</label>
+							</td>
+							<td>
+								<select ng-model="addWarehouseVo.storageType" ng-options="s.name as s.nameKey for s in StorageTypeList" ng-change="changeAdd(addWarehouseVo)">
+								</select>
+								<span style="color: red">*</span>
+							</td>
+						</tr>
+						<tr>
+							<td></td>
+							<td>
+								<span ng-show="addWarehouseVo.addStorageType" style="color: red">Please select the StorageType!</span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<label class="control-label">Storage Area :&nbsp;</label>
+							</td>
+							<td>
+								<input type="text" name="area" ng-model="addWarehouseVo.storageArea" ng-change="changeAdd(addWarehouseVo)"/>
+								<span style="color: red">*</span>
+							</td>
+						</tr>
+						<tr>
+							<td></td>
+							<td>
+								<span ng-show="addWarehouseVo.addStorageArea" style="color: red">Can not be null!</span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<label class="control-label">Storage Bin :&nbsp;</label>
+							</td>
+							<td>
+								<input type="text" name="bin" ng-model="addWarehouseVo.storageBin" ng-change="changeAdd(addWarehouseVo)"/>
+								<span style="color: red">*</span>
+							</td>
+						</tr>
+						<tr>
+							<td></td>
+							<td>
+							<span ng-show="addWarehouseVo.addStorageBin" style="color: red">Can not be null!</span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<label class="control-label">Maximun Capacity :&nbsp;</label>
+							</td>
+							<td>
+								<input type="text" name="maximunCapacity" ng-model="addWarehouseVo.maximunCapacity" float/>
+							</td>
+						</tr>
+						<tr>
+							<td></td>
+							<td>
+							<span ng-show="add.maximunCapacity.$error.date" style="color: red">Must be a maximum  14-bit integers, two decimal places positive!</span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<label class="control-label">CapacityType :&nbsp;</label>
+							</td>
+							<td>
+								<input ng-disabled=true type="text" name="capacityType" ng-model="addWarehouseVo.capacityType"/>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</form>
+		</div>
+		<div class="modal-footer">
+			<button class="btn btn-primary btn-small ok" type="submit" ng-click="addWarehouse(addWarehouseVo)">Save</button>
+			<button class="btn btn-warning btn-small cancel" ng-click="closeAddDlg()">Cancel</button>
+		</div>
+	</div>
+	<!-- 缂栬緫bin -->
+	<div modal="editDlg" close="closeEditDlg()" options="dlgOpts">
+		<div class="modal-header">
+			<h4>Edit bin</h4>
+		</div>
+		<div class="modal-body">
+			<form name="edit" novalidate class="form-horizontal">
+				<table>
+					<tbody>
+						<tr>
+							<td>
+								<label class="control-label">Company :&nbsp;</label>
+							</td>
+							<td>
+								<select ng-model="editWarehouseVo.plantNameId" ng-disabled="true" ng-options="c.id as c.nameKey for c in CompanyList" ng-change="changeEdit(editWarehouseVo)">
+								</select>
+								<span style="color: red">*</span>
+							</td>
+						</tr>
+						<tr>
+							<td></td>
+							<td>
+								<span ng-show="editWarehouseVo.editPlantNameId" style="color: red">Please select the Plant Name!</span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<label class="control-label">Warehouse :&nbsp;</label>
+							</td>
+							<td>
+								<select ng-model="editWarehouseVo.warehouseId" ng-disabled="true" ng-options="w.id as w.nameKey for w in warehouseList" ng-change="changeEdit(editWarehouseVo)">
+								</select>
+								<span style="color: red">*</span>
+							</td>
+						</tr>
+						<tr>
+							<td></td>
+							<td>
+								<span ng-show="editWarehouseVo.editWarehouse" style="color: red">Can not be null!</span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<label class="control-label">Storage Type :&nbsp;</label>
+							</td>
+							<td>
+								<select ng-model="editWarehouseVo.storageType" ng-disabled="true" ng-options="s.name as s.nameKey for s in StorageTypeList" ng-change="changeEdit(editWarehouseVo)">
+								</select>
+								<span style="color: red">*</span>
+							</td>
+						</tr>
+						<tr>
+							<td></td>
+							<td>
+								<span ng-show="editWarehouseVo.editStorageType" style="color: red">Please select the StorageType!</span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<label class="control-label">Storage Area :&nbsp;</label>
+							</td>
+							<td>
+								<input type="text" name="area" ng-disabled="true" ng-model="editWarehouseVo.storageArea" ng-change="changeEdit(editWarehouseVo)"/>
+								<span style="color: red">*</span>
+							</td>
+						</tr>
+						<tr>
+							<td></td>
+							<td>
+								<span ng-show="editWarehouseVo.editStorageArea" style="color: red">Can not be null!</span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<label class="control-label">Storage Bin :&nbsp;</label>
+							</td>
+							<td>
+								<input type="text" name="bin" ng-disabled="true" ng-model="editWarehouseVo.storageBin" ng-change="changeEdit(editWarehouseVo)"/>
+								<span style="color: red">*</span>
+							</td>
+						</tr>
+						<tr>
+							<td></td>
+							<td>
+							<span ng-show="editWarehouseVo.editStorageBin" style="color: red">Can not be null!</span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<label class="control-label">Maximun Capacity :&nbsp;</label>
+							</td>
+							<td>
+								<input type="text" name="maximunCapacity" ng-model="editWarehouseVo.maximunCapacity" float/>
+							</td>
+						</tr>
+						<tr>
+							<td></td>
+							<td>
+							<span ng-show="edit.maximunCapacity.$error.date" style="color: red">Must be a maximum  14-bit integers, two decimal places positive!</span>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<label class="control-label">CapacityType :&nbsp;</label>
+							</td>
+							<td>
+								<input ng-disabled=true type="text" name="capacityType" ng-model="editWarehouseVo.capacityType"/>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</form>
+		</div>
+		<div class="modal-footer">
+			<button class="btn btn-primary btn-small ok" type="submit" ng-click="editWarehouse(editWarehouseVo)">Save</button>
+			<button class="btn btn-warning btn-small cancel" ng-click="closeEditDlg()">Cancel</button>
+		</div>
+	</div>
+	<!-- 涓婁紶excel鏁版嵁 -->
+	<div modal="uploadDlg" close="closeUploadeDlg()" options="dlgOpts">
+		<div class="modal-header">
+			<h4>Uploat Warehouse Data</h4>
+		</div>
+		<form class="form-horizontal" method="post" action="/setup/warehouse/upload" enctype="multipart/form-data">
+			<div class="modal-body">
+		 		<input  type='file' name='file'/>
+			</div>
+			<div class="modal-footer"> 
+				<button class="btn btn-primary btn-small ok"  type="submit">YES</button> 
+				<button class="btn btn-warning btn-small cancel" ng-click="closeUploadeDlg()">NO</button>
+			</div>
+		</form>
+	</div>
+</div>
+<style type="text/css">
+.red{background: red;}
+.column0 {text-align: right;width: 125px;}
+.column1 {text-align: right;width: 165px;}
+.column2 {text-align: left;width: 9px;}
+.selected{color:red;background:GreenYellow;}
+</style>
+}{
+<script type="text/javascript" charset="utf-8">
+		//var CloudWMS = angular.module('CloudWMS', ['ui','ui.bootstrap']);
+		var FLOAT_REGEXP =/^([0-9]{1,14}|[0-9]{1,14}\.[0-9]{0,2})$/;//鏁存暟浣�4浣嶏紝灏忔暟浣嶄袱浣�
+	    var INT_REGEXP=/^[1-9]{1}[0-9]{0,13}$/;//灏忎簬绛変簬14浣嶇殑姝ｆ暣鏁�
+	   	var ISNULL_REGEXP =/^$/;
+	   	var NULL_REGEXP=/^\w+$/;
+	    CloudWMS.directive('float', function() {
+	          return {
+	            require: 'ngModel',
+	            link: function(scope, elm, attrs, ctrl) {
+	              ctrl.$parsers.unshift(function(viewValue) {
+	                if (FLOAT_REGEXP.test(viewValue)||viewValue=='') {
+	                  ctrl.$setValidity('date', true);
+	                  return viewValue;
+	                } else {
+	                  ctrl.$setValidity('date', false);
+	                  return viewValue;
+	                }
+	              });
+	            }
+	          };
+	    }).directive('isnull', function() {
+	          return {
+	            require: 'ngModel',
+	            link: function(scope, elm, attrs, ctrl) {
+	              ctrl.$parsers.unshift(function(viewValue) {
+	                if (ISNULL_REGEXP.test(viewValue)) {
+	                  ctrl.$setValidity('date', true);
+	                  return viewValue;
+	                } else {
+	                  ctrl.$setValidity('date', false);
+	                  return viewValue;
+	                }
+	              });
+	            }
+	          };
+	    });
+		CloudWMS.controller('WarehouseSetUp', function($scope, $http, $timeout){
+			$scope.currentPlantName;//褰撳墠鍏徃
+			$scope.currentWarehouse;//褰撳墠浠撳簱
+			$scope.activeStateDlg = false;//淇敼鐘舵�椤甸潰涓嶆樉绀�
+			$scope.currentWarehouseVo;//褰撳墠鐨剋arehouse鏁版嵁
+        	$scope.currentIndex;//褰撳墠warehouseVo鏁版嵁鎵�湪鐨勬潯鏁�
+			$scope.alerts = [];
+        	$scope.addDlg = false;//榛樿娣诲姞妗嗕笉鏄剧ず
+        	$scope.editDlg = false;//榛樿缂栬緫妗嗕笉鏄剧ず
+        	$scope.uploadDlg = false;//榛樿涓嶆樉绀轰笂浼犻〉闈�
+			var addAlert = function(types,msgs) {
+		        $scope.alerts.push({type:types,msg: msgs});
+		        $timeout($scope.clearAlerts, 5000);
+		    };
+	        $scope.closeAlert = function(index) {
+	          $scope.alerts.splice(index, 1);
+	        };
+	        $scope.clearAlerts = function() {
+	          $scope.alerts = [];
+	        };
+	        $timeout($scope.clearAlerts, 5000);
+	        $scope.dlgOpts = {
+    		    backdropFade: true,
+    		    dialogFade:false,
+    		    backdropClick:false
+    		   // dialogClass: [width:'1200px'];
+    		 };
+	        //鍒濆鍖栭〉闈㈡煡璇㈡潯浠�
+	        $scope.warehouseSearchVo = {plantName:"",warehouse:"",storageType:"",active:""};
+	        $http.get('/setup/warehouse/get').success(
+        		function(data, status, headers, config){
+        			$scope.warehouseVoList = data;
+	        }).error(
+    			function(data, status, headers, config){
+    				alert(status);
+    		});
+	        //鍒濆鍖栧叕鍙稿悕绉�
+	        $http.get('/setup/warehouse/initPlantName').success(
+	        	function(data, status, headers, config)	{
+	        		$scope.CompanyList = data;
+	        		if($scope.CompanyList.length > 0){
+	        			$scope.warehouseSearchVo.plantName = $scope.CompanyList[0].id;
+	        			$scope.currentPlantName = $scope.CompanyList[0].id;
+	        		}
+	        	}).error(
+	        	function(data, status, headers, config)	{
+	        		alert(data);
+	        });
+	        //鍒濆鍖栦粨搴撳悕绉�
+	        $http.get('/setup/warehouse/initWarehouse').success(
+	        	function(data, status, headers, config)	{
+	        		$scope.warehouseList = data;
+	        		if($scope.warehouseList.length > 0){
+	        			$scope.warehouseSearchVo.warehouse = $scope.warehouseList[0].id;
+	        			$scope.currentWarehouse = $scope.warehouseList[0].id;
+	        		}
+	        	}).error(
+	        	function(data, status, headers, config)	{
+	        		alert(data);
+	        });
+	      	//鍒濆鍖栭〉闈㈡煡璇torageType
+			$http.get('/setup/warehouse/initStorageType').success(
+				function(data, status, headers, config){
+					$scope.StorageTypeList = data;
+			}).error(
+				function(data, status, headers, config){
+					alert(status);
+			});
+	      	//澶存煡璇�
+	        $scope.searchVoList = function(warehouseSearchVo){
+	        	document.getElementById("submitDiv").style.display = "inline";
+	        	$http.post('/setup/warehouse/list', JSON.stringify(warehouseSearchVo)).success(
+					function(data, status, headers, config){
+						$scope.warehouseVoList = data;
+						document.getElementById("submitDiv").style.display = "none";
+				}).error(
+					function(data, status, headers, config){
+						document.getElementById("submitDiv").style.display = "none";
+						$scope.alerts.push({type:'error',msg: data});
+						$timeout($scope.clearAlerts, 3000);
+				});
+	        };
+	        //鎵撳紑淇敼鐘舵�椤甸潰
+	        $scope.openStateDlg = function(warehouseVo, index){
+	        	$scope.activeStateDlg = true;
+	        	$scope.currentWarehouseVo = warehouseVo;
+	        	$scope.currentIndex = index;
+	        }
+	        //灏哹in璁剧疆涓轰笉鍙敤鎴栧彲鐢�
+	        $scope.activeOrNot = function (currentWarehouseVo, currentIndex){
+	        	document.getElementById("submitDiv").style.display = "inline";
+	        	$http.post('/setup/warehouse/active', JSON.stringify(currentWarehouseVo)).success(
+	        		function(data, status, headers, config){
+	        			if(currentWarehouseVo.active == true){
+	        				currentWarehouseVo.active = false;
+	        				currentWarehouseVo.activeStr = "NO";
+	        				currentWarehouseVo.lastUpdateDate = data;
+	        			} else {
+	        				currentWarehouseVo.active = true;
+	        				currentWarehouseVo.activeStr = "YES";
+	        				currentWarehouseVo.lastUpdateDate = data;
+	        			}
+	        			$scope.warehouseVoList.splice(currentIndex, 1, currentWarehouseVo);
+	        			$scope.activeStateDlg = false;
+	        			document.getElementById("submitDiv").style.display = "none";
+	        			$scope.alerts.push({type:'success',msg: "Modify successfully!"});
+						$timeout($scope.clearAlerts, 3000);
+	        	}).error(
+	        		function(data, status, headers, config){
+	        			document.getElementById("submitDiv").style.display = "none";
+	        			alert(data);
+	        			$scope.activeStateDlg = false;
+	        	});
+	        };
+	        //鍏抽棴淇敼鐘舵�椤甸潰
+	        $scope.closeActiveDlg = function(){
+	        	$scope.activeStateDlg = false;
+	        };
+	        //鎵撳紑娣诲姞dialog
+	        $scope.openAddDlg = function(){
+	        	$scope.addDlg = true;
+	        	$scope.addWarehouseVo = null;
+	        	$scope.addWarehouseVo= {addPlantNameId : false, addWarehouse : false, addStorageType : false, addStorageArea : false,
+	        			addStorageBin : false, addCapacityType : false, capacityType : "Kg"};
+	        	$scope.addWarehouseVo.plantNameId = $scope.currentPlantName;
+	        	$scope.addWarehouseVo.warehouseId = $scope.currentWarehouse;
+	        };
+	      	//鍔ㄦ�灞曠ず閿欒鎻愮ず淇℃伅
+			$scope.changeAdd = function(addWarehouseVo){
+				if(typeof addWarehouseVo.plantNameId != 'undefined' || addWarehouseVo.plantNameId != null){
+					addWarehouseVo.addPlantNameId = false;
+				}
+				if(typeof addWarehouseVo.warehouseId !='undefined' || addWarehouseVo.warehouseId != null){
+					addWarehouseVo.addWarehouse = false;
+				}
+				if(typeof addWarehouseVo.storageType !='undefined' || addWarehouseVo.storageType != null){
+					addWarehouseVo.addStorageType = false;
+				}
+				if(typeof addWarehouseVo.storageArea !='undefined' || addWarehouseVo.storageArea != null){
+					addWarehouseVo.addStorageArea = false;
+				}
+				if(typeof addWarehouseVo.storageBin != 'undefined' || addWarehouseVo.storageBin != null){
+					addWarehouseVo.addStorageBin = false;
+				}
+			};
+	        //鎵ц娣诲姞
+	        $scope.addWarehouse = function(addWarehouseVo){
+	        	var vilate = $scope.add.maximunCapacity.$error.date;
+        		var next = true;
+        		if(typeof addWarehouseVo.plantNameId == 'undefined' || addWarehouseVo.plantNameId == ''){
+        			next = false;
+        			addWarehouseVo.addPlantNameId = true;
+        		}
+        		if(typeof addWarehouseVo.warehouseId == 'undefined' || addWarehouseVo.warehouseId == ''){
+        			next = false;
+        			addWarehouseVo.addWarehouse = true;
+        		}
+        		if(typeof addWarehouseVo.storageType == 'undefined' || addWarehouseVo.storageType == ''){
+        			next = false;
+        			addWarehouseVo.addStorageType = true;
+        		}
+        		if(typeof addWarehouseVo.storageArea == 'undefined' || addWarehouseVo.storageArea == ''){
+        			next = false;
+        			addWarehouseVo.addStorageArea = true;
+        		}
+        		if(typeof addWarehouseVo.storageBin == 'undefined' || addWarehouseVo.storageBin == ''){
+        			next = false;
+        			addWarehouseVo.addStorageBin = true;
+        		}
+        		if(vilate == true){
+	        		$scope.add.maximunCapacity.$error.date = true;
+	        		next = false;
+        		}
+        		if(next){
+        			document.getElementById("submitDiv").style.display = "inline";
+        			$http.post('/setup/warehouse/addWarehouse', JSON.stringify(addWarehouseVo)).success(
+       					function(data, status, headers, config){
+       						$scope.warehouseVoo = data;
+          					$scope.warehouseVoList.splice(0, 0, $scope.warehouseVoo);
+          					document.getElementById("submitDiv").style.display = "none";
+          					$scope.addDlg = false;
+       				}).error(
+       					function(data, status, headers, config){
+          					document.getElementById("submitDiv").style.display = "none";
+       						alert(data);
+       				});
+        		}
+	        };
+	        //鍏抽棴娣诲姞dialog
+	        $scope.closeAddDlg = function(){
+	        	$scope.addDlg = false;
+	        };
+	      	//鎵撳紑缂栬緫dialog
+	        $scope.openEditDlg = function(warehouseVo, index){
+	      		var s = JSON.stringify(warehouseVo);
+	      		warehouseSetupVo = JSON.parse(s);
+	      		$scope.editWarehouseVo = warehouseSetupVo;
+	      		$scope.editWarehouseVo.editPlantNameId = false;
+	      		$scope.editWarehouseVo.editWarehouse = false;
+	      		$scope.editWarehouseVo.addStorageType = false;
+	      		$scope.editWarehouseVo.editStorageArea = false;
+	      		$scope.editWarehouseVo.editStorageBin = false;
+	      		$scope.currentIndex = index;
+	        	$scope.editDlg = true;
+	        };
+	      	//鍔ㄦ�灞曠ず閿欒鎻愮ず淇℃伅
+			$scope.changeEdit = function(editWarehouseVo){
+				if(editWarehouseVo.plantNameId != null){
+					editWarehouseVo.addPlantNameId = false;
+				}
+				if(editWarehouseVo.warehouseId != null){
+					editWarehouseVo.addWarehouse = false;
+				}
+				if(editWarehouseVo.storageType != null){
+					editWarehouseVo.addStorageType = false;
+				}
+				if(editWarehouseVo.storageArea != null){
+					editWarehouseVo.addStorageArea = false;
+				}
+				if(editWarehouseVo.storageBin != null){
+					editWarehouseVo.addStorageBin = false;
+				}
+			};
+			//鎵ц缂栬緫
+			$scope.editWarehouse = function(editWarehouseVo){
+				var vilate = $scope.edit.maximunCapacity.$error.date;
+        		var next = true;
+        		if(editWarehouseVo.plantNameId == null || editWarehouseVo.plantNameId == ''){
+        			next = false;
+        			editWarehouseVo.editPlantNameId = true;
+        		}
+        		if(editWarehouseVo.warehouseId == null || editWarehouseVo.warehouseId == ''){
+        			next = false;
+        			editWarehouseVo.editWarehouse = true;
+        		}
+        		if(editWarehouseVo.storageType == null || editWarehouseVo.storageType == ''){
+        			next = false;
+        			editWarehouseVo.editStorageType = true;
+        		}
+        		if(editWarehouseVo.storageArea == null || editWarehouseVo.storageArea == ''){
+        			next = false;
+        			editWarehouseVo.editStorageArea = true;
+        		}
+        		if(editWarehouseVo.storageBin == null || editWarehouseVo.storageBin == ''){
+        			next = false;
+        			editWarehouseVo.editStorageBin = true;
+        		}
+        		if(vilate == true){
+	        		$scope.edit.maximunCapacity.$error.date = true;
+	        		next = false;
+        		}
+        		if(next){
+        			document.getElementById("submitDiv").style.display = "inline";
+        			$http.post('/setup/warehouse/editWarehouse', JSON.stringify(editWarehouseVo)).success(
+          				function(data, status, headers, config){
+          					$scope.warehouseVoo = data;
+          					$scope.warehouseVoList.splice($scope.currentIndex, 1, $scope.warehouseVoo);
+          					document.getElementById("submitDiv").style.display = "none";
+          					$scope.editDlg = false;
+         			}).error(
+         				function(data, status, headers, config){
+         					document.getElementById("submitDiv").style.display = "none";
+        					alert(data);
+         			});
+        		}
+			};
+	        //鍏抽棴缂栬緫dialog
+	        $scope.closeEditDlg = function(){
+	        	$scope.editDlg = false;
+	        };
+	      	//寮瑰嚭涓婁紶鐨勫璇濇	
+	        $scope.showUploadView =function(){
+	        	$scope.uploadDlg=true;
+	        }
+	        //鍙栨秷涓婁紶鐨勫璇濇
+	        $scope.closeUploadeDlg =function(){
+	        	$scope.uploadDlg=false;
+	        }
+		});
+	</script>
+}

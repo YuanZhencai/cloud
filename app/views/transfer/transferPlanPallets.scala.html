@@ -1,0 +1,153 @@
+@(name:String)
+<div ng-show="palletdetailDlg">
+	<form name="palletForm" novalidate class="css-form">
+		<table id="palledetailTable" class="table table-bordered  table-condensed">
+			<thead>
+				<th><button class="btn btn-primary btn-mini" ng-click="openSelectDlg(pallets)" title="Select">
+			  <i class="icon-check"></i>
+			</button> <br /> <input type="checkbox" ng-model="showAllPallet" ng-click="selectAllPallet(showAllPallet)" /></th>
+				<th>#</th>
+				<!-- 
+				<th>Warehouse</th>-->
+				<th>Bach No</th>
+				<th>Storage Area(From)</th>
+				<th>Storage Bin(From)</th>
+				<th>Qty <span id="totalQty">{{totalQty|number:2}}</span>/{{tpForPallet.transferQty|number:2}}
+				</th>
+				<th>Storage Area(To)</th>
+				<th>Storage Bin(To)</th>
+				<th>Forklift Driver</th>
+				<th>Operation <input type="submit" class="btn btn-primary btn-small" ng-click="showStocksView()" value="AddPallet" />
+				 <input type="submit" class="btn btn-primary btn-small" ng-click="showEditSelectPalletView(null,null)" value="EditAll" /> <input type="submit" class="btn btn-primary btn-small"
+						ng-click="printAll()" value="PrintAll" /> <input type="submit" class="btn btn-danger btn-small" ng-click="deletePalletView(null,null)" value="DeleteAll" />
+				</th>
+			</thead>
+			<tbody>
+				<tr ng-repeat="pallet in pallets"  >
+					<td><input type="checkbox" ng-model="pallet.todo" ng-click="selectPallet()" ng-disabled="pallet.execute"/></td>
+					<td>{{pallet.palletNo}}</td>
+					<!--  
+					<td>{{pallet.warehouse}}</td>-->
+					<td>{{pallet.batchNo}}</td>
+					<td>{{pallet.areaFrom}}</td>
+					<td>{{pallet.binFrom}}</td>
+					<td>{{pallet.qty|number:2}}</td>
+					<td><span ng-show="pallet.show">{{pallet.areaTo}}</span> <select class="input-small" type="text" ng-model="pallet.areaTo" ng-options="areaToVo.descripton as areaToVo.descripton for areaToVo in areaToVos" ng-change="changeToArea(pallet.areaTo,true)" name="storageAreaTo"
+							ng-show="!pallet.show" required>
+						</select> <span ng-show="!pallet.show" style="color: red">*</span></td>
+					<td><span ng-show="pallet.show">{{pallet.binTo}}</span> <select class="input-small" type="text" ng-model="pallet.binTo" ng-options="binToVo.descripton as binToVo.descripton for binToVo in binToVos" name="storageBinTo" ng-show="!pallet.show" required>
+						</select> <span ng-show="!pallet.show" style="color: red">*</span></td>
+					<td><span ng-show="pallet.show" ng-model="currentPallet.forkLiftDriver">{{pallet.forkLiftDriver}}</span> <select class="input-small" type="text" ng-model="pallet.forkLiftDriver" name="forkliftDriver"
+							ng-options="forkLiftDriverVo.descripton as forkLiftDriverVo.descripton for forkLiftDriverVo in forkLiftDriverVos" ng-show="!pallet.show" required>
+						</select> <span ng-show="!pallet.show" style="color: red">*</span></td>
+					<td><input type="submit" class="btn btn-primary btn-small" ng-show="pallet.show" ng-disabled="pallet.execute" ng-click="showEditSelectPalletView($index,pallet)" value="Edit" /> 
+					<span class="btn btn-primary btn-small" ng-show="!pallet.show" ng-click="editOrSvave(pallet)">Save</span>
+					<input type="submit" class="btn btn-danger btn-small" ng-show="pallet.show" ng-disabled="pallet.execute"  ng-click="deletePalletView(pallet,$index)" value="Delete"> <span
+							class="btn btn-warning btn-small cancel" ng-show="!pallet.show" ng-click="cancelPllet($index)">Cancel</span> 
+							<!-- 
+							<input type="submit" class="btn btn-primary btn-small" ng-disabled="!pallet.show||pallet.notMatch||!pallet.plan" ng-click="printPallet(pallet)" value="Print"> --></td>
+				</tr>
+			</tbody>
+		</table>
+	</form>
+</div>
+<!-- stocksView  -->
+<div modal="stocksView" close="cancelStocksView()" options="dlgOpts">
+  <div ng-show="newPalletShow">
+	<div class="modal-body">
+		<table>
+			<tr>
+				<td width="200px">PI No:{{tpForPallet.pino}}</td>
+				<td width="250px">Batch No:{{tpForPallet.batchNo}}</td>
+			</tr>
+			<tr>
+				<td colspan="2" width="400px">Select Qty:<input type="text" ng-model="selectQty" ng-change="baseSelectQty(selectQty)" class="input-small"></td>
+			</tr>
+		</table>
+		<table id="palledetailTable" class="table table-striped table-bordered table-hover table-condensed">
+			<thead>
+				<th width="30px">
+				<button class="btn btn-primary btn-mini" ng-click="openNewSelectDlg(stocks)" title="Select">
+							<i class="icon-check"></i>
+				</button>
+				<br/>
+				<input type="checkbox" ng-model="allStokcs" ng-click="selectAllStock()" /></th>
+				<th style="display: none;">id</th>
+				<th>#</th>
+				<th>Batch No</th>
+				<th>Stock Area</th>
+				<th>Stock Bin</th>
+				<th>Stock Qty</th>
+			</thead>
+			<tbody>
+				<tr ng-repeat="stock in stocks">
+					<td><input type="checkbox" ng-model="stock.todo" ng-click="selectStock()" /></td>
+					<td>{{stock.palletNo}}</td>
+					<td>{{stock.batchNo}}</td>
+					<td>{{stock.area}}</td>
+					<td>{{stock.bin}}</td>
+					<td>{{stock.qty|number:2}}</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	<div class="modal-footer">
+		<input type="submit" class="btn btn-primary btn-small ok" ng-click="copyStocksToPallets()" value="OK" />
+		<input type="submit" class="btn btn-warning btn-small cancel" ng-click="cancelStocksView()" value="Cancel" />
+	</div>
+</div>
+ 
+	<span>@views.html.common.selectShow("")</span> 
+</div>
+<!-- Edit select stock view -->
+<div modal="addPalletDlg" close="cancelAddpalView()" options="dlgOpts">
+	<div class="modal-header">
+		<h4>Edit Pallet</h4>
+	</div>
+	<div class="modal-body">
+		<form name="addPallet" novalidate class="css-form">
+			<table id="addPalletTabel">
+				<tr>
+					<td align="right"><label>Storage Area(To):</label></td>
+					<td><select type="text" name="storageAreaTo" ng-model="currentPallet.areaTo" ng-options="areaToVo.descripton as areaToVo.descripton for areaToVo in areaToVos" ng-change="changeToArea(currentPallet.areaTo,true)" required>
+						</select> <span style="color: red;">*</span></td>
+				</tr>
+				<tr>
+					<td align="right"><label>Storage Bin(To):</label></td>
+					<td><select type="text" name="storageBinTo" ng-model="currentPallet.binTo" ng-options="binToVo.descripton as binToVo.descripton for binToVo in binToVos" required></select> <span style="color: red;">*</span></td>
+				</tr>
+				<tr>
+					<td align="right"><label>Forklift Driver:</label></td>
+					<td><select type="text" ng-model="currentPallet.forkLiftDriver" name="forkliftDriver" ng-options="forkLiftDriverVo.descripton as forkLiftDriverVo.descripton for forkLiftDriverVo in forkLiftDriverVos" required>
+						</select> <span style="color: red;">*</span></td>
+				</tr>
+				<!--  
+				<tr><td></td><td><span ng-show="!addPallet.forkliftDriver.$error.date" style="color: red">Cann't be null !</span></td></tr>-->
+			</table>
+		</form>
+	</div>
+	<div class="modal-footer">
+		<input type="submit" class="btn btn-primary btn-small ok" ng-click="editSelectPallets(currentPallet)" value="OK" />
+		<input type="submit" class="btn btn-warning btn-small cancel" ng-click="cancelAddpalView()" value="Cancel" />
+	</div>
+</div>
+<!-- 删除对话框Pallet Dialog -->
+<div modal="deletePalletDlg" close="closeDeletePalletDlg()" options="dlgOpts">
+	<div class="modal-header">
+		<h4>Delete Pallet</h4>
+	</div>
+	<div class="modal-body">
+		<form novalidate class="form-horizontal">
+			<table>
+				<tbody>Are you sure to delete ?
+				</tbody>
+			</table>
+		</form>
+	</div>
+	<div class="modal-footer">
+		<button class="btn btn-primary btn-small ok" ng-click="deletePallet()">YES</button>
+		<button class="btn btn-warning btn-small cancel" ng-click="closeDeletePalletDlg()">NO</button>
+	</div>
+</div>
+<!-- select Dialog -->
+ <span>@views.html.common.selectDlg("")</span>

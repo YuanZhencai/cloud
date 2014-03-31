@@ -1,0 +1,235 @@
+@(name:String) @main("TemperingRoom Report"){
+<div ng-controller="MasterialMasterSetUp">
+	<div class="breadcrumb">   
+		<li style="">Current Location: Tempering Room</li> 
+	</div>
+	<div alert ng-repeat="alert in alerts" type="alert.type" close="closeAlert($index)"
+		template-url="/template/alert/alert.html">{{alert.msg}}</div>  
+	<!-- 鏌ヨ鏉′欢 -->
+	<form novalidate class="form-horizontal" >
+		<table>
+		 
+			<tr>
+		 
+				<td>
+					<div class="control-group">
+						<label id="piStatus" class="control-label" >ExecuteDate</label>
+						<div class="controls">
+							<input type="date" ng-model="serchVo.executeDate" style="width: 130px" required>
+						</div>
+					</div>
+				</td>
+			   <td>
+					<div class="control-group">
+						<label class="control-label">InOrOut:</label>
+						<div class="controls">
+							<select  ng-model="serchVo.inOrOut"  class="input-small" ng-change="clearResult()">
+								<option value="IN">IN</option>
+								<option value="OUT">OUT</option>
+							</select>
+						</div>
+					</div>
+				</td>
+				<td>
+					<div class="control-group">
+						<label class="control-label"></label>
+						<div class="controls">
+							<input class="btn btn-primary" type="submit" value="Search" ng-click="searchVoList(serchVo)">
+							<input class="btn btn-primary" type="submit" value="Report" ng-click="download(serchVo)">
+						</div>
+					</div>
+				</td>
+			</tr>
+		</table>
+	</form>
+	<!-- PItable -->
+	<table   class="table   table-bordered   table-condensed">
+		<thead>
+			<tr>
+				<th>No</th>
+				<th><span ng-show="serchVo.inOrOut=='IN'">Product Compay</span><span ng-show="serchVo.inOrOut=='OUT'">Texture Condition(OK/Not Ok)</span></th>
+				<th>Description</th>
+				<th>PI No / Sales Contract</th>
+				<th>Pallet Number</th>
+				<th>Total Boxes</th>
+				<th>Area</th>
+				<th>Bin</th>
+				<th>Remark</th>
+	
+			</tr>
+		</thead>
+		<tbody>
+			<tr ng-repeat="tempering in temperings">
+				<td>{{tempering.no}}</td>
+				<td>{{tempering.prodCompay}}</td>
+				<td>{{tempering.desc}}</td>
+				<td>{{tempering.piNoAdnContract}}</td>
+				<td>{{tempering.palletNo}}</td>
+				<td>{{tempering.totalBox}}</td>
+				<td>{{tempering.area}}</td>
+				<td>{{tempering.bin}}</td>
+				<td>{{tempering.remarks}}</td>
+			</tr>
+		</tbody>
+	</table>
+	
+	 
+ 
+    
+	 
+	
+<div modal="uploadDlg" close="closeUploadeDlg()"  options="dlgOpts">
+		<div class="modal-header">
+			<h4>Uploat Materia</h4>
+		</div>
+			<form   class="form-horizontal" enctype="multipart/form-data" method="post"  action="/setup/materialMaster/upload">
+		<div class="modal-body">
+		 	<input  type='file' name='file'/>
+		</div> 
+		<div class="modal-footer"> 
+					<button class="btn btn-primary btn-small ok"  type="submit"  >YES</button> 
+				
+				</div>
+			</form>
+	</div>
+
+<!--  sure delete -->
+	<div modal="deleteDlg" close="closeDeleteDlg()" options="dlgOpts">
+		<div class="modal-header">
+			<h4>Delete  {{deletedObj}}</h4>
+		</div>
+		<div class="modal-body">
+			<form novalidate class="form-horizontal">
+				<table>
+					<tbody>Are you sure to delete ?
+					</tbody>
+				</table>
+			</form>
+		</div>
+				<div class="modal-footer"> 
+					<button class="btn btn-primary btn-small ok" ng-click="sureDelete()">YES</button> 
+					<button class="btn btn-warning btn-small cancel" ng-click="closeDeleteDlg()">NO</button>
+				</div>
+	</div>
+</div>
+
+ 
+}{
+<script src="@routes.Assets.at("/public", "javascripts/loading.js")" type="text/javascript"></script>
+<script type="text/javascript" charset="utf-8">
+		//var CloudWMS = angular.module('CloudWMS', ['ui','ui.bootstrap']);
+		var FLOAT_REGEXP =/^([0-9]{1,14}|[0-9]{1,14}\.[0-9]{0,2})$/;//鏁存暟浣�4浣嶏紝灏忔暟浣嶄袱浣�
+	    var INT_REGEXP=/^[1-9]{1}[0-9]{0,13}$/;//灏忎簬绛変簬14浣嶇殑姝ｆ暣鏁�
+	   	var ISNULL_REGEXP =/^$/;
+	   	var NULL_REGEXP=/^\.+$/;
+		 
+	    CloudWMS.directive('float', function() {
+	          return {
+	            require: 'ngModel',
+	            link: function(scope, elm, attrs, ctrl) {
+	              ctrl.$parsers.unshift(function(viewValue) {
+	                if (FLOAT_REGEXP.test(viewValue)||viewValue=='') {
+	                  ctrl.$setValidity('f', true);
+	                  return viewValue;
+	                } else {
+	                  ctrl.$setValidity('f', false);
+	                  return viewValue;
+	                }
+	              });
+	            }
+	          };
+	    });
+CloudWMS.controller('MasterialMasterSetUp', function($scope, $http, $timeout,$filter,$window ){
+	        $scope.serchVo = {inOrOut:"IN",executeDate:$filter('date')(new Date,'yyyy-MM-dd')};
+			$scope.alerts = [];
+	 
+//鏍规嵁鏉′欢瀵规暟鎹簱杩涜涓�鏌ヨ	        
+$scope.searchVoList = function(serchVo){
+	try{	    startLoading();
+	        	$http.post('/report/temperingroom/list', JSON.stringify(serchVo)).success(
+					function(data, status, headers, config){
+						$scope.temperings = alertMessage(data) ;
+						endLoading();		 
+				}).error(
+					function(data, status, headers, config){
+						endLoading();
+				});
+	}catch(err){alert(err);}
+	        };
+$scope.clearResult = function(){
+	$scope.temperings=[];
+}
+$scope.download =function(serchVo){
+	startLoading();
+	var date = new Date(serchVo.executeDate).getTime(); 
+    	$window.location.href="/report/temperingroom/download/"+serchVo.inOrOut+"/"+date;
+    	endLoading();
+}
+ 
+ 
+var addAlert = function(types,msgs) {
+       $scope.alerts.push({type:types,msg: msgs});
+       $timeout($scope.clearAlerts, 5000);
+   };
+      $scope.closeAlert = function(index) {
+        $scope.alerts.splice(index, 1);
+      };
+      $scope.clearAlerts = function() {
+        $scope.alerts = [];
+      };
+      $timeout($scope.clearAlerts, 5000);
+      //鍒濆鍖栭〉闈㈡煡璇㈡潯浠�
+ 
+      $scope.dlgOpts = {
+    		    backdropFade: true,
+    		    dialogFade:false,
+    		    backdropClick:false
+    		  }; 
+
+ $scope.dlgOpts = {
+   backdropFade: true,
+   dialogFade:false,
+   backdropClick:false
+ }; 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		});
+	</script>
+	<style type="text/css">
+ 
+      .css-form select[required].ng-invalid {
+        background-color: #FFEEFF;
+      }
+      .css-form input[required].ng-invalid {
+        background-color: #FFEEFF;
+      }
+      .css-form input[type='number'].ng-invalid {
+        background-color: #FFEEFF;
+      }
+      .css-form select[required].ng-valid {
+        background-color: #DEFFFF;
+      } 
+      .css-form input[required].ng-valid {
+        background-color: #DEFFFF;
+      } 
+ 
+      .css-form input[type='number'].ng-valid {
+        background-color: #DEFFFF;
+      } 
+ 
+</style>
+}

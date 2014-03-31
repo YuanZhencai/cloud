@@ -1,0 +1,55 @@
+@(name:String)
+<!-- select Dialog -->
+<div modal="selectDlg" close="closeSelectDlg()" options="dlgOpts">
+	<div class="modal-header">
+		<h4>Select Pallet No</h4>
+	</div>
+	<div class="modal-body">
+	<form novalidate name="select">
+		<table>
+			<tbody>
+				<tr>
+					<td align="right">From :&nbsp;</td>
+					<td>
+						<input type="text" class="input-medium" name="from" ng-model="selectVo.from" placeholder="Must be a number!" ng-change="selectChange(selectVo)"/>
+						<span style="color: red">*</span>
+					</td>
+					<td align="right">To :&nbsp;</td>
+					<td>
+						<input type="text" class="input-medium" name="to" ng-model="selectVo.to" placeholder="Must be a number!" ng-change="selectChange(selectVo)"/>
+						<span style="color: red">*</span>
+					</td>
+				</tr>
+				<!-- 
+				<tr>
+					<td></td>
+					<td>
+						<span ng-show="select.from.$error.date" style="color: red">Must be a number!</span>
+						<span ng-show="select.from.$error.datef" style="color: red">Can not be null!</span>
+					</td>
+					<td></td>
+					<td>
+						<span ng-show="select.to.$error.date" style="color: red">Must be a number!</span>
+						<span ng-show="select.to.$error.datef" style="color: red">Can not be null!</span>
+					</td>
+				</tr>
+				 -->
+				<tr>
+					<td align="right">No of Pallet :&nbsp;</td>
+					<td>
+						<input type="text" class="input-medium" name="from" ng-model="selectVo.number" ng-disabled="true"/>
+					</td>
+					<td align="right">Pallet SKU :&nbsp;</td>
+					<td>
+						<input type="text" class="input-medium" name="to" ng-model="selectVo.palletSku" ng-disabled="true"/>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</form>
+	</div>
+	<div class="modal-footer">
+		<button class="btn btn-primary btn-small ok" ng-click="doSelect(selectVo)">Ok</button>
+		<button class="btn btn-warning btn-small cancel" ng-click="closeSelectDlg()">Cancel</button>
+	</div>
+</div>

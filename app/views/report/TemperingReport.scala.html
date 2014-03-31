@@ -1,0 +1,110 @@
+@(name: String)
+@main("Tempring Control Report"){
+<div ng-controller="TempringCountCtrl">
+	<!--head-->
+	<div class="breadcrumb">
+		<li style="">Current Location: Tempring Control Report</li>
+	</div>
+	<!--search -->
+	<form id="myfrom" name="myfrom" class="form-horizontal">
+		<table >
+                <tr >
+                
+                     <td>
+                        <div class="control-group">
+                             <label class="control-label">Prod Date From</label>
+                             <div class="controls">
+                                <input type="date" class="span2" name="prodDateFrom" ng-model="batch.prodDateFrom" />
+                            </div>
+                        </div>
+                    </td>
+                      <td>
+                        <div class="control-group">
+                             <label class="control-label">Prod Date To</label>
+                             <div class="controls">
+                                <input type="date" class="span2" name="prodDateTo" ng-model="batch.prodDateTo" />
+                            </div>
+                        </div>
+                    </td>
+				<td>
+                </tr>
+				<tr>
+				  <td></td>
+				   <td></td>
+				<td>
+					<div class="control-group">
+						<label class="control-label"></label>
+						<div class="controls" align="right">
+                            <input  type="submit" value="Search" class="btn btn-primary btn-small" ng-click="searchList( batch)"/>
+       						<input  type="button"  value="Report"  onclick="submitForm()"  class="btn btn-primary btn-small"/>
+						</div>
+					</div>
+				</td>
+			</tr>
+		</table>
+	</form>	
+	<!-- table -->
+	<table cellpadding="0" cellspacing="0" border="0" class="table  table-bordered "
+			id="example" width="100%">
+			<thead>
+				<tr>
+					<th>PI No</th>
+					<th>Prod Date</th>
+					<th>Batch No.</th>
+					<th>Storage Area</th>
+					<th>Storage Bin</th>
+					<th>Material Code</th>
+					<th>Material Description</th>
+					<th>Pallet Count</th>
+					<th>Total Qty</th>
+					<th>UOM</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="stockCountVo in stockCountVos|orderBy:['piNo','batchNo','prodDate']" >
+					<td>{{stockCountVo.piNo}}</td>
+					<td>{{stockCountVo.prodDate}}</td>
+					<td>{{stockCountVo.batchNo}}</td>
+					<td>{{stockCountVo.storageArea}}</td>
+					<td>{{stockCountVo.storageBin}}</td>
+					<td>{{stockCountVo.materialCode}}</td>
+					<td>{{stockCountVo.materialDescription}}</td>
+					<td>{{stockCountVo.stockCount}}</td>
+					<td>{{stockCountVo.systemQty}}</td>
+					<td>{{stockCountVo.QtyUom}}</td>
+				</tr>
+			</tbody>
+		</table>
+</div>
+<style type="text/css">
+.selected{color:red;background:GreenYellow;}
+</style>
+}{
+  <script type="text/javascript" charset="utf-8">
+   function submitForm() {  
+       with (document.getElementById("myfrom")) {  
+           method = "post";  
+           action = "/report/TemperingReport/report";  
+           submit();  
+       }  
+   }  
+  
+  	CloudWMS.controller('TempringCountCtrl', function($scope, $http,$window,$filter) {
+    $scope.stockCountVos=[];
+    $scope.stocks=[];
+    $scope.searchList=function(vo){
+   	 document.getElementById("submitDiv").style.display = "inline";
+  		$http.post('/report/TemperingReport/list',vo).success(
+  	   		function(data, status, headers, config) {
+  	   		document.getElementById("submitDiv").style.display = "none";
+  	   		//alert(angular.toJson(data))
+  	   			$scope.stockCountVos=data;
+  	    }).error(
+  	    	function(data, status, headers, config) {
+  	    		document.getElementById("submitDiv").style.display = "none";
+  	        $scope.status = status
+  	    });  
+    }
+  });
+   </script>
+}

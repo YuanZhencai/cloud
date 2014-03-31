@@ -1,0 +1,1294 @@
+@(name:String)
+@main("goodsStuffing") {
+  <div ng-controller="goodsStuffingCtrl">
+  <alert class="navbar-fixed-top" ng-repeat="alert in alerts" type="alert.type" close="closeAlert($index)" template-url="/template/alert/alert.html">{{alert.msg}}</alert>
+  
+	 <div class="breadcrumb">
+		<li style="">Current Location:Stuffing Execution</li>
+	</div> 
+	<form novalidate  class="form-horizontal" ng-submit="searchList(searchVo)">
+		<table>
+			<tr>
+				<td>
+					 <div class="control-group">
+						<label class="control-label">PI No.</label>
+						<div class="controls"> 
+							 <input type="text" class="input-medium"  ng-model="searchVo.piNo"> 
+					 	</div>
+					</div> 
+				</td>
+				<td style="width: 200px;"></td>
+				<td>
+					<div class="control-group">
+						<label class="control-label">Container No.</label>
+						<div class="controls">
+							<input type="text"  class="input-medium"  ng-model="searchVo.sgPiNo" >
+						</div>
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<div class="control-group">
+						<label class="control-label">Stuffing Date(From)</label>
+						<div class="controls"> 
+							 <input type="date"  class="input-medium"  ng-model="searchVo.fromDate" >
+					 	</div>
+					</div> 					
+				</td>
+				<td style="width: 200px;"></td>
+				<td>
+					<div class="control-group">
+						<label class="control-label">Stuffing Date(To)</label>
+						<div class="controls"> 
+							 <input type="date"  class="input-medium"  ng-model="searchVo.toDate" >
+					 	</div>
+					</div> 					
+				</td>
+			</tr>
+			<tr>
+				<td></td>
+				<td style="width: 200px;"></td>
+				<td style="text-align: right;">
+					<div class="control-group">
+						<label class="control-label"></label>
+						<div class="controls">
+							<input type="submit"  class="btn btn-primary btn-small" value="Search">
+						</div>
+					</div>
+				</td>
+			</tr>
+		</table>
+	</form>
+<!-- 	 <pre>form = {{searchVo | json}}</pre> -->
+	
+	<!-- table -->
+		<table cellpadding="0" cellspacing="0" border="0" class="table  table-bordered "
+			id="example" width="100%">
+			<thead>
+		<tr>
+			<th></th>
+			<th>Stuffing Date</th>
+			<th>PI No.</th>
+			<th>Container No.</th>
+			<th>Batch No.</th>
+			<th>Qty</th>
+			<th>Stuffing Qty</th>
+			<!-- <th>Transfer Type</th>
+			<th>Production UOM</th>
+			<th>Stuffing UOM</th> -->
+			<th>Palletized</th>
+			<th>Loading Bay Status</th>
+			<th>Executed</th>
+			<th>OUT</th>
+			<th>Remarks</th>
+			<th>Operation</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr ng-repeat="goodsStuffing in goodsStuffings" ng-class="getClass($index)">
+			<td>
+			 <input type="radio" name="select" ng-click="getStuffingList(goodsStuffing,$index)" ><br/> {{getClass(goodsStuffing)}}</td>
+			<td>{{goodsStuffing.transferDateTime|date:'dd/MM/yyyy'}}</td>
+			<td>{{goodsStuffing.piNo}}</td>
+			<td>{{goodsStuffing.containerNo}}</td>
+			<td><a href="/transfer/transferplan?piNo={{goodsStuffing.piNo}}"><span ng-bind-html-unsafe="goodsStuffing.batchNo"></span></a></td>
+			<td>{{goodsStuffing.productionQuantity}}</td>
+			<td style="font-size:xx-small;" nowrap="nowrap"><p  style="display:inline-table;">Stuffing Qty-SKU({{goodsStuffing.batchQty}}/{{goodsStuffing.productionQuantity/goodsStuffing.netWeight|number:0}})</p> <br><p  style="display:inline-table;"> Stuffing Qty-KG({{goodsStuffing.batchQty*goodsStuffing.netWeight}}/{{goodsStuffing.productionQuantity}})</p> </td>
+			<td ng-switch on="goodsStuffing.palletized">
+					<span ng-switch-when="true">Y</span>
+					<span ng-switch-when="false">N</span>
+					</td>
+			<td ng-switch on="goodsStuffing.loadingBayStatus">
+					<span ng-switch-when="true">Y</span>
+					<span ng-switch-when="false">N</span>
+					</td>
+			<td ng-switch on="goodsStuffing.Executed">
+					<span ng-switch-when="true">Y</span>
+					<span ng-switch-when="false">N</span>
+					</td>
+			<td nowrap="nowrap">{{goodsStuffing.out|date:'yyyy-MM-dd HH:mm'}}</td>
+			<td>{{goodsStuffing.remarks}}</td>
+			<td><input type="button" value="OUT" class="btn btn-primary btn-small" ng-disabled="!goodsStuffing.Executed" ng-click="openOutDlg($index,goodsStuffing)"></td>
+		</tr>
+	</tbody>
+		</table>
+		
+<!-- checkstock -->
+<div modal="checkStock" options="opts">
+<div class="modal-header" >
+ <h4>Stocks</h4>
+ </div>
+  <div class="modal-body">
+  	<table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered"
+			width="100%">
+	<thead>
+		<tr>
+			<th> <input type="checkbox" ng-model="stockchecked" ng-change="setAllSelected(selectDetails,stockchecked)"></th>
+			<th>#</th>
+			<th>Warehouse</th>
+			<th>Storage Area (From)</th>
+			<th>Storage Bin (From)</th>
+			<th>Quantity/Pallet</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr  ng-repeat="SelectDetial in selectDetails|orderBy:getNumber">
+			<td><input type="checkbox" ng-model="SelectDetial.selected" ng-change="changeSelect(selectDetails,0)"></td>
+			<td>{{SelectDetial.No}}</td>
+			<td>{{SelectDetial.warehouse}}</td>
+			<td>{{SelectDetial.storageArea}}</td>
+			<td>{{SelectDetial.storageBin}}</td>
+			<td>
+				<span ng-bind="SelectDetial.quantityPallet" ></span>
+			</td>
+		</tr>
+	</tbody>
+	</table>
+	</div>
+	<div class="modal-footer">
+	 	<input type="button" value="OK" class="btn btn-primary btn-small" ng-click="upload(selectDetails)">
+		<input type="button" value="Cancel" class="btn btn-warning btn-small" ng-click="closestufDetial()">
+	</div>
+</div>
+	<table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered"
+			width="100%">
+		<thead>
+			<tr>
+				<th><button class="btn btn-primary btn-mini" style="display: {{ifAddShow}};" ng-click="openSelectDlg()" title="Select">
+					<i class="icon-check"></i>
+				</button><br>
+				<input type="checkbox" ng-model="checked" ng-change="setAllSelected(goodsStuffingDetails,checked)" ></th>
+<!-- 				<th>#</th> -->
+				<th>Batch No.</th>
+				<th>Pallet No.</th>
+				<th>Qty/Pallet<br>Total :{{sumQty()}}</th>
+				<th>Remarks</th>
+ 				<th>Date/Time</th>
+				<th>Execution</th>
+				<th>Operation 
+ 					<a href="" class="btn btn-primary btn-small" ng-click="upload()" >Add Pallet</a>
+ 					<a href="" class="btn btn-primary btn-small" ng-click="showEditDlg()" >Edit All</a>
+ 					<a href="" class="btn btn-primary btn-small" ng-click="openExecuteDlg()">ExecuteAll</a>
+ 					<a href="" class="btn btn-danger btn-small" ng-click="showDeleteDlg()" >Delete All</a>
+ 				</th> 
+			</tr>
+		</thead>
+		<tbody>
+			<tr  ng-repeat="goodsStuffing in goodsStuffingDetails">
+				<td><input type="checkbox" ng-model="goodsStuffing.selected" 
+					ng-change="changeSelect(goodsStuffingDetails,1)" ng-disabled="goodsStuffing.isExecuted">
+				</td>
+<!-- 				<td >{{goodsStuffing.PlanDetialId}}</td> -->
+				<td>
+					<span ng-bind="goodsStuffing.batchNo" ng-show="goodsStuffing.isExecuted"></span>
+					<select ng-model="goodsStuffing.batchNo"
+						ng-options="b for b in batchList"
+						style="width: 100px;" ng-show="!goodsStuffing.isExecuted"
+						name="batchNo"></select>
+					<br/>
+					<!-- ng-click="addStufDetail()"  -->
+					<button ng-click="resetBatch(TempgoodsStuffing)" ng-disabled="goodsStuffing.isExecuted" class="btn btn-primary btn-small" >Other Batch</button>
+				</td>
+				<td>
+					<span ng-bind="goodsStuffing.No" ng-show="goodsStuffing.isExecuted"></span>
+					<select ng-model="goodsStuffing.No"  ng-disabled="goodsStuffing.isExecuted"
+						ng-options="p.stockNo as p.stockNo for  p in setStockNos(goodsStuffing.batchNo)" 
+						style="width: 75px;" ng-change="setId(goodsStuffing)" ng-show="!goodsStuffing.isExecuted"
+						name="No"></select> <!-- stock No -->
+					<!-- <span ng-bind="goodsStuffing.No" ng-show="goodsStuffing.show" ></span>
+					<input type="text" ng-model="goodsStuffing.containerNo" ng-show="!goodsStuffing.show" class="input-mini"  
+						ng-change="goodsStuffing.column1=NullTest(goodsStuffing.containerNo)"></input>
+					<span ng-show="goodsStuffing.column1" style="color: red">Not null or Too Long</span> -->
+				</td>
+				<td>
+					<span ng-bind="goodsStuffing.stuffingQuantity" ng-show="goodsStuffing.show" ></span>
+					<input type="text" ng-model="goodsStuffing.stuffingQuantity" ng-show="!goodsStuffing.show" class="input-mini"  
+						ng-change="goodsStuffing.column2=stufQtyTest(goodsStuffing.quantityPallet,goodsStuffing.stuffingQuantity)"></input>
+					<span ng-show="goodsStuffing.column2" style="color: red">Not Null or Over Max</span>
+				</td>
+				<td>
+					<span ng-bind="goodsStuffing.cargoRemarks" ng-show="goodsStuffing.show" ></span>
+					<textarea class="input-medium" ng-model="goodsStuffing.cargoRemarks" ng-show="!goodsStuffing.show" ></textarea>
+				</td>
+				<td>
+					<span ng-show="goodsStuffing.show" >{{goodsStuffing.time|date:'dd/MM/yyyy HH:mm'}}</span>
+					<input type="datetime-local" style="width:170px;" ng-model="goodsStuffing.time" ng-show="!goodsStuffing.show" ></input>
+				</td>
+				<td ng-switch on="goodsStuffing.isExecuted">
+					<span ng-switch-when="true">Y</span>
+					<span ng-switch-when="false">N</span>
+					</td>
+				<td>
+					<button class="btn btn-primary btn-small" ng-show="goodsStuffing.show" ng-disabled="goodsStuffing.isExecuted" ng-click="change(goodsStuffing,goodsStuffing.show)">Edit</button>
+					<button class="btn btn-primary btn-small" ng-click="EachSave(goodsStuffing)" ng-show="!goodsStuffing.show" >Save</button>
+					<button ng-show="goodsStuffing.show" class="btn btn-danger btn-small" ng-disabled="goodsStuffing.isExecuted" ng-click="doDelete($index,goodsStuffing)">Delete</button>
+					<button class="btn btn-warning btn-small" ng-click="cancel(goodsStuffing)" ng-show="!goodsStuffing.show">Cancel</button>
+					<button class="btn btn-primary btn-small" ng-click="simpleSave(goodsStuffing)" ng-disabled="goodsStuffing.isExecuted"  ng-show="goodsStuffing.show">Execute</button>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+	<!-- execution dialog -->
+	<div modal="executeDlg" close="closeExecuteDlg()" options="dlgOpts">
+		<div class="modal-header">
+			<h4>Execution Information</h4>
+		</div>
+		<div class="modal-body">
+		<form novalidate name="execute">
+			<table>
+				<tbody>
+					<tr>
+						<td align="right">Shift :&nbsp;</td>
+						<td>
+							<input type="text" class="input-medium" name="shift" ng-model="executeVo.shift"/>
+						</td>
+						<td></td>
+						<td></td>
+					</tr>
+					<tr>
+						<td align="right">Remarks :&nbsp;</td>
+						<td colspan="3">
+							<textarea type="text" ng-model="executeVo.remarks" name="remarks" style="width: 429px;"></textarea>
+						</td>
+					</tr>
+					<tr>
+						<td align="right">Reason :&nbsp;</td>
+						<td colspan="3">
+							<textarea type="text" ng-model="executeVo.reason" name="reason" style="width: 429px;"></textarea>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</form>
+		</div>
+		<div class="modal-footer">
+			<button class="btn btn-primary btn-small ok" ng-click="doExecute(executeVo)">Save</button>
+			<button class="btn btn-warning btn-small cancel" ng-click="closeExecuteDlg()">Cancel</button>
+		</div>
+	</div>
+	<!--out -->
+		<div modal="outDlg" close="closeOutDlg()" options="dlgOpts">
+		<div class="modal-header">
+			<h4>OUT</h4>
+		</div>
+		<div class="modal-body">
+			<table>
+				<tbody>
+					<tr align="center">
+						<td align="right">OUT :&nbsp;</td>
+						<td>
+							<input type="datetime-local"  style="width:170px;"  ng-model="OutTempgoodsStuffing.out"/>
+						</td>
+						<td></td>
+						<td></td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+		<div class="modal-footer">
+			<button class="btn btn-primary btn-small ok" ng-click="out(OutTempgoodsStuffing)">Save</button>
+			<button class="btn btn-warning btn-small cancel" ng-click="closeOutDlg()">Cancel</button>
+		</div>
+	</div>
+	
+	<div modal="editAll" close="closeEditDlg()" options="opts">
+		<div class="modal-header">
+		    <h4>Edit Selected Goods to Stuffing</h4>
+		    <h7 class="text-success">If leave blank,Data will not change</h7>
+	 	</div>
+  		<div class="modal-body">
+			<form> 
+				<table>
+					<tr>
+						<td>
+							Qty/Pallet:
+						</td>
+						<td style="text-align: left;">
+							<input type="text"  class="input-medium"  ng-model="defaul.Qty"  
+								ng-change="defaul.column2=defaul.Qty!=''&&FloatTest(defaul.Qty)"/>
+							<span ng-show="defaul.column2" style="color: red">Not a Number</span>
+						</td>
+					</tr>
+					<tr>
+						<td>Remarks:</td>
+						<td style="text-align: left;">
+							<textarea class="input-medium" ng-model="defaul.cargoRemarks" style="width: 381px; height: 104px;"></textarea>
+						</td>
+					</tr>
+ 					<tr>
+						<td>Time:</td>
+						<td style="text-align: left;">
+							<input type="datetime-local" style="width:170px;" ng-model="defaul.time"></textarea>
+						</td>
+					</tr>
+				</table>
+			</form>
+		</div>
+	 	<div class="modal-footer">
+			<input type="submit" value="OK" class="btn btn-primary btn-small"	ng-click="doEditAll(defaul)">
+			<input type="submit" value="Cancel" class="btn btn-warning btn-small" ng-click="closeEditDlg()">
+		</div>
+	</div>
+	
+	<div modal="selectDlg" close="closeSelectDlg()" options="dlgOpts">
+	<div class="modal-header">
+		<h4>Select Pallet No</h4>
+	</div>
+	<div class="modal-body">
+	<form novalidate name="select">
+		<table>
+			<tbody>
+				<tr>
+					<td align="right">From :&nbsp;</td>
+					<td>
+						<input type="text" class="input-medium" name="from" ng-model="selectVo.from" placeholder="Must be a number!" ng-change="FloatTest(selectVo.from)"/>
+						<span style="color: red">*</span>
+					</td>
+					<td align="right">To :&nbsp;</td>
+					<td>
+						<input type="text" class="input-medium" name="to" ng-model="selectVo.to" placeholder="Must be a number!" ng-change="FloatTest(selectVo.to)"/>
+						<span style="color: red">*</span>
+					</td>
+				</tr>
+				<!-- <tr>
+					<td align="right">Batch:&nbsp;</td>
+					<td>
+						<select ng-model="selectVo.batchNo"
+						ng-options="b for b in batchList"
+						style="width: 100px;"
+						name="batchNo">
+						<option value=''>All</option>
+						</select>
+					</td>
+					<td>
+					</td>
+				</tr> -->
+			</tbody>
+		</table>
+	</form>
+	</div>
+	<div class="modal-footer">
+		<button class="btn btn-primary btn-small ok" ng-click="doSelect(selectVo)">Ok</button>
+		<button class="btn btn-warning btn-small cancel" ng-click="closeSelectDlg()">Cancel</button>
+	</div>
+</div>
+
+<div modal="addPIDetailDlg" close="closeAddDlg()" options="dlgOpts">
+		<div class="modal-header">
+			<h4>Add Pallet</h4>
+		</div>
+		<div class="modal-body">
+		<form novalidate name="add" class="form-horizontal">
+			<table>
+				<tbody>
+					<tr>
+						<td>
+							<label class="control-label">Pallet Count :&nbsp;</label>
+						</td>
+						<td>
+							<input type="number" name="palletCount" ng-model="palletCount"  placeholder="Must be a number!" />
+							<span style="color: red">*</span>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</form>
+		</div>
+		<div class="modal-footer">
+			<button class="btn btn-primary btn-small ok" ng-click="addDetail(palletCount)">Save</button>
+			<button class="btn btn-warning btn-small cancel" ng-click="closeAddDlg()">Cancel</button>
+		</div>
+	</div>
+	
+</div>
+<style type="text/css">
+.alert{margin-top: 50px}
+.selected{color:red;background:GreenYellow;}
+</style>
+} {
+  <script type="text/javascript" charset="utf-8">
+  //var CloudWMS = angular.module('CloudWMS', ['ui.bootstrap']);
+  var DATE_REGEXP =/((^((1[8-9]\d{2})|([2-9]\d{3}))([-\/\._])(10|12|0?[13578])([-\/\._])(3[01]|[12][0-9]|0?[1-9])$)|(^((1[8-9]\d{2})|([2-9]\d{3}))([-\/\._])(11|0?[469])([-\/\._])(30|[12][0-9]|0?[1-9])$)|(^((1[8-9]\d{2})|([2-9]\d{3}))([-\/\._])(0?2)([-\/\._])(2[0-8]|1[0-9]|0?[1-9])$)|(^([2468][048]00)([-\/\._])(0?2)([-\/\._])(29)$)|(^([3579][26]00)([-\/\._])(0?2)([-\/\._])(29)$)|(^([1][89][0][48])([-\/\._])(0?2)([-\/\._])(29)$)|(^([2-9][0-9][0][48])([-\/\._])(0?2)([-\/\._])(29)$)|(^([1][89][2468][048])([-\/\._])(0?2)([-\/\._])(29)$)|(^([2-9][0-9][2468][048])([-\/\._])(0?2)([-\/\._])(29)$)|(^([1][89][13579][26])([-\/\._])(0?2)([-\/\._])(29)$)|(^([2-9][0-9][13579][26])([-\/\._])(0?2)([-\/\._])(29)$))/;
+  var FLOAT_REGEXP =/^[0-9]{1,38}\.{0,1}[0-9]{0,2}$/;
+  var INT_REGEXP=/^[1-9]*[1-9][0-9]*$/;
+  var ISNULL_REGEXP =/^$/;
+  var NULL_REGEXP=/^\S|\s{1,40}$/;
+    CloudWMS.controller('goodsStuffingCtrl', function($scope, $http,$timeout,$dialog,$window,$filter) {
+     $scope.goodsStuffingDetails=[];
+     $scope.alerts = [];
+     $scope.index=-1;
+     $scope.edit=false;
+     $scope.isCollapsed = false;
+     $scope.checked=false;
+     $scope.stockchecked=false;
+     $scope.TempgoodsStuffing={stuffingQuantity:0};
+     $scope.tempgoodsStuffings=[];
+     $scope.getNumber=function(stock){
+     	return parseInt(stock.No);
+     }
+     $scope.openSelectDlg = function(){
+			$scope.selectVo = {from : null, to : null, number : null, palletSku : null};
+			$scope.checkSelect = false;
+			$scope.selectDlg = true;
+		};
+		$scope.doSelect = function(selectVo){
+			try{
+			var doNext = true;
+			if(doNext){
+				var from = parseInt(selectVo.from);
+				var to = parseInt(selectVo.to);
+				if(from > to){
+					alert("From No is bigger than To No!");
+				} else {
+					for(var i = 0, len = $scope.goodsStuffingDetails.length; i<len;i++){
+						if(from <= i+1 &&i+1<= to &&
+								$scope.goodsStuffingDetails[i].isExecuted == false){
+							//alert(typeof selectVo.batchNo!='undefined'&&selectVo.batchNo!=null&&selectVo.batchNo!='')
+								$scope.goodsStuffingDetails[i].selected = true;
+						} else {
+							$scope.goodsStuffingDetails[i].selected = false;
+						}
+						$scope.selectDlg = false;
+					}
+				}
+			}
+			}catch(arr){
+				alert(arr)
+			}
+		};
+		
+		$scope.closeSelectDlg = function(){
+			$scope.selectDlg = false;
+		};
+     $scope.setStockNos=function(batch){
+    	if(typeof $scope.palletNoList!='undefined'){
+    	for(var i=0,len= $scope.palletNoList.length;i<len;++i){
+    		if($scope.palletNoList[i].batchNo==batch)
+    			return $scope.palletNoList[i].stockNos;
+    	}
+    	}
+     }
+     $scope.setId=function(stuffing){
+    	 try{
+    	var temps=$scope.setStockNos(stuffing.batchNo)
+    	for(var j=0,len2=temps.length;j<len2;++j){
+    		if(temps[j].stockNo==stuffing.No){
+    			stuffing.stockId=temps[j].id;
+    			stuffing.quantityPallet=temps[j].qty;
+    			stuffing.stuffingQuantity=temps[j].qty;
+    		}
+    	}
+    	 for(var i = 0, len =$scope.selectDetails.length; i < len; ++i){
+	        			if(stuffing.stockId==$scope.selectDetails[i].stockId){
+	        				stuffing.quantityPallet=JSON.parse(JSON.stringify($scope.selectDetails[i])).quantityPallet;
+	        				stuffing.stuffingQuantity=$scope.goodsStuffingDetails[i].quantityPallet;
+	        			}
+	        }
+    	 
+ 	  $scope.tempgoodsStuffings=JSON.parse(JSON.stringify($scope.goodsStuffingDetails))
+ 	   $scope.saveSuffing($scope.addList(stuffing))
+    	 }catch(arr){
+    		 alert(arr)
+    	 }
+     }
+     $scope.addList=function(stuffing){
+    	 var temps=[];
+    	 temps.push(stuffing);
+    	return temps;
+     }  
+     $scope.closeAlert = function(index) {
+  	 	$scope.alerts.splice(index, 1);
+     };
+     $scope.classType='';
+     $scope.clearAlerts = function() {
+  	   $scope.alerts.splice(0, 1);
+     }
+     
+     $scope.DateTest=function(value){
+     	//alert(0000)
+     	  if (DATE_REGEXP.test(value)) {
+     		  return false;
+     	  }else{
+     		  return true;
+     	  }
+     }
+     $scope.FloatTest=function(value){
+     	  if (FLOAT_REGEXP.test(value)) {
+     		  return false;
+     	  }else{
+     		  return true;
+     	  }
+     }
+     $scope.IntTest=function(value){
+     	  if (INT_REGEXP.test(value)) {
+     		  return false;
+     	  }else{
+     		  return true;
+     	  }
+     }
+     $scope.NullTest=function(value){
+     	  if (NULL_REGEXP.test(value)) {
+     		 return false;
+     	  }else{
+     		  return true;
+     	  }
+     }
+     $scope.sumQty=function(){
+    	if( $scope.goodsStuffingDetails!=null) {
+    		var Sum=0;
+    		for(var i = 0, len = $scope.goodsStuffingDetails.length; i < len; ++i){
+    			if(typeof $scope.goodsStuffingDetails[i].stuffingQuantity!='undefined'&&$scope.goodsStuffingDetails[i].stuffingQuantity!=null&&$scope.goodsStuffingDetails[i].stuffingQuantity!='')
+    			Sum=parseFloat(Sum)+parseFloat($scope.goodsStuffingDetails[i].stuffingQuantity)
+      	  }
+    		if(Sum>$scope.TempgoodsStuffing.stuffingQuantity) $scope.classType='text-error';
+    		else  $scope.classType='';
+    		return Sum;
+    	}
+     }
+   	$scope.getClass=function($index){
+   		if( $scope.index==$index)
+   			return 'selected';
+   		else
+   			return '';
+   	}
+     $scope.opts = {dialogClass:'modal'};
+
+      /* $http.post('/outbound/goodsStuffing/list').success(
+    	    function(data, status, headers, config) {
+    	    	  $scope.goodsStuffings = data;
+    	        //$scope.alerts.push({type:'success',msg: "success!"});
+    	    }).error(
+    	    function(data, status, headers, config) {
+    	        $scope.status = status
+    	    }); */
+      $scope.searchList=function(searchVo){
+    	   document.getElementById("submitDiv").style.display = "inline";
+      		$http.post('/outbound/goodsStuffing/list', searchVo).success(
+	    	    function(data, status, headers, config) {
+	    	       	document.getElementById("submitDiv").style.display = "none";
+	    	       	if(data.Type=='success'){
+		    	        $scope.goodsStuffings=data.Data;
+		        			  
+		    	        for(var i = 0, len = $scope.goodsStuffings.length; i < len; ++i){
+		    	        	$scope.goodsStuffings[i].select=false;
+		    	        	$scope.goodsStuffings[i].batchNo='';
+		    	        	$scope.goodsStuffings[i].batchQty=0;
+		    	        	try{
+				        	for(var l in  $scope.goodsStuffings[i].batchs){
+				        		 if(typeof $scope.goodsStuffings[i].batchs[l].batch=='undefined'||$scope.goodsStuffings[i].batchs[l].batch==null)
+				        			$scope.goodsStuffings[i].batchs[l].batch='';
+				        			$scope.goodsStuffings[i].batchNo=$scope.goodsStuffings[i].batchNo+($scope.goodsStuffings[i].batchs[l].batch+'('+$scope.goodsStuffings[i].batchs[l].Qty+')')+'<br>';
+				        			$scope.goodsStuffings[i].batchQty= parseFloat($scope.goodsStuffings[i].batchQty)+parseFloat($scope.goodsStuffings[i].batchs[l].Qty);
+				        		}
+				        	}catch(arr){
+				                alert(arr)
+				            }
+		    	        }
+		    	        $scope.goodsStuffingDetails='';
+		    	        $scope.index=-1;
+		    	        $scope.status=status;
+	    	       	}else{
+	    	       		$scope.alerts.push({type:data.Type,msg:data.Message });
+	    	       		$timeout($scope.clearAlerts, 5000);
+	    	       	}
+	    	    }).error(
+	    	    	function(data, status, headers, config) {
+		    	        document.getElementById("submitDiv").style.display = "none";
+		    	        $scope.status = status
+	    	    });
+      };
+      
+      $scope.out=function(goodsStuffing){
+    	  document.getElementById("submitDiv").style.display = "inline";
+    	  goodsStuffing.palletNoList = [];
+    	  $http.post("/outbound/goodsStuffing/Out",JSON.stringify(goodsStuffing))
+    	  	.success(function(data, status, headers, config){
+    	  		if(data.Type=='success'){
+    	  			$scope.goodsStuffings[$scope.outIndex].out=JSON.parse(JSON.stringify(data.Data.out))
+    	  		}
+    	  			$scope.closeOutDlg()
+    	  			$scope.alerts.push({type:data.Type,msg:data.Message });
+    	       		$timeout($scope.clearAlerts, 5000);
+    	  		document.getElementById("submitDiv").style.display = "none";
+    	  	}).error(function(data, status, headers, config){
+    	  		document.getElementById("submitDiv").style.display = "none";
+    	  	});
+      }
+      $scope.openOutDlg=function(index,goodsStuffing){
+    	  $scope.outIndex=index;
+    	  try{
+    	  $scope.OutTempgoodsStuffing=JSON.parse(JSON.stringify(goodsStuffing));
+    	  if(typeof $scope.OutTempgoodsStuffing.out=='undefined'||$scope.OutTempgoodsStuffing.out==null||$scope.OutTempgoodsStuffing.out==''){
+    		  $scope.OutTempgoodsStuffing.out=new Date();
+    	  }
+    	  $scope.OutTempgoodsStuffing.out=$filter('date')($scope.OutTempgoodsStuffing.out,'yyyy-MM-ddTHH:mm');
+    	  $scope.outDlg=true;
+    	  }catch(arr){
+    		  alert(arr)
+    	  }
+      }
+      $scope.closeOutDlg=function(){
+    	  $scope.outDlg=false;
+      }
+      $scope.getPalletNoList=function(goodsStuffing){
+    	  document.getElementById("submitDiv").style.display = "inline";
+    	  goodsStuffing.palletNoList = [];
+    	  $http.post("/outbound/goodsStuffing/getStockList",{"piNo":goodsStuffing.piNo,"batchs":JSON.stringify(goodsStuffing.batchs)})
+    	  	.success(function(data, status, headers, config){
+    	  		$scope.palletNoList = data.Data;
+    	  		$scope.batchList=[];
+    	  		for(var i=0,len=$scope.palletNoList.length;i<len;++i){
+    	  			$scope.batchList.push($scope.palletNoList[i].batchNo)
+    	  		}
+    	  		document.getElementById("submitDiv").style.display = "none";
+    	  	}).error(function(data, status, headers, config){
+    	  		document.getElementById("submitDiv").style.display = "none";
+    	  	});
+      }
+      
+      $scope.cacheBatchNoList = {};
+      $scope.resetBatch = function(goodsStuffing){
+    	  try{
+    	  document.getElementById("submitDiv").style.display = "inline";
+    	  //$scope.swapBatchNoList[0] = goodsStuffing.batchNoList;
+    	  goodsStuffing.batchNoList = [];
+    	  $http.post("/outbound/goodsStuffing/getBatchList",{"pi":goodsStuffing.piNo})
+    	  	.success(function(data, status, headers, config){
+    	  		$scope.batchNoList = data.Data;
+    	  	//	alert(angular.toJson(data.Data))
+    	  		if($scope.batchNoList.length>0){
+    	  		$scope.batchList=[];
+    	  		$scope.palletNoList=$scope.batchNoList;
+    	  		for(var i=0,len=$scope.palletNoList.length;i<len;++i){
+    	  			$scope.batchList.push($scope.palletNoList[i].batchNo)
+    	  		}
+    	  		}
+    	  		document.getElementById("submitDiv").style.display = "none";
+    	  	}).error(function(data, status, headers, config){
+    	  		document.getElementById("submitDiv").style.display = "none";
+    	  	}); 
+    	  }catch(arr){
+    		  alert(arr)
+    	  }
+    	  	
+      }
+       $scope.saveSuffing=function(goodsStuffings){
+    	   document.getElementById("submitDiv").style.display = "inline";
+    	  $http.post("/outbound/goodsStuffing/saveStuffing",JSON.stringify(goodsStuffings)).success(
+    	function(data, status, headers, config){
+  	  		if(data.Type=='success'){
+  	  		 for(var i=0,len=$scope.goodsStuffingDetails.length;i<len;++i){
+  	  			 for(var j=0,len2=data.Data.length;j<len2;++j)
+  	  				if($scope.goodsStuffingDetails[i].Number==data.Data[j].Number){
+  	  				$scope.goodsStuffingDetails[i].PlanDetialId=data.Data[j].PlanDetialId;
+  	  				}
+  	  		 }
+  	  		}else{
+  	  		 $scope.alertTip(data.Message);
+  	  		}
+  	  		document.getElementById("submitDiv").style.display = "none";
+  	  	}).error(function(data, status, headers, config){
+  	  		document.getElementById("submitDiv").style.display = "none";
+  	  	});  
+      } 
+       
+       $scope.deleteDetail=function(temp){
+    	   document.getElementById("submitDiv").style.display = "inline";
+    	  $http.post("/outbound/goodsStuffing/deleted",JSON.stringify(temp)).success(
+    	function(data, status, headers, config){
+  	  		if(data.Type=='error')
+  	  		 	$scope.alertTip(data.Message);
+  	  		else{
+  	  			$scope.getStuffingStockList($scope.TempgoodsStuffing)
+  	  			$scope.alerts.push({type:'success',msg:data.Message});
+  	  		    $timeout($scope.clearAlerts, 5000);
+  	  		}
+  	  		document.getElementById("submitDiv").style.display = "none";
+  	  	}).error(function(data, status, headers, config){
+  	  		document.getElementById("submitDiv").style.display = "none";
+  	  	});  
+      } 
+       
+      $scope.EachSave=function(goodsStuffing){
+    	  //alert(angular.toJson($scope.addList(goodsStuffing)))
+    	  if(!goodsStuffing.time){
+    		  $scope.alertTip("Please ensure the date/time integrity");
+    		  return;
+    	  }
+    	  goodsStuffing.time = (goodsStuffing.time).replace("T"," ");
+    	  $scope.saveSuffing($scope.addList(goodsStuffing))
+ 		 goodsStuffing.show=!goodsStuffing.show;
+      }
+      $scope.change=function(goodsStuffing,show){
+	  	    if(!show){
+		  		/* if(typeof goodsStuffing.column1=='undefined'){
+		  			goodsStuffing.column1=$scope.NullTest(goodsStuffing.containerNo)
+		  		}else{
+		  			goodsStuffing.column1=$scope.NullTest(goodsStuffing.containerNo)
+		  		} */
+		  		if(typeof goodsStuffing.column2=='undefined'){
+		  			goodsStuffing.column2=$scope.NullTest(goodsStuffing.stuffingQuantity)
+		  		}else{
+		  			goodsStuffing.column2=$scope.stufQtyTest(goodsStuffing.quantityPallet,goodsStuffing.stuffingQuantity)
+		  		}
+		  		//goodsStuffing.column1||
+		    	if((goodsStuffing.column2)==false){
+		    	  	goodsStuffing.show=!goodsStuffing.show;
+		    	  	for(var i=0,len=$scope.tempgoodsStuffings.length;i<len;++i){
+		    	  		if($scope.tempgoodsStuffings[i].No==goodsStuffing.No){
+		    	  			$scope.tempgoodsStuffings[i].containerNo=goodsStuffing.containerNo;
+		    	  			$scope.tempgoodsStuffings[i].stuffingQuantity=goodsStuffing.stuffingQuantity;
+		    	  			/* $scope.tempgoodsStuffings[i].column1=goodsStuffing.column1; */
+		    	  			$scope.tempgoodsStuffings[i].column2=goodsStuffing.column2;
+		    	  		}
+		    	  	}
+		    	}
+	    	 }else{
+	    		// $scope.saveSuffing($scope.addList(goodsStuffing))
+	    		 goodsStuffing.show=!goodsStuffing.show;
+	    	 }
+      }
+      $scope.cancel=function(goodsStuffing){
+    	  for(var i = 0, len = $scope.tempgoodsStuffings.length; i < len; ++i){
+    		  if($scope.tempgoodsStuffings[i].No==goodsStuffing.No){
+    			  goodsStuffing.containerNo=$scope.tempgoodsStuffings[i].containerNo;
+    	    	  goodsStuffing.stuffingQuantity=$scope.tempgoodsStuffings[i].stuffingQuantity;
+    	    	  goodsStuffing.time=$scope.tempgoodsStuffings[i].time;
+    	    	  goodsStuffing.cargoRemarks=$scope.tempgoodsStuffings[i].cargoRemarks;
+    	    	  goodsStuffing.column2=$scope.tempgoodsStuffings[i].column2;
+    	    	  goodsStuffing.column1=$scope.tempgoodsStuffings[i].column1;
+    		  }
+    	  }
+    	  goodsStuffing.show=!goodsStuffing.show;
+      }
+       $scope.addStufDetail=function(){
+    	  if($scope.edit==false){
+    		  if($scope.index=='-1'){
+    			  $scope.alertTip('Please check one ');
+    		  }else{
+    			  $scope.changeSelect($scope.selectDetails,0);
+    	    	  $scope.checkStock=true;
+    		  }
+    	  }
+      	 
+      } 
+       $scope.closestufDetial=function(){
+       	  $scope.checkStock=false;
+       }
+       $scope.setAllSelected=function(date,value){
+    	   //alert(value)
+    	   if(date!=''){
+    	   	for(var i = 0, len = date.length; i < len; ++i){
+    	   		if(date[i].isExecuted==false)
+    	   		date[i].selected=value;
+    	   	}
+    	   }
+       }
+       $scope.alertTip=function(msg){
+    	   $dialog.messageBox('Tip', msg,  [ {result:'ok', label: 'OK', cssClass: 'btn-primary'}]).open();
+       }
+       $scope.stufQtyTest=function(quantityPallet,stuffingQuantity){
+    	   if($scope.NullTest(stuffingQuantity)) return	$scope.NullTest(stuffingQuantity);
+    	  // alert($scope.NullTest(quantityPallet))
+    	   if(!$scope.NullTest(quantityPallet)){
+    	   		if(quantityPallet<stuffingQuantity||$scope.FloatTest(stuffingQuantity))
+    		   	return true
+    		   	else
+    		   	return false
+    	   }
+       }
+       
+		$scope.changeSelect = function(List,type){
+			try{
+				//alert(List.length)
+			var s = true;
+			for(var i = 0, len =List.length; i < len; i++){
+			//	alert(List[i].isExecuted+''+List[i].selected)
+				if(List[i].isExecuted==false&&(List[i].selected == false||typeof List[i].selected=='undefined' )){
+						s = false;
+				}
+			}
+			$scope.checked=s;
+			}catch(arr){
+				alert(arr)
+			}
+		};
+      /* $scope.setgoodsStuffing=function(goodsStuffing){
+    	goodsStuffing.column0=false;
+    	var id=goodsStuffing.id;
+    	var planItemId=goodsStuffing.planItemId;
+    	var warehouse= goodsStuffing.warehouse;
+      	var storageArea=goodsStuffing.storageArea;
+      	var storageBin=	goodsStuffing.storageBin;
+      	var	quantityPallet=goodsStuffing.quantityPallet;
+      	var containerNo=goodsStuffing.containerNo;
+      	var stuffingQuantity=goodsStuffing.stuffingQuantity;
+    	for(var i = 0, len = $scope.selectDetails.length; i < len; ++i){
+	        	if($scope.selectDetails[i].id==goodsStuffing.selectId){
+	        	for(var j = 0, len2 = $scope.goodsStuffingDetails.length; j < len2; ++j){
+	        		if((goodsStuffing.No!=$scope.goodsStuffingDetails[j].No)&&(goodsStuffing.selectId==$scope.goodsStuffingDetails[j].id)&&goodsStuffing.selectId!=''){
+	        			$scope.alertTip('This has selected');
+		        		goodsStuffing.selectId='';
+		        		goodsStuffing.id=id;
+		        		goodsStuffing.planItemId=planItemId;
+		            	goodsStuffing.warehouse=warehouse;
+		              	goodsStuffing.storageArea=storageArea;
+		              	goodsStuffing.storageBin=storageBin;
+		              	goodsStuffing.quantityPallet=quantityPallet;
+		              	goodsStuffing.containerNo=containerNo;
+		              	goodsStuffing.stuffingQuantity=stuffingQuantity;
+		              	return $scope.NullTest(goodsStuffing.quantityPallet);
+	        		}
+	        	}
+	        	//alert(123);
+    			goodsStuffing.id=$scope.selectDetails[i].id;
+    			goodsStuffing.planItemId=$scope.selectDetails[i].planItemId;
+	        	goodsStuffing.warehouse=$scope.selectDetails[i].warehouse;
+	        	goodsStuffing.storageArea=$scope.selectDetails[i].storageArea;
+	        	goodsStuffing.storageBin=$scope.selectDetails[i].storageBin;
+	        	goodsStuffing.quantityPallet=$scope.selectDetails[i].quantityPallet;
+	        	goodsStuffing.containerNo=$scope.selectDetails[i].containerNo
+	        	goodsStuffing.stuffingQuantity=$scope.selectDetails[i].quantityPallet;
+				return $scope.NullTest(goodsStuffing.quantityPallet);
+	         }
+	        }
+      } */
+      $scope.upload=function(){
+    	  try{
+    	  if(typeof $scope.goodsStuffingDetails=='undefined'||$scope.goodsStuffingDetails==''||$scope.goodsStuffingDetails==null||$scope.goodsStuffingDetails.length==0){
+    		  for(var l in  $scope.TempgoodsStuffing.batchs){
+	        		 if(typeof $scope.TempgoodsStuffing.batchs[l].batch!='undefined'&&$scope.TempgoodsStuffing.batchs[l].batch!=null){
+	        			var totalQty=0;
+	        			 for(var i = 0, len =$scope.selectDetails.length; i < len; ++i){
+	        					if($scope.selectDetails[i].batchNo==$scope.TempgoodsStuffing.batchs[l].batch&&parseInt(totalQty)<parseInt($scope.TempgoodsStuffing.batchs[l].Qty)){
+	     	        			var ishave=false;
+	     	        			for(var j = 0, lenvar = $scope.goodsStuffingDetails.length; j < lenvar; ++j){
+	     	        				if($scope.goodsStuffingDetails[j].stockId==$scope.selectDetails[i].stockId){
+	     	        					ishave=true;
+	     	        					$scope.goodsStuffingDetails[j].quantityPallet=JSON.parse(JSON.stringify($scope.selectDetails[i])).quantityPallet;
+	     	        					totalQty=totalQty+parseInt($scope.goodsStuffingDetails[j].stuffingQuantity);
+	     	        					$scope.selectDetails[i].isPlanned=true;
+	     	        				}
+	     	        			}
+	     	        			if(!ishave){
+	     	        				if($scope.selectDetails[i].isPlanned==false){
+	     	        				$scope.goodsStuffingDetails.push(JSON.parse(JSON.stringify($scope.selectDetails[i])));
+	     	        				totalQty=totalQty+parseInt($scope.selectDetails[i].quantityPallet);
+	     	        				$scope.selectDetails[i].isPlanned=true;
+	     	        				}
+	     	        			}
+	        				}
+	        			 }
+	     	        }
+	        	}
+    	  for(var i = 0, len = $scope.goodsStuffingDetails.length; i < len; ++i){
+    		 /*  $scope.goodsStuffingDetails[i].No=i+1; */
+    		  $scope.goodsStuffingDetails[i].show=true;
+    		  $scope.goodsStuffingDetails[i].selected=false;
+    		  if(typeof $scope.goodsStuffingDetails[i].stuffingQuantity=='undefined'||$scope.goodsStuffingDetails[i].stuffingQuantity==''||$scope.goodsStuffingDetails[i].stuffingQuantity==null)
+    		  $scope.goodsStuffingDetails[i].stuffingQuantity=$scope.goodsStuffingDetails[i].quantityPallet;
+    	  }
+    	  $scope.tempgoodsStuffings=JSON.parse(JSON.stringify($scope.goodsStuffingDetails))
+    	  $scope.checked=false;
+    	  $scope.checkStock=false;
+    	  $scope.saveSuffing($scope.goodsStuffingDetails)
+    	  }else{
+    		 // alert(angular.toJson($scope.TempgoodsStuffing))
+    		  //$scope.goodsStuffingDetails.push({"id":'',"piNo":'',"No":"","batchNo":"","planItemId":$scope.TempgoodsStuffing.id,"stockId":"","warehouse":"","storageArea":"","storageBin":"","quantityPallet":"","containerNo":"","stuffingQuantity":"","show":true,"cargoRemarks":null,"isExecuted":false,"shift":null,"remarks":null,"reason":null,"selected":false})
+    		  $scope.addPIDetailDlg=true;
+    	  }
+    	  }catch(arr){
+    		  alert(arr)
+    	  }
+      }
+      $scope.addDetail=function(len){
+    	  if(parseInt(len)>0){
+    	  try{
+    	  for(var i=0;i<parseInt(len);++i){
+    		  var isAdd=false;
+    			 for(var k = 0, len2 =$scope.selectDetails.length; k < len2; ++k){
+	        			var ishave=false;
+	        			for(var j = 0, lenvar = $scope.goodsStuffingDetails.length; j < lenvar; ++j){
+	        				if($scope.goodsStuffingDetails[j].isExecuted==false&&$scope.goodsStuffingDetails[j].stockId==$scope.selectDetails[k].stockId){
+	        					ishave=true;
+	        				}
+	        			}
+	        			if(!ishave&&!isAdd){
+	        				if($scope.selectDetails[k].isPlanned==false){
+	        				$scope.goodsStuffingDetails.push(JSON.parse(JSON.stringify($scope.selectDetails[k])));
+	        				//totalQty=totalQty+parseInt($scope.selectDetails[k].quantityPallet);
+	        				$scope.selectDetails[k].isPlanned=true;
+	        				isAdd=true;
+	        				}
+	        			}
+  				}
+    		if(!isAdd)
+    		  $scope.goodsStuffingDetails.push({"id":'',"piNo":'',"Number":No,"No":"","batchNo":"","planItemId":$scope.TempgoodsStuffing.id,"stockId":"","warehouse":"","storageArea":"","storageBin":"","quantityPallet":"","containerNo":"","stuffingQuantity":"","show":true,"cargoRemarks":null,"isExecuted":false,"shift":null,"remarks":null,"reason":null,"selected":false})
+    	  	No++;
+    	  }
+    	  }catch(arr){
+    		  alert(arr)
+    	  }
+    	  for(var i = 0, len = $scope.goodsStuffingDetails.length; i < len; ++i){
+     		 /*  $scope.goodsStuffingDetails[i].No=i+1; */
+     		  $scope.goodsStuffingDetails[i].show=true;
+     		  $scope.goodsStuffingDetails[i].selected=false;
+     		  if(typeof $scope.goodsStuffingDetails[i].stuffingQuantity=='undefined'||$scope.goodsStuffingDetails[i].stuffingQuantity==''||$scope.goodsStuffingDetails[i].stuffingQuantity==null)
+     		  $scope.goodsStuffingDetails[i].stuffingQuantity=$scope.goodsStuffingDetails[i].quantityPallet;
+     	  }
+    	  $scope.saveSuffing($scope.goodsStuffingDetails);
+    	  }else{
+    			$scope.alerts.push({type:'error',msg:'Create a failure, data is not a number greater than 0' });
+	        	$timeout($scope.clearAlerts, 5000);
+    	  }
+    	  $scope.addPIDetailDlg=false;
+      }
+      $scope.closeAddDlg=function(){
+    	  $scope.addPIDetailDlg=false;
+      }
+      $scope.doDelete=function($index,goodsStuffing){
+    	  if($scope.edit==false){
+   			 	var title = 'Warning';
+	    	    var msg = 'Are you sure to delete?';
+	    	    var btns = [ {result:'ok', label: 'Yes', cssClass: 'btn-primary'},{result:'no', label: 'No',cssClass:'btn-warning'}];
+	    	    $dialog.messageBox(title, msg, btns).open()
+	    	      .then(function(result){
+	    	        if(result=='ok'){
+	    	       		$scope.goodsStuffingDetails.splice($index,1);
+	    	       		if(typeof goodsStuffing.PlanDetialId!='undefined'&&goodsStuffing.PlanDetialId!=null&&goodsStuffing.PlanDetialId!='')
+	    	       			var temp=[goodsStuffing.PlanDetialId]
+	    	       		if(temp.length>0)
+	    	       		$scope.deleteDetail(temp);
+	    	        }
+	    	    });
+    	  }
+      }
+      var No=0;
+      $scope.getStuffingList=function(goodsStuffing,index){
+    	  $scope.checked=false;
+    	  	$scope.index=index;
+    	  	$scope.TempgoodsStuffing=goodsStuffing;
+    	 	$scope.goodsStuffingDetails=[];
+    	 	$scope.selectDetails=[];
+    	 	No=0;
+    	 	document.getElementById("submitDiv").style.display = "inline";
+          	$http.post('/outbound/goodsStuffing/ExecutDetails/list',{"piNo":goodsStuffing.piNo,"batchs":JSON.stringify(goodsStuffing.batchs)}).success(
+        	    function(data, status, headers, config) {//÷¥––œÍ«È
+        	    	document.getElementById("submitDiv").style.display = "none";
+        	    	if(data.Type=='success'){
+	        	    	if(data.Data==''){
+	        	    		$scope.edit=false;
+	        	    		$scope.getStuffingStockList(goodsStuffing);
+	        	    		/* if(typeof $scope.selectDetails=='undefined'||$scope.selectDetails=='')
+	        	    		$scope.alerts.push({type:'error',msg:'PI:'+goodsStuffing.piNo+'\'s Pallets not on loading bay' });
+	       	        	  	$timeout($scope.clearAlerts, 5000); */
+	        	    		$scope.edit=true;
+	        	    	}else{
+	        	    		$scope.edit=false;
+	        	    		//$scope.getPalletNoList(goodsStuffing)
+	        	    		$scope.goodsStuffingDetails=data.Data;
+	        	    		for(var i=0,len=$scope.goodsStuffingDetails.length;i<len;++i){
+	        	    			$scope.goodsStuffingDetails[i].Number=No;
+	        	    			No++;
+	        	    		}
+	        	    		$scope.getStuffingStockList(goodsStuffing);
+	        	    		 //$scope.checked=true;
+	        	    	}
+        	    	}else{
+        	    		$scope.alerts.push({type:data.Type,msg:data.Message });
+        	    		$timeout($scope.clearAlerts, 5000);
+        	    	}
+        	    }).error(
+        	    function(data, status, headers, config) {
+	  	         	document.getElementById("submitDiv").style.display = "none";
+	  	        	$scope.status = status
+        	    });
+       };
+       
+       $scope.simpleSave=function(goodsStuffing){
+    	   document.getElementById("submitDiv").style.display = "inline";
+ 			$http.post('/outbound/goodsStuffing/SimpleSave', JSON.stringify(goodsStuffing))
+ 				.success(function(data, status, headers, config) {
+	         		document.getElementById("submitDiv").style.display = "none";
+		         	if(data.Type=='success'){
+		         	  $scope.edit=true;
+		         	  var sum=parseFloat(goodsStuffing.stuffingQuantity);
+		         	  var ExecutedQty=0;
+		         	  for(var i=0,len=$scope.goodsStuffingDetails.length;i<len;++i){
+		         		 if($scope.goodsStuffingDetails[i].isExecuted==true){
+		    				 ExecutedQty=ExecutedQty+ parseFloat($scope.goodsStuffingDetails[i].stuffingQuantity);
+		    			 }
+		         		if( $scope.goodsStuffingDetails[i].Number==data.Data.Number)
+		         		$scope.goodsStuffingDetails[i].isExecuted=true;
+		         	  }
+		         	 if($scope.TempgoodsStuffing.batchQty<=(sum+ExecutedQty))
+			    			$scope.TempgoodsStuffing.Executed=true;
+		        	  $scope.alerts.push({type:'success',msg:'Execution success' });
+		        	  $timeout($scope.clearAlerts, 20000);
+		         	}else{
+		         		 $scope.alerts.push({type:data.Type,msg:data.Message});
+			        	  $timeout($scope.clearAlerts, 20000);
+		         	}
+	        	}).error(function(data, status, headers, config) {
+	        	  	document.getElementById("submitDiv").style.display = "none";
+	              	$scope.status = status
+	    		});
+       }
+       
+      $scope.getStuffingStockList=function(goodsStuffing){
+    	 $scope.TempgoodsStuffing=goodsStuffing;
+    	 //$scope.goodsStuffingDetails=[];
+         $http.post('/outbound/goodsStuffing/Details/list',{"piNo":goodsStuffing.piNo,"batchs":JSON.stringify(goodsStuffing.batchs)}).success(
+        	    function(data, status, headers, config) {
+        	    	 document.getElementById("submitDiv").style.display = "none";
+        	    	 if(data.Type=='success'){
+		        	    	if(data.Data==''){ 
+		        	    	
+		        	    	}else{
+		        	    		$scope.getPalletNoList(goodsStuffing)
+		        	    		$scope.edit=false;
+		        	    		$scope.selectDetails=data.Data;
+			        	        for(var i = 0, len = $scope.selectDetails.length; i < len; ++i){
+			        	        	$scope.selectDetails[i].Number=No;
+			        	        	$scope.selectDetails[i].selected=false;
+			        	        	No++;
+			        	        	/* $scope.selectDetails[i].palletNumber=i+1; */
+			        	        }
+		        	        	$scope.tempSelects=JSON.parse(JSON.stringify($scope.selectDetails));
+		        	        	$scope.status=status;
+		        	    	}
+        	    	 }else{
+        	    		 $scope.alertTip('please refresh page');
+        	    	 }
+        	    }).error(
+        	    function(data, status, headers, config) {
+        	       // $scope.alertTip(12324145)
+        	        document.getElementById("submitDiv").style.display = "none";
+        	        $scope.status = status
+        	    });
+      };
+          
+      $scope.doExecute=function(executeVo){
+    	  try{
+	    		$scope.tempStuffing=[];
+	    		var reEdit=false;
+	    		//other batch
+	    		//less stuffing 
+	    		var ExecutedQty=0;
+	    		for(var i = 0, len =$scope.goodsStuffingDetails.length; i < len; ++i){//stuffingDetails
+	    			 if($scope.goodsStuffingDetails[i].isExecuted==true){
+	    				 ExecutedQty=ExecutedQty+ parseFloat($scope.goodsStuffingDetails[i].stuffingQuantity);
+	    			 }
+	    			 if($scope.goodsStuffingDetails[i].selected==true){
+	    				/* if(typeof stuffingDetails[i].column1=='undefined'){
+	        				 stuffingDetails[i].column1=$scope.NullTest(stuffingDetails[i].containerNo)
+	        		  	} */
+        		  		if(typeof $scope.goodsStuffingDetails[i].column2=='undefined'){
+        		  			$scope.goodsStuffingDetails[i].column2=$scope.NullTest($scope.goodsStuffingDetails[i].stuffingQuantity)
+        		  		} 
+	        		  	$scope.goodsStuffingDetails[i].shift = executeVo.shift;
+	        		  	$scope.goodsStuffingDetails[i].remarks = executeVo.remarks;
+	        		  	$scope.goodsStuffingDetails[i].reason = executeVo.reason;
+	        		  	$scope.goodsStuffingDetails[i].column2=$scope.stufQtyTest($scope.goodsStuffingDetails[i].quantityPallet,$scope.goodsStuffingDetails[i].stuffingQuantity)
+        		    	if(($scope.goodsStuffingDetails[i].column1||$scope.goodsStuffingDetails[i].column2)==false){
+        		    		$scope.tempStuffing.push($scope.goodsStuffingDetails[i])
+        		    	}else{
+        		    		if(reEdit==false){
+        		    			reEdit=true;
+        		    			alert('Some Date had not Edit!');
+        		    		}
+        		    	}
+	    			 }
+	    		 }
+	    		if($scope.tempStuffing==[]){
+	    			alert('No Data Selected');
+	    		}else{
+		    		if(!reEdit){
+			    		var sum=0;
+			    		//var canSave=true;
+			    		if($scope.tempStuffing.length==0){  
+			    			alert('Please check someone!');
+			    		}else{
+				    		for(var i = 0, len =$scope.tempStuffing.length; i < len; ++i){
+				    			//canSave=canSave&&$scope.tempStuffing[i].show;
+				 	        	sum=parseFloat(sum)+parseFloat($scope.tempStuffing[i].stuffingQuantity);
+				 	        }
+				    			document.getElementById("submitDiv").style.display = "inline";
+				      			$http.post('/outbound/goodsStuffing/Save', JSON.stringify($scope.tempStuffing))
+				      				.success(function(data, status, headers, config) {
+						         		document.getElementById("submitDiv").style.display = "none";
+							         	if(data.Type=='success'){
+							         		//alert(angular.toJson(data))
+							         		  $scope.alerts.push({type:'success',msg:data.Message });
+							         	  $scope.edit=true;
+							         	 if($scope.TempgoodsStuffing.batchQty<=(sum+ExecutedQty))
+								    			$scope.TempgoodsStuffing.Executed=true;
+							         	  $scope.getStuffingList($scope.TempgoodsStuffing,$scope.index);
+							         	  $scope.closeExecuteDlg();
+							        	  $timeout($scope.clearAlerts, 20000);
+							         	}else{
+							         		//alert(angular.toJson(data))
+							         		alert(data.Message)
+							         		// $scope.alerts.push({type:data.Type,msg:data.Message});
+								        	  $timeout($scope.clearAlerts, 20000);
+							         	}
+						        	}).error(function(data, status, headers, config) {
+						        	  	document.getElementById("submitDiv").style.display = "none";
+						              	$scope.status = status
+						    		});
+			    		}
+		    		}
+	      		} 
+    	  }catch(arr){
+    		  alert(arr)
+    	  }
+      }
+      
+      $scope.showEditDlg=function(){
+    	  if($scope.edit==false){
+    		  if(typeof $scope.goodsStuffingDetails=='undefined'){
+    			  $scope.alertTip('Please check one ');
+    		  }else{
+    			  var isSelected=false;
+    			  for(var i = 0, len = $scope.goodsStuffingDetails.length; i < len; ++i){
+    				  if($scope.goodsStuffingDetails[i].selected==true){
+    					  isSelected=true;
+    					  break;
+    				  }
+    			  }
+    			
+    			 if(isSelected){
+    				 $scope.editAll=true;
+    			 }else{
+    				 $scope.alertTip('Please select data to edit!');
+    			 }
+    		  }
+    	  }
+      }
+      $scope.closeEditDlg=function(){
+    	  $scope.editAll=false;
+      }
+      
+      $scope.doEditAll=function(defual){
+    	 try{
+	    	  for(var i = 0, len = $scope.goodsStuffingDetails.length; i < len; ++i){
+	    		  
+	    		  	if($scope.goodsStuffingDetails[i].selected){
+	    		  		
+		    		  	if(typeof defual!='undefined'&&typeof defual.cargoRemarks!='undefined'&&defual.cargoRemarks!=''){
+		    		  		$scope.goodsStuffingDetails[i].cargoRemarks=defual.cargoRemarks;
+		    		  	} 
+						if(typeof defual.Qty!='undefined'&&defual.Qty!=''&&defual.Qty!=null){
+							$scope.goodsStuffingDetails[i].stuffingQuantity=defual.Qty;
+		    		  	}
+						if(typeof defual!='undefined'&&typeof defual.time!='undefined'&&defual.time!=null){
+		    		  		$scope.goodsStuffingDetails[i].time=defual.time;
+		    		  	}
+		    			/* if(typeof $scope.goodsStuffingDetails[i].column1=='undefined'){
+		    				$scope.goodsStuffingDetails[i].column1=$scope.NullTest($scope.goodsStuffingDetails[i].containerNo)
+		          		}else{
+		          			$scope.goodsStuffingDetails[i].column1=$scope.NullTest($scope.goodsStuffingDetails[i].containerNo)
+		          		} */
+		          		if(typeof $scope.goodsStuffingDetails[i].column2=='undefined'){
+		          			$scope.goodsStuffingDetails[i].column2=$scope.NullTest($scope.goodsStuffingDetails[i].stuffingQuantity)
+		          		}else{
+		          			$scope.goodsStuffingDetails[i].column2=$scope.stufQtyTest($scope.goodsStuffingDetails[i].quantityPallet,$scope.goodsStuffingDetails[i].stuffingQuantity)
+		          		} 
+		          		//$scope.goodsStuffingDetails[i].column1||
+		          		if(($scope.goodsStuffingDetails[i].column2)==false){
+		            	  	for(var j=0,len2=$scope.tempgoodsStuffings.length;j<len2;++j){
+		            	  		if($scope.tempgoodsStuffings[j].No==$scope.goodsStuffingDetails[i].No){
+		            	  			$scope.tempgoodsStuffings[j].stuffingQuantity=$scope.goodsStuffingDetails[i].stuffingQuantity;
+		            	  			$scope.tempgoodsStuffings[j].cargoRemarks=$scope.goodsStuffingDetails[i].cargoRemarks;
+		            	  			$scope.tempgoodsStuffings[j].time=$scope.goodsStuffingDetails[i].time;
+		            	  			/* 
+		            	  				$scope.tempgoodsStuffings[j].containerNo=$scope.goodsStuffingDetails[i].containerNo;
+		            	  				$scope.tempgoodsStuffings[j].column1=$scope.goodsStuffingDetails[i].column1; 
+		            	  			*/
+		            	  			$scope.tempgoodsStuffings[j].column2=$scope.goodsStuffingDetails[i].column2;
+		            	  		}
+		            	  	}
+		            	}
+	    	  		} 
+	    	  }
+	    	  $scope.saveSuffing($scope.goodsStuffingDetails)
+    	 }catch(arr){
+    		 alert(arr)
+    	 }
+    	 $scope.closeEditDlg();
+      }
+      
+      $scope.showDeleteDlg = function(){
+    	  	var s = false;
+    	  	for(var i=0,len=$scope.goodsStuffingDetails.length;i<len;i++){
+    		  if($scope.goodsStuffingDetails[i].selected){
+    			  s = true;
+    			  break;
+    		  }
+       		}
+    	  
+    	  	if(s){
+    	  		var title = 'Warning';
+     	    	var msg = 'Are you sure to delete?';
+     	    	var btns = [ {result:'ok', label: 'Yes', cssClass: 'btn-primary'},{result:'no', label: 'No',cssClass:'btn-warning'}];
+     	    	$dialog.messageBox(title, msg, btns).open()
+     	      		.then(function(result){
+    	  	        if(result=='ok'){
+    	  	        	try{
+    	  	        	var temp=[];
+    	  	        	//alert(angular.toJson($scope.goodsStuffingDetails))
+    	  	       		for(var i=0,len=$scope.goodsStuffingDetails.length;i<len;i++){
+    	  	       			//alert(angular.toJson($scope.goodsStuffingDetails[i]))
+    	  	       			 if($scope.goodsStuffingDetails[i].selected){
+    	  	       				// alert(1111)
+    	  	       			//alert(angular.toJson($scope.goodsStuffingDetails[i]))
+    	  	       			temp.push($scope.goodsStuffingDetails[i].PlanDetialId);
+    	  	       		 	}
+    	  	       			
+    	  	       		}
+    	  	        	if(temp.length>0)
+    	  	       		$scope.deleteDetail(temp);
+    	  	  			for(var i=0,len=$scope.goodsStuffingDetails.length;i<len;++i){
+    	  	  				for(var j=0,len2=temp.length;j<len2;++j){
+    	  	  				if(typeof $scope.goodsStuffingDetails[i]!='undefined'&&$scope.goodsStuffingDetails[i].PlanDetialId==temp[j])
+    	  	  				$scope.goodsStuffingDetails.splice(i,1);
+    	  	  				}
+    	  	  			}
+
+    	  	        	}catch(arr){
+    	  	        		alert(arr)
+    	  	        	}
+    	  	        }
+     	    	});
+    	  	}else{
+    	  		$scope.alertTip('Please select data to delete!');
+    	  	}
+      }
+      
+      $scope.openExecuteDlg = function(){
+    	  	var countNum = 0;
+			for(var i=0,len=$scope.goodsStuffingDetails.length;i<len;i++){
+    		  if($scope.goodsStuffingDetails[i].selected){
+    			  countNum++;
+    		  }
+       		}
+			if(countNum==0){
+				$scope.alertTip('Please select data to execute!');
+				return;
+			}
+			$scope.executeVo = {shift : '', remarks : '', reason : ''};
+			$scope.executeDlg = true;
+		};
+		
+		$scope.closeExecuteDlg = function(){
+			$scope.executeDlg = false;
+		}; 
+      
+      $timeout($scope.clearAlerts, 20000);
+      document.getElementById("submitDiv").style.display = "none";
+    });
+  </script>
+}
+
+

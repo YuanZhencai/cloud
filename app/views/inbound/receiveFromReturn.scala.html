@@ -1,0 +1,2513 @@
+@(name: String)
+@main("Goods Receive"){
+<div ng-controller="ReceiveFromReturn">
+<div class="breadcrumb">
+	<li style="">Current Location: Receive From Return</li>
+</div>
+<div alert ng-repeat="alert in alerts" type="alert.type" close="closeAlert($index)" template-url="/template/alert/alert.html">{{alert.msg}}</div>
+	<!-- 查询条件 -->
+	<form novalidate ng-submit="searchPiList(pISearchVo)">
+		<table>
+			<tr>
+				<td class="column0">
+					<label>PI No:</label>
+				</td>
+				<td>
+					<input class="input-medium" type="text" name="PI_No" ng-model="pISearchVo.piNo">
+				</td>
+				<td class="column1">
+					<label >Sales Contract No:</label>
+				</td>
+				<td class="column2">
+					<input class="input-medium" type="text" name="SG_PI_No" ng-model="pISearchVo.sgPiNo">
+				</td>
+				<td class="column1">
+					<label>PI Status:</label>
+				</td>
+				<td class="column2">
+					<select ng-model="pISearchVo.piStatus" class="span2" ng-options="os.code_key as os.code_name for os in orderStatuses|orderBy:'code_key'">
+						<option value="">ALL</option>
+					</select>
+				</td>
+			</tr>
+			<tr>
+				<td class="column0">
+					<label>Reference No:</label>
+				</td>
+				<td>
+					<input class="input-medium" type="text" name="Reference_NO" ng-model="pISearchVo.referenceNo">
+				</td>
+			</tr>
+			<tr>
+				<td colspan="6">
+				</td>
+				<td>
+					<div style="text-align: right;">
+						<input class="btn btn-primary" type="submit" value="Search">
+					</div>
+				</td>
+			</tr>
+		</table>
+	</form>
+	<!-- PItable -->
+	<table id="pitable" class="table table-bordered table-condensed">
+		<thead>
+			<tr>
+				<th></th>
+				<th>Return PI Date</th>
+				<th>Reference No</th>
+				<th>PI No</th>
+				<th>Material Description</th>
+				<th>Return Qty</th>
+				<th>UOM</th>
+				<th>PI SKU</th>
+				<th>UOM</th>
+				<th>Plan Status</th>
+				<th>PI Status</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr ng-repeat="planItemVo in planItemVoList" ng-class="getClass($index)">
+				<th><input type="radio" name="choice" ng-model="planItemVo.ifSelect" ng-click="setPlanItemDetails(planItemVo, $index)"/></th>
+				<td class="noNewLine">{{planItemVo.productionDate|date:'dd/MM/yyyy'}}</td>
+				<td class="noNewLine">{{planItemVo.referenceNo}}</td>
+				<td class="noNewLine">{{planItemVo.piNo}}</td>
+				<td class="noNewLine">{{planItemVo.materialDescription}}</td>
+				<td class="noNewLine">{{planItemVo.productionqty|number:2}}</td>
+				<td class="noNewLine">{{planItemVo.productionuom}}</td>
+				<td class="noNewLine">{{planItemVo.piSKU|number:2}}</td>
+				<td class="noNewLine">{{planItemVo.skuUOM}}</td>
+				<td class="noNewLine">(<span class="{{planItemVo.styleClass}}">{{planItemVo.receivedQty|number:2}}</span>/{{planItemVo.productionqty|number:2}})</td>
+				<td class="noNewLine">(<span class="{{planItemVo.piStyleClass}}">{{planItemVo.piReceivedQty|number:2}}</span>/{{planItemVo.piqyt|number:2}})</td>
+			</tr>
+		</tbody>
+	</table>
+	<br/>
+	<!-- piDetail table -->
+	<table class="table table-striped table-bordered table-hover table-condensed">
+		<thead>
+			<th>
+				<button class="btn btn-primary btn-mini" style="display: {{ifAddShow}};" ng-click="openSelectDlg()"><i class="icon-check"></i></button>
+				<!-- <a class="btn btn-primary btn-small" style="display: {{ifAddShow}};" ng-click="openSelectDlg()">Select</a> -->
+				<br/>
+				<input type="checkbox" style="display: {{ifAddShow}};" ng-model="checkSelect" ng-change="selectAll(checkSelect)">
+			</th>
+			<th>No</th>
+			<th>Prod Date</th>
+			<th>Prod Line</th>
+			<th>Batch No.</th>
+			<th>Blending Tank</th>
+			<th>Storage Area</th>
+			<th>Storage Bin</th>
+			<th>PA Worker</th>
+			<th>Forklift Driver</th>
+			<th>Leader Shift</th>
+			<th>Qty/Pallet
+				<br/>
+				(<span class="{{classType}}">{{currentUsedSKU|number:2}}</span>/{{currentAllSKU|number:2}})
+			</th>
+			<th>Print</th>
+			<th>Execute</th>
+			<th>Operation
+				<a class="btn btn-primary btn-small" style="text-align: left;display: {{ifAddShow}};" ng-click="openAddDlg()">AddPallet</a>
+				<a class="btn btn-info btn-small" style="text-align: center;display: {{ifAddShow}};" ng-click="openDefDlg()">EditAll</a>
+				<a class="btn btn-info btn-small" style="text-align: right;display: {{ifAddShow}};"  ng-click="printAll()">PrintAll</a>
+				<a class="btn btn-info btn-small" style="text-align: right;display: {{ifAddShow}};"  ng-click="openDeleteAllDlg()">DeleteAll</a>
+				<a class="btn btn-primary btn-small" style="text-align: right;display: {{ifAddShow}};" ng-click="executeOpenDlg(a, b, c, false)">ExecuteAll</a>
+			</th>
+			<th>Last Update Date</th>
+		</thead>
+		<tbody>
+			<tr ng-repeat="planItemDetailVo in piDetailVoList">
+				<td><input type="checkbox" ng-disabled="planItemDetailVo.ifExecution" style="display: {{ifAddShow}};" 
+						ng-model="planItemDetailVo.ifSelect" ng-change="changeSelect()"></td>
+				<td class="noNewLine">{{planItemDetailVo.stockno}}</td>
+				<td class="noNewLine">{{planItemDetailVo.productionDate|date:'dd/MM/yyyy'}}</td>
+				<td class="noNewLine">{{planItemDetailVo.productionLine}}</td>
+				<td class="noNewLine">{{planItemDetailVo.batchNo}}</td>
+				<td class="noNewLine">{{planItemDetailVo.blendingTank}}</td>
+				<td class="noNewLine">{{planItemDetailVo.area}}</td>
+				<td class="noNewLine">{{planItemDetailVo.bin}}</td>
+				<td class="noNewLine">{{planItemDetailVo.paworker}}</td>
+				<td class="noNewLine">{{planItemDetailVo.driver}}</td>
+				<td class="noNewLine">{{planItemDetailVo.leader}}</td>
+				<td class="noNewLine">{{planItemDetailVo.palletQty|number:2}}</td>
+				<td class="noNewLine">{{planItemDetailVo.status}}</td>
+				<td class="noNewLine">{{planItemDetailVo.executionOrNo}}</td>
+				<th>
+					<a class="btn btn-primary btn-small" ng-disabled="planItemDetailVo.ifExecution" style="text-align: left;" ng-click="openEditDlg(planItemDetailVo, planItemDetailVo.ifExecution, $index)"> Edit </a>
+					<a class="btn btn-danger btn-small" ng-disabled="planItemDetailVo.ifExecution" style="text-align: center;" ng-click="openDeletDlg(planItemDetailVo, planItemDetailVo.ifExecution, $index)"> Delete </a>
+					<a class="btn btn-info btn-small" style="text-align: right;" ng-click="printDlg(planItemDetailVo, $index)"> Print </a>
+					<a class="btn btn-primary btn-small" ng-disabled="planItemDetailVo.ifExecution" style="text-align: right;" ng-click="executeOpenDlg(planItemDetailVo, planItemDetailVo.ifExecution, $index, true)">Execute</a>
+				</th>
+				<td class="fontSize_1">{{planItemDetailVo.modifiedby}} {{planItemDetailVo.modifiedat|date:'dd/MM/yyyy HH:mm'}}</td>
+			</tr>
+		</tbody>
+	</table>
+	@views.html.common.selectDlg("")
+	<!-- Split plan Dialog -->
+	<div modal="splitPlanDlg" close="closeSplitDlg()" options="dlgOpts">
+		<div class="modal-header">
+			<h4>Split Plan</h4>
+			<h7>(<span class="{{classTypeTwo}}">{{currentUsedQty|number:2}}</span>/<span>{{currentAllQty|number:2}}</span>)</h7>
+		</div>
+		<div class="modal-body">
+		<form novalidate name="split">
+			<table>
+				<tbody>
+					<tr>
+						<td align="right">Prod Line :&nbsp;</td>
+						<td>
+							<select class="input-medium" ng-model="splitPlanItemVo.productionLineId" ng-options="a.id as a.nameKey for a in splitLineVoList">
+							</select><span style="color: red">*</span>
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<span ng-show="splitPlanItemVo.splitProductionLineId" style="color: red">Please select the Prod Line!</span>
+						</td>
+					</tr>
+					<tr>
+						<td align="right">Plan Prod Qty :&nbsp;</td>
+						<td>
+							<input type="text" class="input-medium" name="productionqty" ng-model="splitPlanItemVo.productionqty" placeholder="Must be a number!" ng-change="getPiSku(splitPlanItemVo, true)" float/>
+							<span style="color: red">*</span>
+						</td>
+						<td>
+							<label class="control-label">UOM :&nbsp;</label>
+						</td>
+						<td>
+							<input type="text" class="input-medium" name="productionuom" ng-model="splitPlanItemVo.productionuom"  ng-disabled="true"/>
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<span ng-show="split.productionqty.$error.date" style="color: red">Must be a number!</span>
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<span ng-show="split.productionqty.$error.datef" style="color: red">Can not be null!</span>
+						</td>
+					</tr>
+					<tr>
+						<td align="right">PI SKU :&nbsp;</td>
+						<td>
+							<input type="text" class="input-medium" name="piSKU" ng-model="splitPlanItemVo.piSKU" placeholder="Must be a number!" ng-change="getPiSku(splitPlanItemVo, false)" float/>
+							<span style="color: red">*</span>
+						</td>
+						<td align="right">UOM :&nbsp;</td>
+						<td>
+							<input type="text" class="input-medium" name="skuUOM" ng-model="splitPlanItemVo.skuUOM"  ng-disabled="true"/>
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<span ng-show="split.piSKU.$error.date" style="color: red">Must be a number!</span>
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<span ng-show="split.piSKU.$error.datef" style="color: red">Can not be null!</span>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</form>
+		</div>
+		<div class="modal-footer">
+			<button class="btn btn-primary btn-small ok" ng-click="saveSpiltPlan(splitPlanItemVo)">Save</button>
+			<button class="btn btn-warning btn-small cancel" ng-click="closeSplitDlg()">Cancel</button>
+		</div>
+	</div>
+	<!-- 添加detail Dialog -->
+	<div modal="addPIDetailDlg" close="closeAddDlg()" options="dlgOpts">
+		<div class="modal-header">
+			<h4>Add Pallet</h4>
+		</div>
+		<div class="modal-body">
+		<form novalidate name="add" class="form-horizontal">
+			<table>
+				<tbody>
+					<tr>
+						<td>
+							<label class="control-label">PI SKU :&nbsp;</label>
+						</td>
+						<td>
+							<input type="text" name="piSku" ng-model="currentAllSKU"  ng-disabled="true"/>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<label class="control-label">Assigned SKU :&nbsp;</label>
+						</td>
+						<td>
+							<input type="text" name="assignedSku" ng-model="assignedSku"  ng-disabled="true"/>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<label class="control-label">Quantity/Pallet :&nbsp;</label>
+						</td>
+						<td>
+							<input type="text" name="quantityPallet" ng-model="currentQuantityPallet"  ng-disabled="true"/>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<label class="control-label">Pallet Count :&nbsp;</label>
+						</td>
+						<td>
+							<input type="text" name="palletCount" ng-model="palletCount"  placeholder="Must be a number!" ng-change="changePalletSKU(palletCount)" int/>
+							<span style="color: red">*</span>
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<span ng-show="add.palletCount.$error.date" style="color: red">Must be a maximum 14-bit positive integers!</span>
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<span ng-show="nullCount" style="color: red">Can not be null!</span>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<label class="control-label">Assigned Pallet SKU :&nbsp;</label>
+						</td>
+						<td>
+							<input type="text" name="allPalletSku" ng-model="assignedPalletSku"  ng-disabled="true"/>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</form>
+		</div>
+		<div class="modal-footer">
+			<button class="btn btn-primary btn-small ok" ng-click="addDetail()">Save</button>
+			<button class="btn btn-warning btn-small cancel" ng-click="closeAddDlg()">Cancel</button>
+		</div>
+	</div>
+	<!-- 编辑detail Dialog -->
+	<div modal="editPIDetailDlg" close="closeEditDlg()" options="dlgOpts">
+		<div class="modal-header">
+			<h4>Edit Pallet</h4>
+		</div>
+		<div class="modal-body">
+		<form novalidate name="edit" class="form-horizontal">
+			<table>
+				<tbody>
+					<tr>
+						<td>
+							<label class="control-label">Pallet No :&nbsp;</label>
+						</td>
+						<td>
+							<input type="text" name="stockno" ng-model="editViewDetailVo.stockno"  placeholder="Must be a number!" ng-change="changeEdit(editViewDetailVo)" int/>
+							<span style="color: red">*</span>
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<span ng-show="edit.stockno.$error.date" style="color: red">Must be a number!</span>
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<span ng-show="editViewDetailVo.editstockno" style="color: red">Can not be null!</span>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<label class="control-label">Production Date :&nbsp;</label>
+						</td>
+						<td>
+							<input type="date" name="stockno" ng-model="editViewDetailVo.productionDate" ng-change="changeEdit(editViewDetailVo)"/>
+							<!--  <span style="color: red">*</span>-->
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<span ng-show="editViewDetailVo.editProductionDate" style="color: red">Please select the Production Date!</span>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<label class="control-label">Production Line :&nbsp;</label>
+						</td>
+						<td>
+							<select ng-model="editViewDetailVo.productionLineId" ng-options="a.id as a.nameKey for a in editLineVoList">
+							</select>
+							<!--  <span style="color: red">*</span>-->
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<span ng-show="editViewDetailVo.editLineId" style="color: red">Please select the Production Line!</span>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<label class="control-label">Batch NO :&nbsp;</label>
+						</td>
+						<td>
+							<input type="text" name="batchNo" ng-model="editViewDetailVo.batchNo" ng-change="changeEdit(editViewDetailVo)"/>
+							<!--  <span style="color: red">*</span>-->
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<span ng-show="editViewDetailVo.editBatchNo" style="color: red">Can not be null!</span>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<label class="control-label">Blending Tank :&nbsp;</label>
+						</td>
+						<td>
+							<input type="text" name="batchNo" ng-model="editViewDetailVo.blendingTank" ng-change="changeEdit(editViewDetailVo)"/>
+							<!--  <span style="color: red">*</span>-->
+						</td>
+					</tr>
+					<!-- <tr>
+						<td>
+							<label class="control-label">Warehouse :&nbsp;</label>
+						</td>
+						<td>
+							<select ng-model="editViewDetailVo.warehouseId" ng-options="w.id as w.nameKey for w in editWarehouseVoList" disabled="true">
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<span ng-show="editViewDetailVo.editwarehouseId" style="color: red">Please select the Warehouse!</span>
+						</td>
+					</tr> -->
+					<tr>
+						<td>
+							<label class="control-label">Area :&nbsp;</label>
+						</td>
+						<td>
+							<select ng-model="editViewDetailVo.areaId" ng-options="a.id as a.nameKey for a in editAreaVoList" ng-change="changeBinEdit(editViewDetailVo)">
+							</select>
+							<!--  <span style="color: red">*</span>-->
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<span ng-show="editViewDetailVo.editareaId" style="color: red">Please select the Area!</span>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<label class="control-label">Bin :&nbsp;</label>
+						</td>
+						<td>
+							<select ng-model="editViewDetailVo.binId" ng-options="b.id as b.nameKey for b in editBinVoList" ng-change="changeEdit(editViewDetailVo)">
+							</select>
+							<!--  <span style="color: red">*</span>-->
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<span ng-show="editViewDetailVo.editbinId" style="color: red">Please select the Bin!</span>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<label class="control-label">PA Worker :&nbsp;</label>
+						</td>
+						<td>
+							<select ng-model="editViewDetailVo.paworkerId" ng-options="p.id as p.nameKey for p in editPaWorkerVoList" ng-change="changeEdit(editViewDetailVo)">
+							</select>
+							<!--  <span style="color: red">*</span>-->
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<span ng-show="editViewDetailVo.editpaworkerId" style="color: red">Please select the PA Worker!</span>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<label class="control-label">Forklift Driver :&nbsp;</label>
+						</td>
+						<td>
+							<select ng-model="editViewDetailVo.driverId" ng-options="d.id as d.nameKey for d in edtiDriverVoList" ng-change="changeEdit(editViewDetailVo)">
+							</select>
+							<!--  <span style="color: red">*</span>-->
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<span ng-show="editViewDetailVo.editdriverId" style="color: red">Please select the Forklift Driver!</span>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<label class="control-label">Leader Shift :&nbsp;</label>
+						</td>
+						<td>
+							<select ng-model="editViewDetailVo.leaderId" ng-options="l.id as l.nameKey for l in edtiLeaderVoList" ng-change="changeEdit(editViewDetailVo)">
+							</select>
+							<!--  <span style="color: red">*</span>-->
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<span ng-show="editViewDetailVo.editleaderId" style="color: red">Please select the Leader Shift!</span>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<label class="control-label">Quantity :&nbsp;</label>
+						</td>
+						<td>
+							<input type="text" name="palletQty" ng-model="editViewDetailVo.palletQty"  placeholder="Must be a number!" ng-change="changeEdit(editViewDetailVo)" float/>
+							<span style="color: red">*</span>
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<span ng-show="edit.palletQty.$error.date" style="color: red">Must be a maximum  14-bit integers, two decimal places positive!</span>
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<span ng-show="editViewDetailVo.editpalletQty" style="color: red">Can not be null!</span>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</form>
+		</div>
+		<div class="modal-footer">
+			<button class="btn btn-primary btn-small ok" ng-click="editDetail(editViewDetailVo)">Save</button>
+			<button class="btn btn-warning btn-small cancel" ng-click="closeEditDlg()">Cancel</button>
+		</div>
+	</div>
+	<!-- 默认修改全部 -->
+	<div modal="defPIDetailDlg" close="closeDefDlg()" options="dlgOpts">
+		<div class="modal-header">
+			<h4>Default Pallet</h4>
+		</div>
+		<div class="modal-body">
+		<form name="def" novalidate class="form-horizontal">
+			<table>
+				<tbody>
+					<tr>
+						<td>
+							<label class="control-label">Production Date :&nbsp;</label>
+						</td>
+						<td>
+							<input type="date" name="stockno" ng-model="defPIDetailVo.productionDate" ng-change="changeDef(defPIDetailVo)"/>
+							<!--  <span style="color: red">*</span>-->
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<span ng-show="defPIDetailVo.defProductionDate" style="color: red">Please select the Production Date!</span>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<label class="control-label">Production Line :&nbsp;</label>
+						</td>
+						<td>
+							<select ng-model="defPIDetailVo.productionLineId" ng-options="a.id as a.nameKey for a in defLineVoList" ng-change="changeDef(defPIDetailVo)">
+								<option value=""></option>
+							</select>
+							<!--  <span style="color: red">*</span>-->
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<span ng-show="defPIDetailVo.defLineId" style="color: red">Please select the Production Line!</span>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<label class="control-label">Batch NO :&nbsp;</label>
+						</td>
+						<td>
+							<input type="text" name="batchNo" ng-model="defPIDetailVo.batchNo" ng-change="changeDef(defPIDetailVo)"/>
+							<!--  <span style="color: red">*</span>-->
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<span ng-show="defPIDetailVo.defBatchNo" style="color: red">Can not be null!</span>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<label class="control-label">Blending Tank :&nbsp;</label>
+						</td>
+						<td>
+							<input type="text" name="batchNo" ng-model="defPIDetailVo.blendingTank" ng-change="changeDef(defPIDetailVo)"/>
+							<!--  <span style="color: red">*</span>-->
+						</td>
+					</tr>
+					<!-- <tr>
+						<td>
+							<label class="control-label">Warehouse :&nbsp;</label>
+						</td>
+						<td>
+							<select ng-model="defPIDetailVo.warehouseId" ng-options="a.id as a.nameKey for a in warehouseVoList">
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<span ng-show="defPIDetailVo.defwarehouseId" style="color: red">Please select the Warehouse!</span>
+						</td>
+					</tr>-->
+					<tr>
+						<td>
+							<label class="control-label">Area :&nbsp;</label>
+						</td>
+						<td>
+							<select ng-model="defPIDetailVo.areaId" ng-options="a.id as a.nameKey for a in areaVoList" ng-change="changeBinDef(defPIDetailVo)">
+								<option value=""></option>
+							</select>
+							<!--  <span style="color: red">*</span>-->
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<span ng-show="defPIDetailVo.defareaId" style="color: red">Please select the Area!</span>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<label class="control-label">Bin :&nbsp;</label>
+						</td>
+						<td>
+							<select ng-model="defPIDetailVo.binId" ng-options="a.id as a.nameKey for a in binVoList" ng-change="changeDef(defPIDetailVo)">
+								<option value=""></option>
+							</select>
+							<!--  <span style="color: red">*</span>-->
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<span ng-show="defPIDetailVo.defbinId" style="color: red">Please select the Bin!</span>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<label class="control-label">PA Worker :&nbsp;</label>
+						</td>
+						<td>
+							<select ng-model="defPIDetailVo.paworkerId" ng-options="a.id as a.nameKey for a in paworkerVoList" ng-change="changeDef(defPIDetailVo)">
+								<option value=""></option>
+							</select>
+							<!--  <span style="color: red">*</span>-->
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<span ng-show="defPIDetailVo.defpaworkerId" style="color: red">Please select the PA Worker!</span>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<label class="control-label">Forklift Driver :&nbsp;</label>
+						</td>
+						<td>
+							<select ng-model="defPIDetailVo.driverId" ng-options="a.id as a.nameKey for a in driverVoList" ng-change="changeDef(defPIDetailVo)">
+								<option value=""></option>
+							</select>
+							<!--  <span style="color: red">*</span>-->
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<span ng-show="defPIDetailVo.defdriverId" style="color: red">Please select the Forklift Driver!</span>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<label class="control-label">Leader Shift :&nbsp;</label>
+						</td>
+						<td>
+							<select ng-model="defPIDetailVo.leaderId" ng-options="l.id as l.nameKey for l in leaderVoList" ng-change="changeDef(defPIDetailVo)">
+								<option value=""></option>
+							</select>
+							<!--  <span style="color: red">*</span>-->
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<span ng-show="defPIDetailVo.defleaderId" style="color: red">Please select the Leader Shift!</span>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<label class="control-label">Quantity :&nbsp;</label>
+						</td>
+						<td>
+							<input type="text" name="palletQty" ng-model="defPIDetailVo.palletQty"  placeholder="Must be a number!" ng-change="changeDef(defPIDetailVo)" float/>
+							<span style="color: red">*</span>
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<span ng-show="def.palletQty.$error.date" style="color: red">Must be a maximum  14-bit integers, two decimal places positive!</span>
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td>
+							<span ng-show="defPIDetailVo.defpalletQty" style="color: red">Can not be null!</span>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</form>
+		</div>
+		<div class="modal-footer">
+			<button class="btn btn-primary btn-small ok" type="submit" ng-click="defDetail(defPIDetailVo)">Save</button>
+			<button class="btn btn-warning btn-small cancel" ng-click="closeDefDlg()">Cancel</button>
+		</div>
+	</div>
+	<!-- 删除detail Dialog -->
+	<div modal="deletePIDetailDlg" close="closeDeleteDlg()" options="dlgOpts">
+		<div class="modal-header">
+			<h4>Delete Pallet</h4>
+		</div>
+		<div class="modal-body">
+		<form novalidate class="form-horizontal">
+			<table>
+				<tbody>
+					Are you sure to delete ?
+				</tbody>
+			</table>
+		</form>
+		</div>
+		<div class="modal-footer">
+			<button class="btn btn-primary btn-small ok" ng-click="deleteDetail(deleteDetailVo)">YES</button>
+			<button class="btn btn-warning btn-small cancel" ng-click="closeDeletDlg()">NO</button>
+		</div>
+	</div>
+	<!-- 批量删除detail Dialog -->
+	<div modal="deleteAllDetailDlg" close="closeDeleteAllDlg()" options="dlgOpts">
+		<div class="modal-header">
+			<h4>Delete Pallet</h4>
+		</div>
+		<div class="modal-body">
+		<form novalidate class="form-horizontal">
+			<table>
+				<tbody>
+					Are you sure to delete ?
+				</tbody>
+			</table>
+		</form>
+		</div>
+		<div class="modal-footer">
+			<button class="btn btn-primary btn-small ok" ng-click="deleteAll()">YES</button>
+			<button class="btn btn-warning btn-small cancel" ng-click="closeDeleteAllDlg()">NO</button>
+		</div>
+	</div>
+	<!-- Execution Dialog -->
+	<div modal="executeDlg" close="closeExecuteDlg()" options="dlgOpts">
+		<div class="modal-header">
+			<h4>Execution Information</h4>
+		</div>
+		<div class="modal-body">
+		<form novalidate name="execute">
+			<table>
+				<tbody>
+					<tr>
+						<td align="right">Shift :&nbsp;</td>
+						<td>
+							<input type="text" class="input-medium" name="shift" ng-model="executeVo.shift"/>
+						</td>
+						<td></td>
+						<td></td>
+					</tr>
+					<tr>
+						<td align="right">Remarks :&nbsp;</td>
+						<td colspan="3">
+							<textarea type="text" ng-model="executeVo.remarks" name="remarks" style="width: 429px;"></textarea>
+						</td>
+					</tr>
+					<tr>
+						<td align="right">Reason :&nbsp;</td>
+						<td colspan="3">
+							<textarea type="text" ng-model="executeVo.reason" name="reason" style="width: 429px;"></textarea>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</form>
+		</div>
+		<div class="modal-footer">
+			<button class="btn btn-primary btn-small ok" ng-click="doExecute(executeVo)">Save</button>
+			<button class="btn btn-warning btn-small cancel" ng-click="closeExecuteDlg()">Cancel</button>
+		</div>
+	</div>
+</div>
+<style type="text/css">
+.red{background: red;}
+.column0 {text-align: right;width: 125px;}
+.column1 {text-align: right;width: 165px;}
+.column2 {text-align: left;width: 9px;}
+.selected{color:red;background:GreenYellow;}
+.errorNum{color:red;}
+.blueNum{color:blue;}
+</style>
+}{
+	<script src="@routes.Assets.at("/public", "javascripts/selectDlg.js")" type="text/javascript"></script>
+	<script src="@routes.Assets.at("/public", "javascripts/printStyles/whshipped.js")" type="text/javascript"></script>
+	<!-- <script src="/assets/javascripts/json2.js"></script> -->
+	<script type="text/javascript" charset="utf-8">
+		//在页面中初始化LODOP
+		LODOP=getLodop(document.getElementById('LODOP_OB'),document.getElementById('LODOP_EM'));
+		//var CloudWMS = angular.module('CloudWMS', ['ui','ui.bootstrap']);
+		var FLOAT_REGEXP =/^([0-9]{1,14}|[0-9]{1,14}\.[0-9]{0,2})$/;//整数位14位，小数位两位
+	    var INT_REGEXP=/^[1-9]{1}[0-9]{0,13}$/;//小于等于14位的正整数
+	   	var ISNULL_REGEXP =/^$/;
+	   	var NULL_REGEXP=/^\w+$/;
+	    CloudWMS.directive('float', function() {
+	          return {
+	            require: 'ngModel',
+	            link: function(scope, elm, attrs, ctrl) {
+	              ctrl.$parsers.unshift(function(viewValue) {
+	                if (FLOAT_REGEXP.test(viewValue)||viewValue=='') {
+	                  ctrl.$setValidity('date', true);
+	                  return viewValue;
+	                } else {
+	                  ctrl.$setValidity('date', false);
+	                  return viewValue;
+	                }
+	              });
+	            }
+	          };
+	    }).directive('isnull', function() {
+	          return {
+	            require: 'ngModel',
+	            link: function(scope, elm, attrs, ctrl) {
+	              ctrl.$parsers.unshift(function(viewValue) {
+	                if (ISNULL_REGEXP.test(viewValue)) {
+	                  ctrl.$setValidity('date', true);
+	                  return viewValue;
+	                } else {
+	                  ctrl.$setValidity('date', false);
+	                  return viewValue;
+	                }
+	              });
+	            }
+	          };
+	    }).directive('int', function() {
+	          return {
+	            require: 'ngModel',
+	            link: function(scope, elm, attrs, ctrl) {
+	              ctrl.$parsers.unshift(function(viewValue) {
+	                if (INT_REGEXP.test(viewValue)||viewValue=='') {
+	                  ctrl.$setValidity('date', true);
+	                  return viewValue;
+	                } else {
+	                  ctrl.$setValidity('date', false);
+	                  return viewValue;
+	                }
+	              });
+	            }
+	          };
+	    }).directive('null', function() {
+	          return {
+	            require: 'ngModel',
+	            link: function(scope, elm, attrs, ctrl) {
+	              ctrl.$parsers.unshift(function(viewValue) {
+	                if (NULL_REGEXP.test(viewValue)) {
+	                  ctrl.$setValidity('date', true);
+	                  return viewValue;
+	                } else {
+	                  ctrl.$setValidity('date', false);
+	                  return viewValue;
+	                }
+	              });
+	            }
+	          };
+	    }).directive('floatnull', function() {
+	        return {
+	            require: 'ngModel',
+	            link: function(scope, elm, attrs, ctrl) {
+	              ctrl.$parsers.unshift(function(viewValue) {
+	                if (!NULL_REGEXP.test(viewValue)) {
+	                  ctrl.$setValidity('datef', true);
+	                  return viewValue;
+	                } else {
+	                  ctrl.$setValidity('datef', false);
+	                  return viewValue;
+	                }
+	              });
+	            }
+	          };
+	      });
+		CloudWMS.controller('ReceiveFromReturn', function($scope, $http, $timeout, $filter){
+			$scope.piDetailVoList;//PlanItemDetail的页面展示List
+			$scope.binList;//头查询初始化的binList
+			$scope.currentPlanItemId;//得到当前的PlanItem的id
+			$scope.splitPlanDlg = false;//split页面默认不显示
+			$scope.addPIDetailVo;//承接detail添加页面数据的VO
+			$scope.editDetailCopyVo;//编辑detail页面暂存数据
+			$scope.editPIDetailVo;//编辑detail页面暂存数据
+			$scope.deleteDetailVo;//删除的那条detail
+			$scope.checkSelect = false;//是否选中全部
+			$scope.selectDlg = false;//select页面默认隐藏
+			$scope.addPIDetailDlg = false;//默认添加框为隐藏
+			$scope.editPIDetailDlg = false;//编辑框默认隐藏
+			$scope.defPIDetailDlg = false;//全部修改的框默认隐藏
+			$scope.deletePIDetailDlg = false;//删除框默认隐藏
+			$scope.deleteAllDetailDlg = false;//批量删除框默认隐藏
+			$scope.executeDlg = false;//execution弹出框默认不展示
+			$scope.ifAddShow = "none";//不显示添加按钮
+			$scope.selecedIndex = -1;//初始选中行
+			$scope.currentAllSKU;//当前PI的SKU
+			$scope.currentUsedSKU;//已经处理的SKU
+			$scope.currentAllQty;//当前PI的SKU---split
+			$scope.currentUsedQty = 0;//已经处理的SKU---split
+			$scope.currentSpiltPlanVo;//splice功能
+			$scope.classType='';
+			$scope.classTypeTwo='';//split页面
+			$scope.currentIndex;
+			$scope.splitIndex;//split页面
+			$scope.assignedSku;//add页面
+			$scope.currentQuantityPallet;//add页面
+			$scope.palletCount;//add页面
+			$scope.nullCount = false;//错误提示
+			$scope.assignedPalletSku;//add页面
+			//++++++++++++++++++++++++++++++++++++
+			$scope.alerts = [];
+			var addAlert = function(types,msgs) {
+		        $scope.alerts.push({type:types,msg: msgs});
+		        $timeout($scope.clearAlerts, 5000);
+		    };
+	        $scope.closeAlert = function(index) {
+	          $scope.alerts.splice(index, 1);
+	        };
+	        $scope.clearAlerts = function() {
+	          $scope.alerts = [];
+	        };
+	        $timeout($scope.clearAlerts, 5000);
+	        $scope.dlgOpts = {
+	   		    backdropFade: true,
+	   		    dialogFade:false,
+	   		    backdropClick:false
+	   		   // dialogClass: [width:'1200px'];
+    		};
+	        $scope.NullTest = function(value){
+			    if (value.length > 0 && value.replace(/(^\s*)|(\s*$)/g,"").length != 0) {
+			    	return false;
+			    }else{
+			    	return true;
+			    }
+			};
+			//初始化页面
+			$scope.pISearchVo = {piNo:"",sgPiNo:"",piStatus:"",referenceNo:""};
+			$http({method: 'GET', url: '/inbound/receiveFromReturn/list'}).success(
+				function(data, status, headers, config){
+					if(data.Type == "success"){
+						$scope.planItemVoList = data.Data;
+					} else {
+						alert(data.Message);
+					}
+			}).error(
+				function(data, status, headers, config){
+					alert(status);
+			});
+			//初始化查询pi status
+			 $http.get('/inbound/receiveFromReturn/listPiStatus').success(
+               function(data, status, headers, config) {
+               	if(data.Type == "success"){
+             	  $scope.orderStatuses = data.Data;
+               	} else {
+               		alert(data.Message);
+               	}
+             }).error(
+               function(data, status, headers, config) {
+            	  alert(status);
+             });
+			//添加查询bin的初始化
+			$http.get('/inbound/receiveFromReturn/initBin').success(
+				function(data, status, headers, config){
+					if(data.Type == "success"){
+						$scope.binList = data.Data;
+					} else {
+						alert(data.Message);
+					}
+			}).error(
+				function(data, status, headers, config){
+					alert(status);
+			});
+			//选中后的样式选择
+			$scope.getClass = function(ind){
+				if(ind === $scope.selecedIndex){
+					return "selected";
+				} else {
+					return "";
+				}
+			};
+			//计算palletQty总数
+			$scope.sumSKU = function(piDetailVoList){
+				var amount = 0;
+				for(i = 0, len = piDetailVoList.length; i < len; i++){
+					 amount = Number(amount) + Number(piDetailVoList[i].palletQty);
+				}
+				$scope.currentUsedSKU = amount;
+				if($scope.currentUsedSKU > $scope.currentAllSKU){
+					$scope.classType='errorNum';
+				} else {
+					$scope.classType='';
+				}
+			};
+			//计算plan received qty
+			$scope.sumQyt = function(piDetailVoList, planItemVo){
+				var amount = 0;
+				for(i = 0, len = piDetailVoList.length; i < len; i++){
+					if(piDetailVoList[i].driverId != null && piDetailVoList[i].driverId != '' && piDetailVoList[i].paworkerId != null &&
+						piDetailVoList[i].paworkerId != '' && piDetailVoList[i].leaderId != null && piDetailVoList[i].leaderId != ''){
+						amount = Number(amount) + Number(piDetailVoList[i].palletQty);
+					}
+				}
+				amount = Number(amount)*Number(planItemVo.conversion);
+				return amount;
+			};
+			//计算Pl received qyt
+			$scope.sumPIQty = function(currentPlanItem){
+				$http.post('/inbound/receiveFromReturn/sumPIQty', JSON.stringify(currentPlanItem)).success(
+					function(data, status, headers, config){
+						if(data.Type == 'success'){
+							currentPlanItem.piReceivedQty = Number(data.Data);
+							if(Number(currentPlanItem.piReceivedQty) > Number(currentPlanItem.piqyt)){
+								currentPlanItem.piStyleClass = "errorNum";
+							} else if(Number(currentPlanItem.piReceivedQty) == Number(currentPlanItem.piqyt)){
+								currentPlanItem.piStyleClass = '';
+							} else {
+								currentPlanItem.piStyleClass = "blueNum";
+							}
+							for(var i = 0, len = $scope.planItemVoList.length; i<len;i++){
+								if($scope.planItemVoList[i].piNo == currentPlanItem.piNo){
+									$scope.planItemVoList[i].piReceivedQty = currentPlanItem.piReceivedQty;
+									$scope.planItemVoList[i].piqyt = currentPlanItem.piqyt;
+									$scope.planItemVoList[i].piStyleClass = currentPlanItem.piStyleClass;
+									$scope.planItemVoList.splice(i, 1, $scope.planItemVoList[i]);
+								}
+							}
+							$scope.planItemVoList.splice($scope.selecedIndex, 1, currentPlanItem);
+						} else {
+							alert(data.Message);
+						}
+				}).error(
+					function(data, status, headers, config){
+						alert(status);
+				});
+			};
+			//头查询
+			$scope.searchPiList = function(pISearchVo){
+				document.getElementById("submitDiv").style.display = "inline";
+				$scope.selecedIndex = -1;//去掉高亮显示
+				$scope.ifdate = true;
+				if(pISearchVo.fromDate == ''){
+					pISearchVo.fromDate = null;
+				}
+				if(pISearchVo.toDate == ''){
+					pISearchVo.toDate = null;
+				}
+				if($scope.ifdate){
+					$http.post('/inbound/receiveFromReturn/searchPiList', JSON.stringify(pISearchVo)).success(
+						function(data, status, headers, config){
+							if(data.Type == "success"){
+								$scope.planItemVoList = data.Data;
+								$http.get('/inbound/receiveFromReturn/initProductionLine').success(
+									function(data, status, headers, config){
+										if(data.Type == 'success'){
+											$scope.splitLineVoList = data.Data;
+										} else {
+											alert(data.Message);
+										}
+								}).error(
+									function(data, status, headers, config){
+										alert(status);
+								});
+			               	} else {
+								$scope.alerts.push({type : data.Type, msg : data.Message});
+								$timeout($scope.clearAlerts, 3000);
+			               	}
+							$scope.piDetailVoList = null;
+							$scope.ifAddShow = "none";
+							document.getElementById("submitDiv").style.display = "none";
+							$scope.currentAllSKU = null;
+							$scope.currentUsedSKU = null;
+					}).error(
+						function(data, status, headers, config){
+							document.getElementById("submitDiv").style.display = "none";
+					});
+				} else {
+					document.getElementById("submitDiv").style.display = "none";
+				}
+			};
+			//展示split页面
+			$scope.openSplitDlg = function(planItemVo, index){
+				//去掉左侧单选按钮的选中
+				for(var i = 0, len = $scope.planItemVoList.length; i<len; i++){
+					$scope.planItemVoList[i].ifSelect = false;
+				}
+				$scope.splitIndex = index;
+				var s  = JSON.stringify(planItemVo);
+				//放入split
+				$scope.currentAllQty = planItemVo.productionqty;
+				$scope.currentUsedQty = 0;
+				$scope.classTypeTwo = '';
+				$scope.selecedIndex = index;//高亮
+				$scope.currentSpiltPlanVo = planItemVo;
+				$scope.splitPlanItemVo = JSON.parse(s);
+				$scope.piDetailVoList = null;//detail表全部清空
+				$scope.classType = '';//detail页面去掉红色
+				$scope.currentUsedSKU = null;
+				$scope.currentAllSKU = null;
+				$scope.splitPlanDlg = true;
+				$scope.ifAddShow = "none";
+			};
+			//自动换算不同单位
+			$scope.getPiSku = function(planItemVo, type){
+				var doNext = true;
+				$scope.currentUsedQty = 0;
+				$scope.classTypeTwo='';
+				if(type == true){
+					if($scope.split.productionqty.$error.date == false){
+						if(planItemVo.productionqty == null || planItemVo.productionqty == ''){
+							$scope.split.productionqty.$error.datef = true;
+							$scope.splitPlanItemVo.piSKU = '';
+							doNext = false;
+						} else{
+							$scope.split.productionqty.$error.datef = false;
+						}
+					} else if($scope.split.productionqty.$error.date == true){
+						$scope.splitPlanItemVo.piSKU = '';
+						$scope.split.productionqty.$error.datef = false;
+						doNext = false;
+					}
+					if($scope.split.productionqty.$error.date == false && $scope.split.productionqty.$error.datef == false){
+						$scope.split.piSKU.$error.datef = false;
+						$scope.split.piSKU.$error.date = false;
+						doNext = true;
+					}
+				} else {
+					if($scope.split.piSKU.$error.date == false){
+						if(planItemVo.piSKU == null || planItemVo.piSKU == ''){
+							$scope.split.piSKU.$error.datef = true;
+							$scope.splitPlanItemVo.productionqty = '';
+							doNext = false;
+						} else {
+							$scope.split.piSKU.$error.datef = false;
+						}
+					} else if($scope.split.piSKU.$error.date == true){
+						$scope.split.piSKU.$error.datef = false;
+						$scope.splitPlanItemVo.productionqty = '';
+						doNext = false;
+					}
+					if($scope.split.piSKU.$error.date == false && $scope.split.piSKU.$error.datef == false){
+						$scope.split.productionqty.$error.datef = false;
+						$scope.split.productionqty.$error.date = false;
+						doNext = true;
+					}
+				}
+				if($scope.split.piSKU.$error.datef == true || $scope.split.piSKU.$error.date == true || $scope.split.productionqty.$error.datef == true
+						|| $scope.split.productionqty.$error.date == true){
+					doNext = false;
+				}
+				if(doNext){
+					if(type){
+						planItemVo.piSKU = 0;
+					} else{
+						planItemVo.productionqty = 0;
+					}
+					document.getElementById("submitDiv").style.display = "inline";
+					$http.post('/inbound/receiveFromReturn/getPiSku', JSON.stringify(planItemVo)).success(
+						function(data, status, headers, config){
+							if(data.Type == 'success'){
+								if(type){
+									$scope.splitPlanItemVo.piSKU = (Number(planItemVo.productionqty)/Number(data.Data)).toFixed(2);
+									$scope.currentUsedQty = Number(planItemVo.productionqty).toFixed(2);
+								} else {
+									$scope.splitPlanItemVo.productionqty = (Number(planItemVo.piSKU) * Number(data.Data)).toFixed(2);
+									$scope.currentUsedQty = $scope.splitPlanItemVo.productionqty;
+								}
+								if(Number($scope.currentUsedQty) > Number($scope.currentAllQty)){
+									$scope.classTypeTwo='errorNum';
+								} else {
+									$scope.classTypeTwo='';
+								}
+							} else {
+								alert(data.Message);
+							}
+							document.getElementById("submitDiv").style.display = "none";
+					}).error(
+						function(data, status, headers, config){
+							alert(status);
+							document.getElementById("submitDiv").style.display = "none";
+					})
+				}
+			};
+			//执行拆分plan为两条
+			$scope.saveSpiltPlan = function(planItemVo){
+				var doNext = true;
+				if($scope.split.piSKU.$error.datef == true || $scope.split.piSKU.$error.date == true || $scope.split.productionqty.$error.datef == true
+						|| $scope.split.productionqty.$error.date == true){
+					doNext = false;
+				}
+				if(Number($scope.currentUsedQty) <= Number($scope.currentAllQty)){
+					if(doNext){
+						document.getElementById("submitDiv").style.display = "inline";
+						$http.post('/inbound/receiveFromReturn/saveSpiltPlan', JSON.stringify(planItemVo)).success(
+							function(data, status, headers, config){
+								if(data.Type == 'success'){
+									$scope.currentSpiltPlanVo.productionqty = Number($scope.currentSpiltPlanVo.productionqty) - Number(planItemVo.productionqty);
+									$scope.currentSpiltPlanVo.piSKU = Number($scope.currentSpiltPlanVo.piSKU) - Number(planItemVo.piSKU);
+									if(Number($scope.currentSpiltPlanVo.receivedQty) > Number($scope.currentSpiltPlanVo.productionqty)){
+										$scope.currentSpiltPlanVo.styleClass = "errorNum";
+									} else if(Number($scope.currentSpiltPlanVo.receivedQty) == Number($scope.currentSpiltPlanVo.productionqty)){
+										$scope.currentSpiltPlanVo.styleClass = '';
+									} else {
+										$scope.currentSpiltPlanVo.styleClass = "blueNum";
+									}
+									$scope.planItemVoList.splice($scope.splitIndex, 1, $scope.currentSpiltPlanVo);
+									$scope.planItemVoList.splice(Number($scope.splitIndex) + Number(1), 0, data.Data);
+									$scope.splitPlanDlg = false;
+								} else {
+									alert(data.Message);
+								}
+								document.getElementById("submitDiv").style.display = "none";
+						}).error(
+							function(data, status, headers, config){
+								document.getElementById("submitDiv").style.display = "none";
+						});
+					}
+				} else {
+					alert("Plan Prod Qty is bigger than the Production Quantity!");
+				}
+			};
+			//关闭split页面
+			$scope.closeSplitDlg = function(){
+				$scope.splitPlanDlg = false;
+			};
+			//detail查询
+			$scope.setPlanItemDetails = function(planItemVo, index){
+				document.getElementById("submitDiv").style.display = "inline";
+				$scope.checkSelect = false;//是否选中全部
+				$scope.currentAllSKU = Number(planItemVo.piSKU).toFixed(2);
+				if($scope.selecedIndex < 0 ){
+					$scope.selecedIndex = index;
+				} else {
+					if(index == $scope.selecedIndex){
+						$scope.selecedIndex = index;
+					} else {
+						$scope.selecedIndex = index;
+					}
+				}
+				//若planItem已经执行，则不显示add、default、execution按钮
+				var s = JSON.stringify(planItemVo);
+		    	planVo = JSON.parse(s);
+		    	if(planVo.ifExecution){
+		    		$scope.ifAddShow = "none";
+		    	}else{
+		    		$scope.ifAddShow = "inline";
+		    	}
+				$scope.currentPlanItemId = planItemVo.planItemId;
+				$scope.currentPlanItem = planItemVo;//为后面的default而用
+				$scope.currentPISKU = planItemVo.piSKU;
+				$http.post('/inbound/receiveFromReturn/get', JSON.stringify(planItemVo)).success(
+					function(data, status, headers, config){
+						if(data.Type == 'success'){
+							$scope.piDetailVoList = null;
+							$scope.piDetailVoList = data.Data;
+							$scope.sumSKU($scope.piDetailVoList);
+							for(var i = 0, len = $scope.piDetailVoList.length; i<len;i++){
+								$scope.currentWarehouseId = $scope.piDetailVoList[i].warehouseId;
+								break;
+							}
+						} else {
+							alert(data.Message);
+						}
+						document.getElementById("submitDiv").style.display = "none";
+				}).error(
+					function(data, status, headers, config){
+						document.getElementById("submitDiv").style.display = "none";
+				});
+			};
+			//打开select页面
+			$scope.openSelectDlg = function(){
+				$scope.selectVo = {from : null, to : null, number : null, palletSku : null};
+				$scope.checkSelect = false;
+				$scope.selectDlg = true;
+			};
+			//自动验证from和to信息的正确性
+			$scope.selectChange = function(selectVo, type){
+				calculateNo(selectVo, $scope.piDetailVoList);
+			};
+			//执行选择
+			$scope.doSelect = function(selectVo){
+				baseFromToSelectQty(selectVo, $scope.piDetailVoList);
+				$scope.selectDlg = false;
+			};
+			//关闭select页面
+			$scope.closeSelectDlg = function(){
+				$scope.selectDlg = false;
+			};
+			//选择全部detail信息
+			$scope.selectAll = function(checkSelect){
+				for(var i = 0, len = $scope.piDetailVoList.length; i<len;i++){
+					if($scope.piDetailVoList[i].executionOrNo == 'Y'){
+						$scope.piDetailVoList[i].ifSelect = false;
+					} else {
+						$scope.piDetailVoList[i].ifSelect = checkSelect;
+					}
+				}
+			};
+			//当全选后，去掉某条不选，则全选按钮设为false
+			$scope.changeSelect = function(){
+				var s = true;
+				var nou = true;
+				for(var i = 0, len = $scope.piDetailVoList.length; i < len; i++){
+					if(typeof $scope.piDetailVoList[i].ifSelect == 'undefined'){
+						nou = false;
+					}
+					if($scope.piDetailVoList[i].ifSelect == false && $scope.piDetailVoList[i].executionOrNo == 'N'){
+						s = false;
+						$scope.checkSelect = false;
+						continue;
+					}
+				}
+				if(nou && s){
+					$scope.checkSelect = true;
+				}
+			};
+			//打开添加框
+			$scope.openAddDlg = function(){
+				if($scope.piDetailVoList.length < 1){
+					$http.post('/inbound/receiveFromReturn/detail/defaultAddDetail', JSON.stringify($scope.currentPlanItem)).success(
+						function(data, status, headers, config){
+							if(data.Type == 'success'){
+								$scope.piDetailVoList = data.Data;
+								$scope.sumSKU($scope.piDetailVoList);
+								$scope.checkSelect = false;
+							} else {
+								alert(data.Message);
+							}
+							document.getElementById("submitDiv").style.display = "none";
+					}).error(
+						function(data, status, headers, config){
+							$scope.checkSelect = false;
+							document.getElementById("submitDiv").style.display = "none";
+					});
+				} else {
+					var amount = 0;
+					for(i = 0, len = $scope.piDetailVoList.length; i < len; i++){
+						 amount = Number(amount) + Number($scope.piDetailVoList[i].palletQty);
+					}
+					$scope.assignedSku = amount.toFixed(2);
+					$scope.currentQuantityPallet = $scope.currentPlanItem.qtyPerPallet.toFixed(2);
+					var count = Math.ceil((Number($scope.currentAllSKU) - Number($scope.assignedSku))/Number($scope.currentQuantityPallet));
+					if(count <= 0){
+						$scope.palletCount = null;
+					} else {
+						$scope.palletCount = Number(count);
+					}
+					$scope.assignedPalletSku = (Number(amount) + Number($scope.currentQuantityPallet ) * Number($scope.palletCount)).toFixed(2);
+					$scope.nullCount = false
+					$scope.addPIDetailDlg = true;
+				}
+			};
+			//assigned Pallet SKU随动
+			$scope.changePalletSKU = function(palletCount){
+				var amount = 0;
+				if(palletCount != null){
+					$scope.nullCount = false;
+				}
+				if($scope.add.palletCount.$error.date != true && $scope.nullCount != true){
+					if(typeof $scope.add.palletCount.$error.date == 'undefined'){
+						$scope.nullCount = true;
+					} else {
+						amount = Number($scope.assignedSku) + Number($scope.currentQuantityPallet) * Number(palletCount);
+						$scope.assignedPalletSku = Number(amount).toFixed(2);
+					}
+				}
+			};
+			//执行添加
+			$scope.addDetail = function(){
+				if($scope.add.palletCount.$error.date != true && $scope.nullCount != true){
+					if(typeof $scope.add.palletCount.$error.date == 'undefined' && $scope.palletCount == null){
+						$scope.nullCount = true;
+					} else {
+						document.getElementById("submitDiv").style.display = "inline";
+						$scope.currentPlanItem.palletCount = $scope.palletCount;
+						$http.post('/inbound/receiveFromReturn/detail/add', JSON.stringify($scope.currentPlanItem)).success(
+							function(data, status, headers, config){
+								if(data.Type == 'success'){
+									$scope.piDetailVoList = data.Data;
+									$scope.sumSKU($scope.piDetailVoList);
+									$scope.addPIDetailDlg = false;
+								} else {
+									alert(data.Message);
+								}
+								document.getElementById("submitDiv").style.display = "none";
+						}).error(
+							function(data, status, headers, config){
+								$scope.addPIDetailDlg = false;
+								document.getElementById("submitDiv").style.display = "none";
+						});
+					}
+				}
+			};
+			//关闭添加框
+			$scope.closeAddDlg = function(){
+				$scope.nullCount = false;
+				$scope.addPIDetailDlg = false;
+			};
+			//打开编辑框
+			$scope.openEditDlg = function(planItemDetailVo, ifExecution, index){
+				//执行添加时去掉所有选择框中的选择项
+				$scope.checkSelect = false;
+				for(var i = 0, len = $scope.piDetailVoList.length; i<len;i++){
+					$scope.piDetailVoList[i].ifSelect = false;
+				}
+				if(!ifExecution){
+					$scope.currentIndex = index;
+					$scope.editDetailCopyVo = planItemDetailVo;
+					var s = JSON.stringify(planItemDetailVo);
+			    	editPIDetailVo = JSON.parse(s);
+		    		//将页面值放到编辑框中
+					$scope.editViewDetailVo = editPIDetailVo;
+		    		//编辑页面提示信息默认不显示
+					$scope.editViewDetailVo.productionDate=$filter('date')($scope.editViewDetailVo.productionDate, 'yyyy-MM-dd');
+					$scope.editViewDetailVo.editProductionDate = false;
+		    		$scope.editViewDetailVo.editLineId = false;
+		    		$scope.editViewDetailVo.editBatchNo = false;
+		    		$scope.editViewDetailVo.editwarehouseId = false;
+		    		$scope.editViewDetailVo.editareaId = false;
+		    		$scope.editViewDetailVo.editbinId = false;
+		    		$scope.editViewDetailVo.editpaworkerId = false;
+		    		$scope.editViewDetailVo.editdriverId = false;
+		    		$scope.editViewDetailVo.editpalletQty = false;
+		    		$scope.editViewDetailVo.editstockno = false;
+		    		//获得warehouse
+					$http.get('/inbound/receiveFromReturn/initWare').success(
+						function(data, status, headers, config){
+							if(data.Type == 'success'){
+								$scope.editWarehouseVoList = data.Data;
+						    	//清空编辑页面binList的值，好方便选area后再去得到
+					    		delete $scope.editBinVoList;
+								//获得编辑页面area集合
+								$http.post('/inbound/receiveFromReturn/initArea', JSON.stringify(editPIDetailVo)).success(
+									function(data, status, headers, config){
+										if(data.Type == 'success'){
+											$scope.editAreaVoList = data.Data;
+											//获得对应的productionLine的集合
+											$http.get('/inbound/receiveFromReturn/initProductionLine').success(
+												function(data, status, headers, config){
+													if(data.Type == 'success'){
+														$scope.editLineVoList = data.Data;
+													} else {
+														alert(data.Message);
+													}
+											}).error(
+												function(data, status, headers, config){
+													alert(status);
+											});
+											//获得area对应的bin的集合
+											if (editPIDetailVo.areaId != null && editPIDetailVo.areaId != ""){
+												$http.post('/inbound/receiveFromReturn/changeBin', JSON.stringify(editPIDetailVo)).success(
+													function(data, status, headers, config){
+														if(data.Type == 'success'){
+															$scope.editBinVoList = data.Data;
+														} else {
+															alert(data.Message);
+														}
+												}).error(
+													function(data, status, headers, config){
+														alert(status);
+												});
+											}
+											//获得paworker
+											$http.get('/inbound/receiveFromReturn/initPAworker').success(
+												function(data, status, headers, config){
+													if(data.Type == 'success'){
+														$scope.editPaWorkerVoList = data.Data;
+													} else {
+														alert(data.Message);
+													}
+											}).error(
+												function(data, status, headers, config){
+													alert(status);
+											}); 
+											//获得driver
+											$http.get('/inbound/receiveFromReturn/initDriver').success(
+												function(data, status, headers, config){
+													if(data.Type == 'success'){
+														$scope.edtiDriverVoList = data.Data;
+													} else {
+														alert(data.Message);
+													}
+											}).error(
+												function(data, status, headers, config){
+													alert(status);
+											});
+											//获得leader
+											$http.get('/inbound/receiveFromReturn/initLeader').success(
+												function(data, status, headers, config){
+													if(data.Type == 'success'){
+														$scope.edtiLeaderVoList = data.Data;
+													} else {
+														alert(data.Message);
+													}
+											}).error(
+												function(data, status, headers, config){
+													alert(status);
+											});
+											$scope.editPIDetailDlg = true;
+										} else {
+											alert(data.Message);
+										}
+								}).error(
+									function(data, status, headers, config){
+										alert(status);
+								});
+							} else {
+								alert(data.Message);
+							}
+					}).error(
+							function(data, status, headers, config){
+								alert(status);
+					});
+				}
+			};
+			//动态展示编辑bin
+			$scope.changeBinEdit = function(editViewDetailVo){
+				if(editViewDetailVo.areaId != null){
+					document.getElementById("submitDiv").style.display = "inline";
+					editViewDetailVo.editareaId = false;
+					$http.post('/inbound/receiveFromReturn/changeBin', JSON.stringify(editViewDetailVo)).success(
+						function(data, status, headers, config){
+							if(data.Type == 'success'){
+								$scope.editBinVoList = data.Data;
+							} else {
+								alert(data.Message);
+							}
+							document.getElementById("submitDiv").style.display = "none";
+					}).error(
+						function(data, status, headers, config){
+							document.getElementById("submitDiv").style.display = "none";
+					});
+				}
+			};
+			//动态展示编辑错误提示信息
+			$scope.changeEdit = function(editViewDetailVo){
+				/* if(editViewDetailVo.batchNo != null && editViewDetailVo.batchNo != ""){
+					var s = $scope.NullTest(editViewDetailVo.batchNo);
+					editViewDetailVo.editBatchNo = s ;
+				}
+				if(editViewDetailVo.productionDate != null && editViewDetailVo.productionDate != ''){
+					editViewDetailVo.editProductionDate = false;
+				}
+				if(editViewDetailVo.binId != null){
+					editViewDetailVo.editbinId = false;
+				}
+				if(editViewDetailVo.paworkerId != null){
+					editViewDetailVo.editpaworkerId = false;
+				}
+				if(editViewDetailVo.driverId != null){
+					editViewDetailVo.editdriverId = false;
+				}
+				if(editViewDetailVo.leaderId != null){
+					editViewDetailVo.editleaderId = false;
+				} */
+				if(editViewDetailVo.palletQty != null){
+					editViewDetailVo.editpalletQty = false;
+				}
+				if(editViewDetailVo.palletQty == ''){
+					editViewDetailVo.editpalletQty = true;
+				}
+				if(editViewDetailVo.palletQty > 0){
+					$scope.edit.palletQty.$error.date = false
+				}
+				if(editViewDetailVo.stockno != null){
+					editViewDetailVo.editstockno = false;
+				}
+				if(editViewDetailVo.stockno == ''){
+					editViewDetailVo.editstockno = true;
+				}
+			};
+			//保存修改后的detail(保存数据库)
+			$scope.editDetail = function(editViewDetailVo){
+				var vilate = $scope.edit.palletQty.$error.date;
+				var valate = $scope.edit.stockno.$error.date;
+				var doNext = true;
+				var ifture = true;
+				if(vilate){
+					$scope.edit.palletQty.$error.date = true;
+					doNext = false;
+				}
+				if(valate){
+					$scope.edit.stock.$error.date = true;
+					doNext = false;
+				}
+				if(doNext){
+					var s = JSON.stringify(editViewDetailVo);
+					PIDetailVo = JSON.parse(s);
+					/* if(editViewDetailVo.productionDate == null || editViewDetailVo.productionDate == ''){
+						ifture = false;
+						editViewDetailVo.editProductionDate = true;
+					}
+					var s = $scope.NullTest(editViewDetailVo.batchNo);
+					if(s == true){
+						ifture = false;
+						editViewDetailVo.editBatchNo = true ;
+					}
+					if(editViewDetailVo.warehouseId == null){
+						ifture = false;
+						editViewDetailVo.editwarehouseId = true;
+					}
+					if(editViewDetailVo.areaId == null){
+						ifture = false;
+						editViewDetailVo.editareaId = true;
+					}
+					if(editViewDetailVo.binId == null){
+						ifture = false;
+						editViewDetailVo.editbinId = true;
+					}
+					if(editViewDetailVo.paworkerId == null){
+						ifture = false;
+						editViewDetailVo.editpaworkerId = true;
+					}
+					if(editViewDetailVo.driverId == null){
+						ifture = false;
+						editViewDetailVo.editdriverId = true;
+					}
+					if(editViewDetailVo.leaderId == null){
+						ifture = false;
+						editViewDetailVo.editleaderId = true;
+					} */
+					if(editViewDetailVo.palletQty == null){
+						ifture = false;
+						editViewDetailVo.editpalletQty = true;
+					}
+					if(editViewDetailVo.palletQty <= 0){
+						ifture = false;
+						$scope.edit.palletQty.$error.date = true;
+					}
+					if(editViewDetailVo.stockno == null){
+						ifture = false;
+						editViewDetailVo.editstockno = true;
+					}
+					if(editViewDetailVo.stockno <= 0){
+						ifture = false;
+						$scope.edit.stockno.$error.date = true;
+					}
+					if(ifture){
+						for(var i = 0, len = $scope.editLineVoList.length; i<len; i++){
+							if($scope.editLineVoList[i].id == editViewDetailVo.productionLineId){
+								editViewDetailVo.productionLine = $scope.editLineVoList[i].nameKey;
+							}
+						}
+						/* for(var i = 0, len = $scope.editWarehouseVoList.length; i<len; i++){
+							if($scope.editWarehouseVoList[i].id == editViewDetailVo.warehouseId){
+								editViewDetailVo.warehouse = $scope.editWarehouseVoList[i].nameKey;
+							}
+						} */
+						if(editViewDetailVo.areaId != null){
+							for(var i = 0, len = $scope.editAreaVoList.length; i<len; i++){
+								if($scope.editAreaVoList[i].id == editViewDetailVo.areaId){
+									editViewDetailVo.area = $scope.editAreaVoList[i].nameKey;
+								}
+							}
+						}
+						if(editViewDetailVo.binId != null){
+							for(var i = 0, len = $scope.editBinVoList.length; i<len; i++){
+								if($scope.editBinVoList[i].id == editViewDetailVo.binId){
+									editViewDetailVo.bin = $scope.editBinVoList[i].nameKey;
+								}
+							}
+						}
+						if(editViewDetailVo.paworkerId != null){
+							for(var i = 0, len = $scope.editPaWorkerVoList.length; i<len; i++){
+								if($scope.editPaWorkerVoList[i].id == editViewDetailVo.paworkerId){
+									editViewDetailVo.paworker = $scope.editPaWorkerVoList[i].nameKey;
+								}
+							}
+						}
+						if(editViewDetailVo.driverId != null){
+							for(var i = 0, len = $scope.edtiDriverVoList.length; i<len; i++){
+								if($scope.edtiDriverVoList[i].id == editViewDetailVo.driverId){
+									editViewDetailVo.driver = $scope.edtiDriverVoList[i].nameKey;
+								}
+							}
+						}
+						if(editViewDetailVo.leaderId != null){
+							for(var i = 0, len = $scope.edtiLeaderVoList.length; i<len; i++){
+								if($scope.edtiLeaderVoList[i].id == editViewDetailVo.leaderId){
+									editViewDetailVo.leader = $scope.edtiLeaderVoList[i].nameKey;
+								}
+							}
+						}
+						//var amount = 0;
+						var sameNo = false;
+						for(var i = 0, len = $scope.piDetailVoList.length; i<len;i++){
+							if(i != $scope.currentIndex){
+								//amount = Number(amount) + Number($scope.piDetailVoList[i].palletQty);
+								if(editPIDetailVo.stockno == $scope.piDetailVoList[i].stockno){
+									sameNo = true;
+									break;
+								}
+							}
+						}
+						if(editViewDetailVo.productionDate == ''){
+							editViewDetailVo.productionDate == null;
+						}
+						if(!sameNo){
+							//var s = Number(amount) + Number(editPIDetailVo.palletQty);
+							var num = $scope.currentIndex;
+							editViewDetailVo.status = "N";
+							editViewDetailVo.executionOrNo ="N";
+							editViewDetailVo.ifExecution = false;
+							editViewDetailVo.ifSelect = false;
+							//var b = false;
+							//if(s > $scope.currentPISKU){
+							//	var b = confirm("Warning : The sum of pallet's quantity(" + s + ") is greater than PI SKU(" + $scope.currentPISKU + "),are you sure to save?");
+							//}
+							//if(s <= $scope.currentPISKU || b){
+							document.getElementById("submitDiv").style.display = "inline";
+							$http.post('/inbound/receiveFromReturn/detail/update', JSON.stringify(editViewDetailVo)).success(
+								function(data, status, headers, config){
+									if(data.Type == 'success'){
+										editViewDetailVo.modifiedat = data.Data.modifiedat;
+										editViewDetailVo.modifiedby = data.Data.modifiedby;
+										$scope.piDetailVoList.splice(num, 1, editViewDetailVo);
+										$scope.editPIDetailDlg = false;
+										$scope.editDetailCopyVo = null;
+										$scope.sumSKU($scope.piDetailVoList);
+										//页面反写PlanItem
+										$scope.currentPlanItem.receivedQty = Number($scope.sumQyt($scope.piDetailVoList, $scope.currentPlanItem));
+										if(Number($scope.currentPlanItem.receivedQty) > Number($scope.currentPlanItem.productionqty)){
+											$scope.currentPlanItem.styleClass = "errorNum";
+										} else if(Number($scope.currentPlanItem.receivedQty) == Number($scope.currentPlanItem.productionqty)){
+											$scope.currentPlanItem.styleClass = '';
+										} else {
+											$scope.currentPlanItem.styleClass = "blueNum";
+										}
+										//页面反写PlanItem的PI status
+										//$scope.sumPIQty($scope.currentPlanItem);
+										$scope.planItemVoList.splice($scope.selecedIndex, 1, $scope.currentPlanItem);
+									} else {
+										alert(data.Message);
+									}
+									document.getElementById("submitDiv").style.display = "none";
+							}).error(
+								function(data, status, headers, config){
+									document.getElementById("submitDiv").style.display = "none";
+									alert(status);
+							});
+							//}
+						} else {
+							alert("The pallet no has exist!");
+						}
+					}
+				}
+			};
+			//打开默认修改框
+			$scope.openDefDlg = function(){
+				var s = false;
+				var b = true;
+				var amount = 0;
+				$scope.currentDetailVoList = [];
+				for(var i = 0, len = $scope.piDetailVoList.length; i<len;i++){
+					if($scope.piDetailVoList[i].ifSelect == true){
+						amount++;
+						$scope.currentDetailVoList.push($scope.piDetailVoList[i]);
+					}
+					if($scope.piDetailVoList[i].status == "Y" && $scope.piDetailVoList[i].planItemDetailId != null
+							&& $scope.piDetailVoList[i].ifSelect == true){
+						s = true;
+						continue;
+					}
+				}
+				if(amount < 1){
+					alert("Please select the data !");
+				} else {
+					if(s){
+						var b = confirm("Warning : The data you have selected contains data to be printed, are you sure to continue?");
+					}
+					if(b){
+						$scope.defPIDetailVo = null;
+						$scope.areaVoList = null;
+						$scope.binVoList = null;
+						//先不显示警告框,但需要先给planItem赋值个id
+						$scope.defPIDetailVo = {defProductionDate:false, defLineId:false, defBatchNo:false, warehouseId:$scope.currentWarehouseId, planItemId:$scope.currentPlanItemId, 
+								defwarehouseId:false, defareaId:false, defbinId:false, defdriverId:false, defpaworkerId:false, defleaderId:false, productionDate:'', batchNo:''};
+						//获得对应的productionLine的集合
+						$http.get('/inbound/receiveFromReturn/initProductionLine').success(
+							function(data, status, headers, config){
+								if(data.Type == 'success'){
+									$scope.defLineVoList = data.Data;
+								} else {
+									alert(data.Message);
+								}
+						}).error(
+							function(data, status, headers, config){
+								alert(status);
+						});
+						//获得warehouse
+						$http.get('/inbound/receiveFromReturn/initWare').success(
+								function(data, status, headers, config){
+									if(data.Type == 'success'){
+										$scope.warehouseVoList = data.Data;
+										if(typeof $scope.currentWarehouseId == 'undefined'){
+											$scope.defPIDetailVo.warehouseId = $scope.warehouseVoList[0].id;
+										}
+										$http.post('/inbound/receiveFromReturn/initArea', JSON.stringify($scope.defPIDetailVo)).success(
+											function(data, status, headers, config){
+												if(data.Type == 'success'){
+													$scope.areaVoList = data.Data;
+												} else {
+													alert(data.Message);
+												}
+										}).error(
+											function(data, status, headers, config){
+												alert(status);
+										});
+									} else {
+										alert(data.Message);
+									}
+						}).error(
+								function(data, status, headers, config){
+									alert(status);
+						});
+						//获得paworker
+						$http.get('/inbound/receiveFromReturn/initPAworker').success(
+								function(data, status, headers, config){
+									if(data.Type == 'success'){
+										$scope.paworkerVoList = data.Data;
+									} else {
+										alert(data.Message);
+									}
+						}).error(
+								function(data, status, headers, config){
+									alert(status);
+						}); 
+						//获得driver
+						$http.get('/inbound/receiveFromReturn/initDriver').success(
+								function(data, status, headers, config){
+									if(data.Type == 'success'){
+										$scope.driverVoList = data.Data;
+									} else {
+										alert(data.Message);
+									}
+						}).error(
+								function(data, status, headers, config){
+									alert(status);
+						});
+						//获得leader
+						$http.get('/inbound/receiveFromReturn/initLeader').success(
+							function(data, status, headers, config){
+								if(data.Type == 'success'){
+									$scope.leaderVoList = data.Data;
+								} else {
+									alert(data.Message);
+								}
+						}).error(
+							function(data, status, headers, config){
+								alert(status);
+						});
+						for(i = 0; i < $scope.currentDetailVoList.length; i++){
+							if($scope.currentDetailVoList[0].productionDate == $scope.currentDetailVoList[i].productionDate){
+								$scope.defPIDetailVo.productionDate = $filter('date')($scope.currentDetailVoList[0].productionDate, 'yyyy-MM-dd');
+							} else {
+								$scope.defPIDetailVo.productionDate = null;
+								break;
+							}
+						}
+						for(i = 0; i < $scope.currentDetailVoList.length; i++){
+							if($scope.currentDetailVoList[0].productionLineId == $scope.currentDetailVoList[i].productionLineId){
+								$scope.defPIDetailVo.productionLineId = $scope.currentDetailVoList[0].productionLineId;
+							} else {
+								$scope.defPIDetailVo.productionLineId = null;
+								break;
+							}
+						}
+						for(i = 0; i < $scope.currentDetailVoList.length; i++){
+							if($scope.currentDetailVoList[0].batchNo == $scope.currentDetailVoList[i].batchNo){
+								$scope.defPIDetailVo.batchNo = $scope.currentDetailVoList[0].batchNo;
+							} else {
+								$scope.defPIDetailVo.batchNo = null;
+								break;
+							}
+						}
+						for(i = 0; i < $scope.currentDetailVoList.length; i++){
+							if($scope.currentDetailVoList[0].blendingTank == $scope.currentDetailVoList[i].blendingTank){
+								$scope.defPIDetailVo.blendingTank = $scope.currentDetailVoList[0].blendingTank;
+							} else {
+								$scope.defPIDetailVo.blendingTank = null;
+								break;
+							}
+						}
+						for(i = 0; i < $scope.currentDetailVoList.length; i++){
+							if($scope.currentDetailVoList[0].areaId == $scope.currentDetailVoList[i].areaId){
+								$scope.defPIDetailVo.areaId = $scope.currentDetailVoList[0].areaId;
+							} else {
+								$scope.defPIDetailVo.areaId = null;
+								break;
+							}
+						}
+						if($scope.defPIDetailVo.areaId != null){
+							$scope.changeBinDef($scope.defPIDetailVo);
+						}
+						for(i = 0; i < $scope.currentDetailVoList.length; i++){
+							if($scope.currentDetailVoList[0].binId == $scope.currentDetailVoList[i].binId){
+								$scope.defPIDetailVo.binId = $scope.currentDetailVoList[0].binId;
+							} else {
+								$scope.defPIDetailVo.binId = null;
+								break;
+							}
+						}
+						for(i = 0; i < $scope.currentDetailVoList.length; i++){
+							if($scope.currentDetailVoList[0].paworkerId == $scope.currentDetailVoList[i].paworkerId){
+								$scope.defPIDetailVo.paworkerId = $scope.currentDetailVoList[0].paworkerId;
+							} else {
+								$scope.defPIDetailVo.paworkerId = null;
+								break;
+							}
+						}
+						for(i = 0; i < $scope.currentDetailVoList.length; i++){
+							if($scope.currentDetailVoList[0].driverId == $scope.currentDetailVoList[i].driverId){
+								$scope.defPIDetailVo.driverId = $scope.currentDetailVoList[0].driverId;
+							} else {
+								$scope.defPIDetailVo.driverId = null;
+								break;
+							}
+						}
+						for(i = 0; i < $scope.currentDetailVoList.length; i++){
+							if($scope.currentDetailVoList[0].leaderId == $scope.currentDetailVoList[i].leaderId){
+								$scope.defPIDetailVo.leaderId = $scope.currentDetailVoList[0].leaderId;
+							} else {
+								$scope.defPIDetailVo.leaderId = null;
+								break;
+							}
+						}
+						for(i = 0; i < $scope.currentDetailVoList.length; i++){
+							if($scope.currentDetailVoList[0].palletQty == $scope.currentDetailVoList[i].palletQty){
+								$scope.defPIDetailVo.palletQty = $scope.currentDetailVoList[0].palletQty;
+							} else {
+								$scope.defPIDetailVo.palletQty = null;
+								break;
+							}
+						}
+						$scope.defPIDetailDlg = true;
+					}
+				}
+			};
+			//动态展示bin
+			$scope.changeBinDef = function(defPIDetailVo){
+				if(defPIDetailVo.areaId != null){
+					document.getElementById("submitDiv").style.display = "inline";
+					defPIDetailVo.defareaId = false;
+					$http.post('/inbound/receiveFromReturn/changeBin', JSON.stringify(defPIDetailVo)).success(
+						function(data, status, headers, config){
+							if(data.Type == 'success'){
+								$scope.binVoList = data.Data;
+							} else {
+								alert(data.Message)
+							}
+							document.getElementById("submitDiv").style.display = "none";
+					}).error(
+						function(data, status, headers, config){
+							document.getElementById("submitDiv").style.display = "none";
+							alert(status);
+					});
+				}else {
+					$scope.binVoList = null;
+				}
+			};
+			//动态展示错误提示信息
+			$scope.changeDef = function(defPIDetailVo){
+				/* if(defPIDetailVo.batchNo != null && defPIDetailVo.batchNo != ""){
+					var s = $scope.NullTest(defPIDetailVo.batchNo);
+					defPIDetailVo.defBatchNo = s ;
+				}
+				if(defPIDetailVo.productionDate != null && defPIDetailVo.productionDate != ''){
+					defPIDetailVo.defProductionDate = false;
+				}
+				if(defPIDetailVo.productionLineId != null){
+					defPIDetailVo.defLineId = false;
+				}
+				if(defPIDetailVo.binId != null){
+					defPIDetailVo.defbinId = false;
+				}
+				if(defPIDetailVo.paworkerId != null){
+					defPIDetailVo.defpaworkerId = false;
+				}
+				if(defPIDetailVo.driverId != null){
+					defPIDetailVo.defdriverId = false;
+				} */
+				if(defPIDetailVo.leaderId != null){
+					defPIDetailVo.defleaderId = false;
+				}
+				if(defPIDetailVo.palletQty != null){
+					defPIDetailVo.defpalletQty = false;
+				}
+				if(defPIDetailVo.palletQty == ''){
+					defPIDetailVo.defpalletQty = true;
+				}
+				if(defPIDetailVo.palletQty > 0){
+					$scope.def.palletQty.$error.date = false
+				}
+			};
+			//关闭默认修改框
+			$scope.closeDefDlg = function(){
+				$scope.defPIDetailDlg = false;
+			};
+			//执行默认修改（全部保存数据库）
+			$scope.defDetail = function(defPIDetailVo){
+				$scope.currentPIDetailList = [];
+				var iftrue = true;
+				var s = JSON.stringify(defPIDetailVo);
+				PIDetailVo = JSON.parse(s);
+				/* if(PIDetailVo.productionDate == ''){
+					iftrue = false;
+					defPIDetailVo.defProductionDate = true;
+				}
+				if(typeof PIDetailVo.batchNo == 'undefined'){
+					iftrue = false;
+					defPIDetailVo.defBatchNo = true ;
+				} else {
+					var s = $scope.NullTest(PIDetailVo.batchNo);
+					if(s == true){
+						iftrue = false;
+						defPIDetailVo.defBatchNo = true ;
+					}
+				}
+				if(PIDetailVo.productionLineId == null){
+					iftrue = false;
+					defPIDetailVo.defLineId = true;
+				}
+				if(PIDetailVo.warehouseId == null){
+					iftrue = false;
+					defPIDetailVo.defwarehouseId = true;
+				}
+				if(PIDetailVo.areaId == null){
+					iftrue = false;
+					defPIDetailVo.defareaId = true;
+				}
+				if(PIDetailVo.binId == null){
+					iftrue = false;
+					defPIDetailVo.defbinId = true;
+				}
+				if(PIDetailVo.paworkerId == null){
+					iftrue = false;
+					defPIDetailVo.defpaworkerId = true;
+				}
+				if(PIDetailVo.driverId == null){
+					iftrue = false;
+					defPIDetailVo.defdriverId = true;
+				}
+				if(PIDetailVo.leaderId == null){
+					iftrue = false;
+					defPIDetailVo.defleaderId = true;
+				} */
+				if(PIDetailVo.palletQty == null){
+					iftrue = false;
+					defPIDetailVo.defpalletQty = true;
+				}
+				if(PIDetailVo.palletQty <= 0){
+					iftrue = false;
+					$scope.def.palletQty.$error.date = true;
+				}
+				if(iftrue){
+					if(defPIDetailVo.productionDate == ''){
+						defPIDetailVo.productionDate = null;
+					}
+					if(defPIDetailVo.productionLineId != null){
+						for(var i = 0, len = $scope.defLineVoList.length; i<len;i++){
+							if($scope.defLineVoList[i].id == defPIDetailVo.productionLineId){
+								defPIDetailVo.productionLine = $scope.defLineVoList[i].nameKey;
+							}
+						}
+					}
+					for(var i = 0, len = $scope.warehouseVoList.length; i<len;i++){
+						if($scope.warehouseVoList[i].id == defPIDetailVo.warehouseId){
+							defPIDetailVo.warehouse = $scope.warehouseVoList[i].nameKey;
+						}
+					}
+					if(defPIDetailVo.areaId != null){
+						for(var i = 0, len = $scope.areaVoList.length; i<len;i++){
+							if($scope.areaVoList[i].id == defPIDetailVo.areaId){
+								defPIDetailVo.area = $scope.areaVoList[i].nameKey;
+							}
+						}
+					}
+					if(defPIDetailVo.binId != null){
+						for(var i = 0, len = $scope.binVoList.length; i<len;i++){
+							if($scope.binVoList[i].id == defPIDetailVo.binId){
+								defPIDetailVo.bin = $scope.binVoList[i].nameKey;
+							}
+						}
+					}
+					if(defPIDetailVo.paworkerId != null){
+						for(var i = 0, len = $scope.paworkerVoList.length; i<len;i++){
+							if($scope.paworkerVoList[i].id == defPIDetailVo.paworkerId){
+								defPIDetailVo.paworker = $scope.paworkerVoList[i].nameKey;
+							}
+						}
+					}
+					if(defPIDetailVo.driverId != null){
+						for(var i = 0, len = $scope.driverVoList.length; i<len;i++){
+							if($scope.driverVoList[i].id == defPIDetailVo.driverId){
+								defPIDetailVo.driver = $scope.driverVoList[i].nameKey;
+							}
+						}
+					}
+					if(defPIDetailVo.leaderId != null){
+						for(var i = 0, len = $scope.leaderVoList.length; i<len;i++){
+							if($scope.leaderVoList[i].id == defPIDetailVo.leaderId){
+								defPIDetailVo.leader = $scope.leaderVoList[i].nameKey;
+							}
+						}
+					}
+					defPIDetailVo.planItemId = $scope.currentPlanItemId;
+					defPIDetailVo.status ="N";
+					defPIDetailVo.executionOrNo ="N";
+					defPIDetailVo.ifExecution = false;
+					defPIDetailVo.ifSelect = false;
+					document.getElementById("submitDiv").style.display = "inline";
+					for(var i = 0, len = $scope.piDetailVoList.length; i < len; i++){
+						if($scope.piDetailVoList[i].ifSelect == true){
+							var s = JSON.stringify(defPIDetailVo);
+							$scope.Copy = JSON.parse(s);
+							$scope.Copy.stockno = $scope.piDetailVoList[i].stockno;
+							$scope.Copy.planItemDetailId = $scope.piDetailVoList[i].planItemDetailId;
+							$scope.currentPIDetailList.push($scope.Copy);
+						}
+					}
+					if($scope.currentPIDetailList.length < 1){
+						document.getElementById("submitDiv").style.display = "none";
+						alert("Sorry : Please re-select the default data to be processed!");
+					} else {
+						$http.post('/inbound/receiveFromReturn/detail/default', JSON.stringify($scope.currentPIDetailList)).success(
+							function(data, status, headers, config){
+								if(data.Type == 'success'){
+									$scope.defPIDetailDlg = false;
+									$scope.checkSelect = false;//消掉全选框上的选择
+									for(var j = 0; j < $scope.piDetailVoList.length; j++){
+										for(var i = 0; i < $scope.currentPIDetailList.length; i++){
+											if($scope.piDetailVoList[j].ifSelect == true && 
+													$scope.piDetailVoList[j].stockno == $scope.currentPIDetailList[i].stockno){
+												$scope.currentPIDetailList[i].modifiedat = data.Data.modifiedat;
+												$scope.currentPIDetailList[i].modifiedby = data.Data.modifiedby;
+												$scope.piDetailVoList.splice(j, 1, $scope.currentPIDetailList[i]);
+											}
+										}
+									}
+									$scope.sumSKU($scope.piDetailVoList);
+									//页面反写PlanItem
+									$scope.currentPlanItem.receivedQty = Number($scope.sumQyt($scope.piDetailVoList, $scope.currentPlanItem));
+									if(Number($scope.currentPlanItem.receivedQty) > Number($scope.currentPlanItem.productionqty)){
+										$scope.currentPlanItem.styleClass = "errorNum";
+									} else if(Number($scope.currentPlanItem.receivedQty) == Number($scope.currentPlanItem.productionqty)){
+										$scope.currentPlanItem.styleClass = '';
+									} else {
+										$scope.currentPlanItem.styleClass = "blueNum";
+									}
+									//页面反写PlanItem的PI status
+									//$scope.sumPIQty($scope.currentPlanItem);
+									$scope.planItemVoList.splice($scope.selecedIndex, 1, $scope.currentPlanItem);
+								} else {
+									alert(data.Message);
+								}
+								document.getElementById("submitDiv").style.display = "none";
+						}).error(
+							function(data, status, headers, config){
+								document.getElementById("submitDiv").style.display = "none";
+								alert(status);
+						});
+					}
+				}
+			};
+			//打开删除框
+			$scope.openDeletDlg = function(planItemDetailVo, ifExecution, index){
+				//执行添加时去掉所有选择框中的选择项
+				$scope.checkSelect = false;
+				$scope.currentIndex = index;
+				for(var i = 0, len = $scope.piDetailVoList.length; i<len;i++){
+					$scope.piDetailVoList[i].ifSelect = false;
+				}
+				if(!ifExecution){
+					$scope.deletePIDetailDlg = true;
+					$scope.deleteDetailVo = planItemDetailVo;
+				}
+			};
+			//删除detail
+			$scope.deleteDetail = function(deleteDetailVo){
+				document.getElementById("submitDiv").style.display = "inline";
+				if(deleteDetailVo.planItemDetailId != null){
+					$http.post('/inbound/receiveFromReturn/detail/delete', JSON.stringify(deleteDetailVo)).success(
+						function(data, status, headers, config){
+							if(data.Type == 'success'){
+								$scope.piDetailVoList.splice($scope.currentIndex, 1);
+								$scope.sumSKU($scope.piDetailVoList);
+								//页面反写PlanItem
+								$scope.currentPlanItem.receivedQty = Number($scope.sumQyt($scope.piDetailVoList, $scope.currentPlanItem));
+								if(Number($scope.currentPlanItem.receivedQty) > Number($scope.currentPlanItem.productionqty)){
+									$scope.currentPlanItem.styleClass = "errorNum";
+								} else if(Number($scope.currentPlanItem.receivedQty) == Number($scope.currentPlanItem.productionqty)){
+									$scope.currentPlanItem.styleClass = '';
+								} else {
+									$scope.currentPlanItem.styleClass = "blueNum";
+								}
+								//页面反写PlanItem的PI status
+								//$scope.sumPIQty($scope.currentPlanItem);
+								$scope.planItemVoList.splice($scope.selecedIndex, 1, $scope.currentPlanItem);
+								$scope.deletePIDetailDlg = false;
+								document.getElementById("submitDiv").style.display = "none";
+							} else {
+								alert(data.Message);
+							}
+					}).error(
+						function(data, status, headers, config){
+							document.getElementById("submitDiv").style.display = "none";
+							alert(status);
+					});
+				} else {
+					$scope.piDetailVoList.splice($scope.currentIndex, 1);
+					$scope.deletePIDetailDlg = false;
+				}
+			};
+			//打开批量删除框
+			$scope.openDeleteAllDlg = function(){
+				var amount = 0;
+				for(var i = 0, len = $scope.piDetailVoList.length; i<len;i++){
+					if($scope.piDetailVoList[i].ifSelect == true){
+						amount++;
+					}
+				}
+				if(amount < 1){
+					alert("Please select the data !");
+				} else {
+					$scope.deleteAllDetailDlg = true;
+				}
+			}
+			//批量删除
+			$scope.deleteAll = function(){
+				document.getElementById("submitDiv").style.display = "inline";
+				$scope.currentDeleteDetailList = [];
+				$scope.currentCopyDetailList = [];//页面复制用
+				for(var i = 0, len = $scope.piDetailVoList.length; i < len; i++){
+					if($scope.piDetailVoList[i].ifSelect == true && $scope.piDetailVoList[i].executionOrNo == 'N' && $scope.piDetailVoList[i].ifExecution == false){
+						$scope.currentDeleteDetailList.push($scope.piDetailVoList[i]);
+					} else {
+						$scope.currentCopyDetailList.push($scope.piDetailVoList[i]);
+					}
+				}
+				if($scope.currentDeleteDetailList.length < 1){
+					document.getElementById("submitDiv").style.display = "none";
+					alert("Sorry : Please re-select the default data to be processed!");
+				} else {
+					$http.post('/inbound/receiveFromReturn/detail/deleteall', JSON.stringify($scope.currentDeleteDetailList)).success(
+						function(data, status, headers, config){
+							if(data.Type == 'success'){
+								$scope.piDetailVoList = $scope.currentCopyDetailList;
+								$scope.checkSelect = false;//消掉全选框上的选择
+								$scope.sumSKU($scope.piDetailVoList);
+								//页面反写PlanItem
+								$scope.currentPlanItem.receivedQty = Number($scope.sumQyt($scope.piDetailVoList, $scope.currentPlanItem));
+								if(Number($scope.currentPlanItem.receivedQty) > Number($scope.currentPlanItem.productionqty)){
+									$scope.currentPlanItem.styleClass = "errorNum";
+								} else if(Number($scope.currentPlanItem.receivedQty) == Number($scope.currentPlanItem.productionqty)){
+									$scope.currentPlanItem.styleClass = '';
+								} else {
+									$scope.currentPlanItem.styleClass = "blueNum";
+								}
+								//页面反写PlanItem的PI status
+								//$scope.sumPIQty($scope.currentPlanItem);
+								$scope.planItemVoList.splice($scope.selecedIndex, 1, $scope.currentPlanItem);
+								$scope.deleteAllDetailDlg = false;
+							} else {
+								alert(data.Message);
+							}
+							document.getElementById("submitDiv").style.display = "none";
+					}).error(
+						function(data, status, headers, config){
+							document.getElementById("submitDiv").style.display = "none";
+							alert(status);
+					});
+				}
+			};
+			//单条打印
+			$scope.printDlg = function(planItemDetailVo, index){
+				//document.getElementById("submitDiv").style.display = "inline";
+				if(planItemDetailVo.area == null||planItemDetailVo.area ==""||planItemDetailVo.bin == null||planItemDetailVo.bin =="" ||
+						planItemDetailVo.driverId == null || planItemDetailVo.driverId == '' || planItemDetailVo.batchNo == null || planItemDetailVo.batchNo == '' 
+						|| planItemDetailVo.productionDate == null || planItemDetailVo.productionDate == '' || planItemDetailVo.paworkerId == null || planItemDetailVo.paworkerId == ''
+						|| planItemDetailVo.leaderId == null || planItemDetailVo.leaderId == ''){
+					//document.getElementById("submitDiv").style.display = "none";
+					alert("ERROR : Please fill all the data!");
+				}else{
+					$scope.currentIndex = index;
+					$http.post('/inbound/receiveFromReturn/detail/print',JSON.stringify(planItemDetailVo)).success(
+						function(data, status, headers, config){
+							if(data.Type == 'success'){
+								//document.getElementById("submitDiv").style.display = "none";
+								try{
+							    	LODOP=getLodop(document.getElementById('LODOP_OB'),document.getElementById('LODOP_EM'));
+							    	printPickData(data.Data);
+									planItemDetailVo.status ="Y";
+									$scope.piDetailVoList.splice($scope.currentIndex, 1, planItemDetailVo);
+							    }catch(err){
+									alert(err);
+								}
+							} else {
+								alert(data.Message);
+							}
+					}).error(
+						function(data, status, headers, config){
+							//document.getElementById("submitDiv").style.display = "none";
+							alert(status);
+					});
+				}
+			};
+			// 选择性打印
+			$scope.printAll = function(){
+				$scope.currentPIDetailList = [];
+				var s = true;
+				//document.getElementById("submitDiv").style.display = "inline";
+				for(var i = 0, len = $scope.piDetailVoList.length; i < len; i++){
+					if($scope.piDetailVoList[i].ifSelect == true){
+						if($scope.piDetailVoList[i].area == null||$scope.piDetailVoList[i].area ==""||$scope.piDetailVoList[i].bin == null||$scope.piDetailVoList[i].bin =="" ||
+								$scope.piDetailVoList[i].driverId == null || $scope.piDetailVoList[i].driverId == '' || $scope.piDetailVoList[i].batchNo == null || $scope.piDetailVoList[i].batchNo == '' 
+									|| $scope.piDetailVoList[i].productionDate == null || $scope.piDetailVoList[i].productionDate == '' || $scope.piDetailVoList[i].paworkerId == null || $scope.piDetailVoList[i].paworkerId == ''
+									|| $scope.piDetailVoList[i].leaderId == null || $scope.piDetailVoList[i].leaderId == ''){
+							s = false;
+							//document.getElementById("submitDiv").style.display = "none";
+							alert("ERROR : Some data is not complete!");
+							break;
+						}
+						if(!s){
+							break;
+						}
+						$scope.currentPIDetailList.push($scope.piDetailVoList[i]);
+					}
+				}
+				if(s){
+					if($scope.currentPIDetailList.length > 0){
+						$http.post('/inbound/receiveFromReturn/detail/printall', JSON.stringify($scope.currentPIDetailList)).success(
+								function(data, status, headers, config){
+									if(data.Type == 'success'){
+										$scope.printVoList = data.Data;
+										for(var i=0,len = $scope.currentPIDetailList.length;i<len;i++){
+											if($scope.piDetailVoList[i].ifSelect == true){
+											}
+										}
+										for(var i = 0; i < $scope.printVoList.length; i++){
+											try{
+										    	LODOP=getLodop(document.getElementById('LODOP_OB'),document.getElementById('LODOP_EM'));
+										    	printPickData($scope.printVoList[i]);
+												$scope.currentPIDetailList[i].status ="Y";
+												$scope.currentPIDetailList[i].ifSelect = false;
+												$scope.piDetailVoList.splice(i , 1, $scope.currentPIDetailList[i]);
+										    }catch(err){
+												alert(err);
+											}
+										}
+										$scope.checkSelect = false;//消掉全选框上的选择
+									} else {
+										alert(data.Message);
+									}
+									//document.getElementById("submitDiv").style.display = "none";
+							}).error(
+								function(data, status, headers, config){
+									alert(status);
+							});
+					} else {
+						//document.getElementById("submitDiv").style.display = "none";
+						alert("Please select the data to printed!");
+					}
+				}
+			};
+			//关闭编辑框
+			$scope.closeEditDlg = function(){
+				$scope.editPIDetailDlg = false;
+			};
+			//关闭删除框
+			$scope.closeDeletDlg = function(){
+				$scope.deletePIDetailDlg = false;
+			};
+			//关闭批量删除框
+			$scope.closeDeleteAllDlg = function(){
+				$scope.deleteAllDetailDlg = false;
+			};
+			//弹出executeDlg
+			$scope.executeOpenDlg = function(planItemDetailVo, ifExecution, index, type){
+				if(type == true){
+					if(ifExecution == false){
+						//单条执行
+						if(planItemDetailVo.status == 'N'){
+							alert("Please print Pallet [ " + planItemDetailVo.stockno + " ] carton slip before execute!");
+						} else {
+							$scope.currentIndex = index;
+							$scope.currentPlanItemDetailVo = planItemDetailVo;
+							$scope.executeDlg = true;
+							$scope.currentType = true;
+						}
+					} else {
+						alert("Pallet [ " + planItemDetailVo.stockno + " ] has executed!");
+					}
+				} else {
+					var s = 0;
+					for(var i = 0,len = $scope.piDetailVoList.length; i<len; i++){
+						if($scope.piDetailVoList[i].ifSelect == true){
+							s++;
+						}
+					}
+					if(s > 0){
+						var number = "";
+						var nullData = false;
+						var exeNumber = "";
+						var exeData = false;
+						for(var i = 0,len = $scope.piDetailVoList.length; i<len; i++){
+							if($scope.piDetailVoList[i].ifSelect == true){
+								if($scope.piDetailVoList[i].status == 'N'){
+									nullData = true;
+									number = number + $scope.piDetailVoList[i].stockno + " ,";
+								}
+								if($scope.piDetailVoList[i].ifExecution == true || $scope.piDetailVoList[i].executionOrNo == "Y"){
+									exeData = true;
+									exeNumber = exeNumber + $scope.piDetailVoList[i].stockno + " ,";
+								}
+							}
+						}
+						if(nullData){
+							number = number.substring(0, number.length -1);
+							alert("Please print Pallet [ " + number + " ] carton slip before execute!");
+						} else {
+							if(exeData){
+								exeNumber = exeNumber.substring(0, number.length -1);
+								alert("Pallet [ " + exeNumber + " ] has executed!");
+							} else {
+								$scope.executeDlg = true;
+								$scope.currentType = false;
+							}
+						}
+					} else {
+						alert("Please select the data to execute!");
+					}
+				}
+				$scope.executeVo = {shift : '', remarks : '', reason : ''};
+			};
+			//执行execute
+			$scope.doExecute = function(executeVo){
+				if($scope.currentType == true){
+					//单条
+					document.getElementById("submitDiv").style.display = "inline";
+					$scope.currentPlanItemDetailVo.shift = executeVo.shift;
+					$scope.currentPlanItemDetailVo.remarks = executeVo.remarks;
+					$scope.currentPlanItemDetailVo.reason = executeVo.reason;
+					$http.post('/inbound/receiveFromReturn/execute', JSON.stringify($scope.currentPlanItemDetailVo)).success(
+						function(data, status, headers, config){
+							if(data.Type == 'success'){
+								$scope.currentPlanItemDetailVo.ifExecution = true;
+								$scope.currentPlanItemDetailVo.executionOrNo = "Y";
+								$scope.currentPlanItemDetailVo.status = "Y";
+								$scope.currentPlanItemDetailVo.ifSelect = false;
+								$scope.piDetailVoList.splice($scope.currentIndex, 1, $scope.currentPlanItemDetailVo);
+								$scope.sumPIQty($scope.currentPlanItem);
+								$scope.executeDlg = false;
+							} else {
+								alert(data.Message);
+							}
+							if(data.Type == 'success'){
+								alert("Congrations : Execute successfully!");
+							}
+							document.getElementById("submitDiv").style.display = "none";
+					}).error(
+						function(data, status, headers, config){
+							document.getElementById("submitDiv").style.display = "none";
+							alert(status);
+					});
+				} else {
+					//批量
+					$scope.currentExecutionList = [];
+					for(var i = 0,len = $scope.piDetailVoList.length; i<len; i++){
+						if($scope.piDetailVoList[i].ifSelect == true){
+							$scope.piDetailVoList[i].shift = executeVo.shift;
+							$scope.piDetailVoList[i].remarks = executeVo.remarks;
+							$scope.piDetailVoList[i].reason = executeVo.reason;
+							$scope.currentExecutionList.push($scope.piDetailVoList[i]);
+						}
+					}
+					document.getElementById("submitDiv").style.display = "inline";
+					$http.post('/inbound/receiveFromReturn/executeAll', JSON.stringify($scope.currentExecutionList)).success(
+						function(data, status, headers, config){
+							if(data.Type == 'success'){
+								for(var j = 0; j < $scope.piDetailVoList.length; j++){
+									for(var i = 0; i < $scope.currentExecutionList.length; i++){
+										if($scope.piDetailVoList[j].ifSelect == true && 
+												$scope.piDetailVoList[j].stockno == $scope.currentExecutionList[i].stockno){
+											$scope.currentExecutionList[i].ifSelect = false;
+											$scope.currentExecutionList[i].ifExecution = true;
+											$scope.currentExecutionList[i].executionOrNo = "Y";
+											$scope.currentExecutionList[i].status = "Y";
+											$scope.piDetailVoList.splice(j, 1, $scope.currentExecutionList[i]);
+										}
+									}
+								}
+								$scope.sumPIQty($scope.currentPlanItem);
+								$scope.checkSelect = false;
+								$scope.executeDlg = false;
+								alert("Congrations : Execute successfully!");
+							} else {
+								alert(data.Message);
+							}
+							document.getElementById("submitDiv").style.display = "none";
+					}).error(
+						function(data, status, headers, config){
+							document.getElementById("submitDiv").style.display = "none";
+							alert(status);
+					});
+				}
+			};
+			//关闭executeDlg
+			$scope.closeExecuteDlg = function(){
+				$scope.executeDlg = false;
+			};
+		});
+	</script>
+}

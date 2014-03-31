@@ -1,0 +1,106 @@
+@(name:String) @main("Pallet Arrangement"){
+<div ng-controller="PalletArrangement">
+	<div class="breadcrumb">
+		<li>Current Location:</li>
+		<li>Pallet Arrangement</li>
+
+		<li><div class="span2 offset1"></div></li>
+	</div>
+	<!-- search -->
+	<form novalidate class="form-horizontal" ng-submit="searchList(searchVo)">
+		<table>
+			<tr>
+				<td>
+
+					<div class="control-group">
+						<label class="control-label">PI NO.</label>
+						<div class="controls">
+						<input type="text" class="input-small"  name="piNo" ng-model="searchVo.piNo" >
+						</div>
+					</div>
+				</td>
+				<td>
+					<div class="control-group">
+						<label class="control-label">Sales Contract No</label>
+						<div class="controls">
+							<input type="text" ng-model="searchVo.sgPiNo" class="input-small">
+						</div>
+					</div>
+				</td>
+				<td>
+					<div class="control-group">
+						<label id="piStatus" class="control-label">PI Status</label>
+						<div class="controls">
+							<select ng-model="searchVo.piStatus" class="input-small"
+								ng-options="os.code_key as os.code_name for os in piStatuss|orderBy:'code_key'">
+								<option value="">ALL</option>
+							</select>
+
+						</div>
+					</div>
+				</td>
+			</tr>
+
+			<tr>
+				<td>
+					<div class="control-group">
+						<label class="control-label" for="date01">Prod Date(From)</label>
+						<div class="controls">
+							<input type="date" ng-model="searchVo.beginDate" style="width: 130px">
+						</div>
+					</div>
+				</td>
+				<td>
+					<div class="control-group">
+						<label class="control-label" for="date01">Prod Date(To)</label>
+						<div class="controls">
+							<input type="date" ng-model="searchVo.endDate" style="width: 130px">
+						</div>
+					</div>
+				</td>
+				<td>
+					<div class="control-group">
+						<label class="control-label"></label>
+						<div class="controls">
+							<input type="submit" id="submit" value="Search" class="btn btn-primary btn-small">
+						</div>
+					</div>
+				</td>
+			</tr>
+		</table>
+	</form>
+
+	<!-- PalletArrangement    planItem(have in one line) table-->
+	<table id="palletArrangementTable" class="table  table-bordered   table-condensed">
+		<thead>
+		    <th>#</th>
+			<th style="display: none;">id</th>
+			<th>Prod Date</th>
+			<th>Prod Line</th>
+			<th>PI No</th>
+			<th>Batch No</th>
+			<th>Material Code</th>
+			<th>Prod Qty</th>
+			<th>UOM</th>
+			<th>PI SKU</th>
+		</thead>
+
+		<tbody>
+			<tr ng-repeat="lineStrock in lineStrocks" ng-class="getClass($index)">
+			    <td><input type="radio" name="lineStock" ng-click="listPallets(lineStrock,$index)" /></td>
+				<td style="display: none;">{{lineStrock.planItemId}}</td>
+				<td>{{lineStrock.proDate| date:'yyyy-MM-dd'}}</td>
+				<td>{{lineStrock.proLine}}</td>
+				<td>{{lineStrock.piNo}}</td>
+				<td>{{lineStrock.batchNo}}</td>
+				<td>{{lineStrock.materialCode}}</td>
+				<td>{{lineStrock.proQty}}</td>
+				<td>{{lineStrock.ProUom}}</td>
+				<td>{{lineStrock.piSKU}}</td>
+			</tr>
+		</tbody>
+	</table>
+	<span>@palletArrangementPallets("")</span>
+</div>
+}{ @palletArrangementScript("") }
+

@@ -1,0 +1,25 @@
+@(name:String)
+<form name="download">
+ <div class="modal-header">
+      <h4>Download SAP PI</h4>
+    </div>
+     <div alert ng-repeat="alert in alerts" type="alert.type" close="closeAlert($index)" template-url="/template/alert/alert.html">{{alert.msg}}</div>
+    <div class="modal-body">
+      <table>
+        <tbody>
+          <tr>
+          <td>From Date:</td><td><input type="date" class="input-medium" ng-model="downloadVo.fromDownloadDate"/></td>
+          <td>To Date:</td><td><input type="date" class="input-medium" ng-model="downloadVo.toDownloadDate"/></td>
+          </tr>
+          <tr>
+          <td>SG PI No:</td>
+          <td><input type="text" ng-model="downloadVo.sgPiNo" name="sgPiNo" style="width: 150px;"/></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary btn-small"  ng-click="downloadOrder()">Download</button>
+      <button class="btn btn-warning btn-small" ng-click="closeSapDownloadDlg()">Cancel</button>
+    </div>
+    </form>

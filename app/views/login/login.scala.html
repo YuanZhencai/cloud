@@ -1,0 +1,132 @@
+@(name: String)
+
+@main("login") {
+ <style type="text/css">
+      body {
+        padding-top: 40px;
+        padding-bottom: 40px;
+        background-color: #f5f5f5;
+      }
+
+      .form-signin {
+        max-width: 300px;
+        padding: 19px 29px 29px;
+        margin: 0 auto 20px;
+        background-color: #fff;
+        border: 1px solid #e5e5e5;
+        -webkit-border-radius: 5px;
+           -moz-border-radius: 5px;
+                border-radius: 5px;
+        -webkit-box-shadow: 0 1px 2px rgba(0,0,0,.05);
+           -moz-box-shadow: 0 1px 2px rgba(0,0,0,.05);
+                box-shadow: 0 1px 2px rgba(0,0,0,.05);
+      }
+      .form-signin .form-signin-heading,
+      .form-signin .checkbox {
+        margin-bottom: 10px;
+      }
+      .form-signin input[type="text"],
+      .form-signin select[],
+      .form-signin input[type="password"] {
+        font-size: 16px;
+        height: auto;
+        margin-bottom: 15px;
+        padding: 7px 9px;
+      }
+
+    </style>
+  <div ng-controller="LoginCtrl">
+  <div alert ng-repeat="alert in alerts" type="alert.type" close="closeAlert($index)" template-url="/template/alert/alert.html">{{alert.msg}}</div>
+  <div class="container-fluid">
+   <div class="row-fluid">
+   <div class="span8">
+     <img src="@routes.Assets.at("/public", "images/login.jpg")" alt="" align="right"/>
+    </div>
+  	<form class="form-signin span4">
+  	<h2 class="form-signin-heading">Please sign in</h2>
+<!--   <div class="control-group"> -->
+<!--     <label class="control-label">Warehouse</label> --> 
+<!--     <div class="controls"> -->
+<!--      <select ng-model="user.warehouseId"  class="input-block-level" ng-options="warhouse.id as warhouse.nameKey for warhouse in warhouses" placeholder="Warehouse"> -->
+<!--      	<option value="">--Please Select Warehouse--</option> -->
+<!--      </select> -->
+<!--     </div> -->
+<!--   </div> -->
+  <div class="control-group inline">
+<!--     <label class="control-label">name</label> -->
+    <div class="controls">
+      <input type="text"  class="input-block-level" ng-model="user.name" placeholder="Username">
+    </div>
+  </div>
+  <div class="control-group">
+<!--     <label class="control-label">Password</label> -->
+    <div class="controls">
+      <input type="password"  class="input-block-level" ng-model="user.password" placeholder="Password">
+    </div>
+  </div>
+  <div class="control-group">
+    <div class="controls">
+      <button type="submit" ng-click="login(user)" class="btn btn-primary btn-small span4 offset8">Sign in</button>
+    </div>
+  </div>
+</form>
+</div>
+ </div>
+  
+  <form name="downForm" class="form-horizontal" action="/chrome/download" method="get">
+	  <br/>
+	  <br/>
+	  <div style="text-align: center;font-size: 14px;font-weight:bold;">
+	  		Best viewed in Google Chrome. Please click the <a href="#" onclick="downForm.submit()">link</a> to download
+	  </div>
+  </form>
+  
+  </div>
+} {
+  <script type="text/javascript" charset="utf-8">
+    //var CloudWMS = angular.module('CloudWMS', ['ui.bootstrap']);
+    CloudWMS.controller('LoginCtrl', function($scope, $http, $timeout,$window) {
+      $scope.alerts = [];
+      $scope.addAlert = function(message) {
+        $scope.alerts.push({msg: message});
+        $timeout($scope.clearAlerts, 5000);
+      };
+      $scope.closeAlert = function(index) {
+        $scope.alerts.splice(index, 1);
+      };
+      $scope.clearAlerts = function() {
+    	  $scope.alerts.splice(0, 1);
+      }
+      $timeout($scope.clearAlerts, 5000);
+      $scope.login = function(user) {
+          $http.post('/login/login', JSON.stringify(user)).success(
+            function(data, status, headers, config) {
+              $scope.status = status;
+              $window.location.reload();
+          }).error(
+            function(data, status, headers, config) {
+              $scope.status = status
+              $scope.addAlert("user failed to login!");
+          });
+      }
+     /*  $http.get('/login/warehouse').success(
+  	    	function(data, status, headers, config) {
+  	     	     $scope.warhouses = JSON.parse(JSON.stringify(data));
+  	     	}).error(
+  	     	function(data, status, headers, config) {
+  	     	     $scope.status = status
+  	     	});  */
+      $scope.logout = function() {
+          $http.get('/login/logout/'+JSON.stringify(user.name)).success(
+            function(data, status, headers, config) {
+              $scope.status = status;
+              $window.location.reload();
+          }).error(
+            function(data, status, headers, config) {
+              $scope.status = status
+              $scope.addAlert("logout failed!");
+          });
+        }
+    });
+  </script>
+}

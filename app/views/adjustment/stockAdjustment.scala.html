@@ -1,0 +1,858 @@
+@(name: String)
+@main("Stock Adjust"){
+<div ng-controller="stockAdjust">
+<div class="breadcrumb">
+	<li style=""> Current Location: Stock Adjust Qty</li>
+</div>
+<div alert ng-repeat="alert in alerts" type="alert.type" close="closeAlert($index)" template-url="/template/alert/alert.html">{{alert.msg}}</div>
+	<!-- 查询条件 -->
+	<form novalidate ng-submit="searchStockCollect(stockSearchVo)">
+		<table>
+			<tr>
+				<td class="column0">
+					<label>Warehouse:</label>
+				</td>
+				<td class="column2">
+					<select ng-model="stockSearchVo.warehouse" ng-options="w.id as w.nameKey for w in initWarehouseList">
+					</select>
+				</td>
+				<td class="column0">
+					<label>Storage Type:</label>
+				</td>
+				<td class="column2">
+					<select ng-model="stockSearchVo.storageType" ng-options="s.id as s.nameKey for s in initStorageTypeList" ng-change="changeArea(stockSearchVo)">
+					</select>
+				</td>
+				<td class="column0">
+					<label>Storage Area:</label>
+				</td>
+				<td class="column2">
+					<select ng-model="stockSearchVo.area" ng-options="a.id as a.nameKey for a in initAreaList" ng-change="changeBin(stockSearchVo)">
+					</select>
+				</td>
+			</tr>
+			<tr>
+				<td class="column0">
+					<label>Storage Bin:</label>
+				</td>
+				<td class="column2">
+					<select ng-model="stockSearchVo.bin" ng-options="a.id as a.nameKey for a in initBinList">
+					</select>
+				</td>
+				<td>
+					<label>Stock Check Type:</label>
+				</td>
+				<td class="column2">
+					<select ng-model="stockSearchVo.checkType" ng-change="changeCheckType(stockSearchVo.checkType)">
+							<option value="location">Location</option>
+							<option value="batch">Batch</option>
+					</select>
+				<td>
+				<td colspan="4">
+				</td>
+				<td>
+					<div style="text-align: right;">
+						<input class="btn btn-primary" type="submit" value="Search">
+					</div>
+				</td>
+			</tr>
+		</table>
+	</form>
+	<!-- 按location方式展示stockCollection -->	
+	<div  style="display:{{ifShow}}">
+		<form name="location">
+		<table class="table table-striped table-bordered table-hover table-condensed">
+				<thead>
+					<tr>
+						<th>PI Number</th>
+						<th>Warehouse</th>
+						<th>Storage Area</th>
+						<th>Storage Bin</th>
+						<th>Material Code</th>
+						<th>System Quantity</th>
+						<th>Quantity UOM</th>
+						<th>Adjusted Quantity</th>
+						<th>Reason</th>
+						<th>Operation</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr ng-repeat="stockCollectionVo in stockCollectList">
+						<td class="noNewLine">{{stockCollectionVo.pino}}</td>
+						<td class="noNewLine">{{stockCollectionVo.warehouse}}</td>
+						<td class="noNewLine">{{stockCollectionVo.area}}</td>
+						<td class="noNewLine">{{stockCollectionVo.bin}}</td>
+						<td class="noNewLine">{{stockCollectionVo.materialCode}}</td>
+						<td class="noNewLine">{{stockCollectionVo.systemQuantity|number:2}}</td>
+						<td class="noNewLine">{{stockCollectionVo.quantityUom}}</td>
+						<td>
+							<span ng-bind="stockCollectionVo.adjusterQuantity" ng-show="stockCollectionVo.ifshow" ></span>
+							<input type="text"  ng-model="stockCollectionVo.adjusterQuantity" ng-show="!stockCollectionVo.ifshow" class="input-mini" ng-change="stockCollectionVo.quantityCol=regexpQuantity(stockCollectionVo)"></input>
+							<span style="color:red" ng-show="!stockCollectionVo.ifshow">*</span>
+							<br/>
+							<span ng-show="stockCollectionVo.quantityCol.notNull" style="color:red">Can't be null</span>
+							<span ng-show="stockCollectionVo.quantityCol.beNumber" style="color:red">Should be number</span>
+						</td>
+						<td>
+							<span ng-bind="stockCollectionVo.reason" ng-show="stockCollectionVo.ifshow"></span>
+							<textarea rows="2" cols="4" ng-model="stockCollectionVo.reason" ng-show="!stockCollectionVo.ifshow" ng-change="stockCollectionVo.reasonCol=regexpReason(stockCollectionVo)"></textarea>
+							<span style="color:red" ng-show="!stockCollectionVo.ifshow">*</span>
+							<br/>
+							<span ng-show="stockCollectionVo.reasonCol.upto" style="color:red">Up to 300 characters</span>
+							<span ng-show="stockCollectionVo.reasonCol.notNull" style="color:red">Can't be null</span>
+						</td>
+						<th>
+							<a class="btn btn-primary btn-small" ng-show="stockCollectionVo.ifshow" ng-click="editAble(stockCollectionVo)" > Edit </a>
+							<a class="btn btn-info btn-small" ng-show="stockCollectionVo.ifshow" ng-click="startAdjust(stockCollectionVo)"> Execute </a>
+							<a class="btn btn-primary btn-small" ng-show="!stockCollectionVo.ifshow" ng-click="saveReason(stockCollectionVo)"> Save </a>
+							<a class="btn btn-warning btn-small" ng-show="!stockCollectionVo.ifshow" ng-click="editDisable(stockCollectionVo)"> Cancel </a>
+						</th>
+					</tr>
+				</tbody>
+		</table>
+		</form>
+	</div>
+	<!-- 展示stocks 按location-->
+	<div modal="showAllStockDlg" close="closeAdjust()" options="dlgOpts">
+		<div class="modal-header">
+			<h4>Adjust Stock</h4>
+		</div>
+		<div class="modal-body">
+			<table>
+				<tr>
+					<td>
+						<label>Adjusted Quantity:</label>
+					</td>
+					<td>
+						<input class="input-medium" type="text" value="{{currentQty}}" ng-disabled="true">
+					</td>
+				</tr>
+			</table>
+			<table class="table table-striped table-bordered table-hover table-condensed">
+				<thead>
+					<tr>
+						<th>StockNo</th>
+						<th>Material Code</th>
+						<th>Area</th>
+						<th>Bin</th>
+						<th>Quantity</th>
+						<th>Quantity UOM</th>
+						<th>Adjusted Quantity
+							<br/>
+							(<span class="{{classType}}">{{currentUsedSKU|number:2}}</span>/{{currentAllSKU|number:2}})
+						</th>
+						<th>Operation</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr ng-repeat="stockLoc in stockListLoc">
+						<td>{{stockLoc.stockNo}}</td>
+						<td>{{stockLoc.material}}</td>
+						<td>{{stockLoc.area}}</td>
+						<td>{{stockLoc.bin}}</td>
+						<td>{{stockLoc.qty|number:2}}</td>
+						<td>{{stockLoc.materialUOM}}</td>
+						<td>
+							<span ng-bind="stockLoc.adjustQty" ng-show="stockLoc.ngshow" ></span>
+							<input type="text"  ng-model="stockLoc.adjustQty" ng-show="!stockLoc.ngshow" class="input-mini" ng-change="stockLoc.adjustQtyLoc=regexpAdjQ(stockLoc)"></input>
+							<span style="color:red" ng-show="!stockLoc.ngshow">*</span>
+							<span ng-show="stockLoc.adjustQtyLoc.notNull" style="color:red">Can't be null</span>
+							<span ng-show="stockLoc.adjustQtyLoc.beNumber" style="color:red">Should be number</span>
+						</td>
+						<th>
+							<a class="btn btn-primary btn-small" ng-show="stockLoc.ngshow" ng-click="editStockAble(stockLoc)" > Edit </a>
+							<a class="btn btn-primary btn-small" ng-show="!stockLoc.ngshow" ng-click="saveStock(stockLoc)"> Save </a>
+							<a class="btn btn-warning btn-small" ng-show="!stockLoc.ngshow" ng-click="editStockDisable(stockLoc)"> Cancel </a>
+						</th>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+		<div class="modal-footer">
+			<button class="btn btn-primary btn-small ok" ng-click="execution(stockListLoc)">Execute</button>
+			<button class="btn btn-warning btn-small cancel" ng-click="closeAdjust()">Cancel</button>
+		</div>
+	</div>
+	<!--按batch方式展示页面  -->
+	<div style="display:{{noShow}}">
+		<table class="table table-striped table-bordered table-hover table-condensed">
+				<thead>
+					<tr>
+						<th>PI Number</th>
+						<th>Material Code</th>
+						<th>Batch No</th>
+						<th>System Quantity</th>
+						<th>Quantity UOM</th>
+						<th>Adjusted Quantity</th>
+						<th>Reason</th>
+						<th>Operation</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr ng-repeat="stockCollectionVoBt in stockCollectListBt">
+						<td class="noNewLine">{{stockCollectionVoBt.pino}}</td>
+						<td class="noNewLine">{{stockCollectionVoBt.materialCode}}</td>
+						<td class="noNewLine">{{stockCollectionVoBt.batchNo}}</td>
+						<td class="noNewLine">{{stockCollectionVoBt.systemQuantity|number:2}}</td>
+						<td class="noNewLine">{{stockCollectionVoBt.quantityUom}}</td>
+						<td>
+							<span ng-bind="stockCollectionVoBt.adjusterQuantity" ng-show="stockCollectionVoBt.ifshow" ></span>
+							<input type="text"  ng-model="stockCollectionVoBt.adjusterQuantity" ng-show="!stockCollectionVoBt.ifshow" class="input-mini" ng-change="stockCollectionVoBt.quantityCol=regexpQuantity(stockCollectionVoBt)"></input>
+							<span style="color:red" ng-show="!stockCollectionVoBt.ifshow">*</span>
+							<br/>
+							<span ng-show="stockCollectionVoBt.quantityCol.notNull" style="color:red">Can't be null</span>
+							<span ng-show="stockCollectionVoBt.quantityCol.beNumber" style="color:red">Should be number</span>
+						</td>
+						<td>
+							<span ng-bind="stockCollectionVoBt.reason" ng-show="stockCollectionVoBt.ifshow"></span>
+							<textarea rows="2" cols="4" ng-model="stockCollectionVoBt.reason" ng-show="!stockCollectionVoBt.ifshow" ng-change="stockCollectionVoBt.reasonCol=regexpReason(stockCollectionVoBt)"></textarea>
+							<span style="color:red" ng-show="!stockCollectionVoBt.ifshow">*</span>
+							<br/>
+							<span ng-show="stockCollectionVoBt.reasonCol.upto" style="color:red">Up to 300 characters</span>
+							<span ng-show="stockCollectionVoBt.reasonCol.notNull" style="color:red">Can't be null</span>
+						</td>
+						<th>
+							<a class="btn btn-primary btn-small" ng-show="stockCollectionVoBt.ifshow" ng-click="editAbleBt(stockCollectionVoBt)" > Edit </a>
+							<a class="btn btn-info btn-small" ng-show="stockCollectionVoBt.ifshow" ng-click="startAdjustBt(stockCollectionVoBt)"> Execute </a>
+							<a class="btn btn-primary btn-small" ng-show="!stockCollectionVoBt.ifshow" ng-click="saveReasonBt(stockCollectionVoBt)"> Save </a>
+							<a class="btn btn-warning btn-small" ng-show="!stockCollectionVoBt.ifshow" ng-click="editDisableBt(stockCollectionVoBt)"> Cancel </a>
+						</th>
+					</tr>
+				</tbody>
+		</table>
+	</div>
+	<!-- 展示stocks 按batch-->
+	<div modal="showAllStockDlgBt" close="closeAdjustBt()" options="dlgOpts">
+		<div class="modal-header">
+			<h4>Adjust Reason</h4>
+		</div>
+		<div class="modal-body">
+			<table>
+				<tr>
+					<td>
+						<label>Adjusted Quantity:</label>
+					</td>
+					<td>
+						<input class="input-medium" type="text" value="{{currentQtyBt}}" ng-disabled="true">
+					</td>
+				</tr>
+			</table>
+			<table class="table table-striped table-bordered table-hover table-condensed">
+				<thead>
+					<tr>
+						<th>StockNo</th>
+						<th>Material Code</th>
+						<th>Area</th>
+						<th>Bin</th>
+						<th>Batch</th>
+						<th>Quantity</th>
+						<th>Quantity UOM</th>
+						<th>Adjusted Quantity
+							<br/>
+							(<span class="{{classType}}">{{currentUsedSKU|number:2}}</span>/{{currentAllSKU|number:2}})
+						</th>
+						<th>Operation</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr ng-repeat="stockBt in stockListBt">
+						<td>{{stockBt.stockNo}}</td>
+						<td>{{stockBt.material}}</td>
+						<td>{{stockBt.area}}</td>
+						<td>{{stockBt.bin}}</td>
+						<td>{{stockBt.batch}}</td>
+						<td>{{stockBt.qty|number:2}}</td>
+						<td>{{stockBt.materialUOM}}</td>
+						<td>
+							<span ng-bind="stockBt.adjustQty" ng-show="stockBt.ngshow" ></span>
+							<input type="text"  ng-model="stockBt.adjustQty" ng-show="!stockBt.ngshow" class="input-mini" ng-change="stockBt.adjustQtyLoc=regexpAdjQ(stockBt)"></input>
+							<span style="color:red" ng-show="!stockBt.ngshow">*</span>
+							<br/>
+							<span ng-show="stockBt.adjustQtyLoc.notNull" style="color:red">Can't be null</span>
+							<span ng-show="stockBt.adjustQtyLoc.beNumber" style="color:red">Should be number</span>
+						</td>
+						<th>
+							<a class="btn btn-primary btn-small" ng-show="stockBt.ngshow" ng-click="editStockAbleBt(stockBt)" > Edit </a>
+							<a class="btn btn-primary btn-small" ng-show="!stockBt.ngshow" ng-click="saveStockBt(stockBt)"> Save </a>
+							<a class="btn btn-warning btn-small" ng-show="!stockBt.ngshow" ng-click="editStockDisableBt(stockBt)"> Cancel </a>
+						</th>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+		<div class="modal-footer">
+			<button class="btn btn-primary btn-small ok" ng-click="executionBt(stockListBt)">Execute</button>
+			<button class="btn btn-warning btn-small cancel" ng-click="closeAdjustBt()">Cancel</button>
+		</div>
+	</div>
+</div>
+<style type="text/css">
+.red{background: red;}
+.column0 {text-align: right;width: 125px;}
+.column1 {text-align: right;width: 165px;}
+.column2 {text-align: left;width: 9px;}
+.errorNum{color:red;}
+</style>
+}{
+<script type="text/javascript" charset="utf-8">
+	var FLOAT_REGEXP =/^([0-9]{1,14}|[0-9]{1,14}\.[0-9]{0,2})$/;//整数位14位，小数位两位
+	var NULL_REGEXP=/^\S+$/;
+	CloudWMS.controller('stockAdjust', function($scope, $http, $timeout){
+		$scope.initWarehouseList;//头查询的初始化warehouse
+		$scope.ifShow = 'inline';
+		$scope.noShow = 'none';
+		$scope.showAllStockDlg = false;
+		$scope.alerts = [];
+		$scope.ifCanUpdate = false;//若页面有未保存的可编辑框，则不允许继续打开
+		$scope.ifCanUpdateBt = false;//若页面有未保存的可编辑框，则不允许继续打开
+		$scope.ifStockCanUpdate = false;//Stock页面有未保存的可编辑框，则不允许继续打开
+		$scope.ifStockCanUpdateBt = false;//Stock页面有未保存的可编辑框，则不允许继续打开
+		$scope.currentAllSKU;//当前PI的SKU
+		$scope.currentUsedSKU;//已经处理的SKU
+		$scope.classType='';
+		//正则验证
+		$scope.FloatTest=function(value){
+		    if (FLOAT_REGEXP.test(value)) {
+		    	 return false;
+		    }else{
+		    	return true;
+		    }
+		}
+		$scope.NullTest=function(value){
+		    if (value.length > 0 && value.replace(/(^\s*)|(\s*$)/g,"").length != 0) {
+		    	return false;
+		    }else{
+		    	return true;
+		    }
+		}
+		$scope.dlgOpts = {
+   		    backdropFade: true,
+   		    dialogFade:false,
+   		    backdropClick:false
+   		   // dialogClass: [width:'1200px'];
+   		};
+		//+++++++++++++++++++++++++++++++++++
+		//填写调整原因页面
+		$scope.regexpReason = function(stockCollectionVo){
+			if($scope.NullTest(stockCollectionVo.reason)){
+				return {notNull:true}
+			}
+			if(stockCollectionVo.reason.length > 300){
+				return {upto:true}
+			}
+		}
+		$scope.regexpQuantity = function(stockCollectionVo){
+			if($scope.NullTest(stockCollectionVo.adjusterQuantity)){
+				return {notNull:true}
+			}
+			if($scope.FloatTest(stockCollectionVo.adjusterQuantity)){
+				return {beNumber:true}
+			}
+		}
+		//stock调整页面
+		$scope.regexpAdjQ = function(stockLoc){
+			if($scope.NullTest(stockLoc.adjustQty)){
+				return {notNull:true}
+			}
+			if($scope.FloatTest(stockLoc.adjustQty)){
+				return {beNumber:true}
+			}
+		}
+		//++++++++++++++++++++++++++++++++++++
+		var addAlert = function(types,msgs) {
+	        $scope.alerts.push({type:types,msg: msgs});
+	        $timeout($scope.clearAlerts, 5000);
+	    };
+        $scope.closeAlert = function(index) {
+          $scope.alerts.splice(index, 1);
+        };
+        $scope.clearAlerts = function() {
+          $scope.alerts = [];
+        }
+        $timeout($scope.clearAlerts, 5000);
+      	//计算palletQty总数
+		$scope.sumSKU = function(piDetailVoList){
+			var amount = 0;
+			for(i = 0, len = piDetailVoList.length; i < len; i++){
+				 amount = Number(amount) + Number(piDetailVoList[i].adjustQty);
+			}
+			$scope.currentUsedSKU = amount;
+			if($scope.currentUsedSKU > $scope.currentAllSKU){
+				$scope.classType='errorNum';
+			} else {
+				$scope.classType='';
+			}
+		};
+		//初始化头查询的warehouse
+		$http({method: 'GET', url: '/adjustment/stockadjust/initWarehouse'}).success(
+				function(data, status, headers, config){
+					if(data.Type == 'success'){
+						$scope.initWarehouseList = data.Data;
+						$scope.stockSearchVo ={warehouse:$scope.initWarehouseList[0].id, storageType:'', area:'', bin:'', checkType:'location'};
+						if($scope.stockSearchVo == null || $scope.stockSearchVo == ""){
+							alert("Can not find data!");
+						} else {
+							$http.post('/adjustment/stockadjust/changeStoType', JSON.stringify($scope.stockSearchVo)).success(
+								function(data, status, headers, config){
+									if(data.Type == 'success'){
+										$scope.initStorageTypeList = data.Data;
+									} else {
+										alert(data.Message);
+									}
+							}).error(
+								function(data, status, headers, config){
+									alert(status);
+							});
+						}
+					} else {
+						alert(data.Message);
+					}
+		}).error(
+				function(data, status, headers, config){
+					alert(status);
+		});
+		//查询area
+		$scope.changeArea = function(stockSearchVo){
+			$scope.stockSearchVo.area =null;
+			$scope.stockSearchVo.bin = null;
+			$scope.initBinList = null;
+			$http.post('/adjustment/stockadjust/changeArea', JSON.stringify(stockSearchVo)).success(
+				function(data, status, headers, config){
+					if(data.Type == 'success'){
+						$scope.initAreaList = data.Data;
+					} else {
+						alert(data.Message);
+					}
+			}).error(
+				function(data, status, headers, config){
+					alert(status);
+			});
+		};
+		//查询bin
+		$scope.changeBin = function(stockSearchVo){
+			$scope.stockSearchVo.bin = null;
+			$http.post('/adjustment/stockadjust/changeBin', JSON.stringify(stockSearchVo)).success(
+				function(data, status, headers, config){
+					if(data.Type == 'success'){
+						$scope.initBinList = data.Data;
+					} else {
+						alert(data.Message);
+					}
+			}).error(
+				function(data, status, headers, config){
+					alert(status);
+			});
+		};
+		//改变展示表
+		$scope.changeCheckType = function(checkType){
+			if(checkType =="location"){
+				$scope.ifShow = 'inline';
+				$scope.noShow = 'none';
+				$scope.stockCollectListBt = null;
+			} else {
+				$scope.ifShow = 'none';
+				$scope.noShow = 'inline';
+				$scope.stockCollectList = null;
+			}
+		};
+		//页面头查询
+		$scope.searchStockCollect = function(stockSearchVo){
+			if(typeof stockSearchVo !== 'undefined'){
+				if(typeof stockSearchVo.warehouse !== 'undefined' && stockSearchVo.warehouse !== ''){
+					if(typeof stockSearchVo.checkType !== 'undefined' && stockSearchVo.checkType !== ''){
+						document.getElementById("submitDiv").style.display = "inline";
+						$scope.currentAllSKU = null;
+						$scope.currentUsedSKU = null;
+						if(stockSearchVo.checkType =="location"){
+							$http.post('/adjustment/stockadjust/collectByLoc', JSON.stringify(stockSearchVo)).success(
+								function(data, status, headers, config){
+									if(data.Type == 'success'){
+										$scope.stockCollectList = data.Data;
+									} else {
+										alert(data.Message);
+									}
+									document.getElementById("submitDiv").style.display = "none";
+							}).error(
+								function(data, status, headers, config){
+									document.getElementById("submitDiv").style.display = "none";
+									alert(status);
+							});
+						} else {
+							$http.post('/adjustment/stockadjust/collectByBtc', JSON.stringify(stockSearchVo)).success(
+								function(data, status, headers, config){
+									if(data.Type == 'success'){
+										$scope.stockCollectListBt = data.Data;
+									} else {
+										alert(data.Message);
+									}
+									document.getElementById("submitDiv").style.display = "none";
+							}).error(
+								function(data, status, headers, config){
+									document.getElementById("submitDiv").style.display = "none";
+									alert(status);
+							});
+						}
+					}else{
+						addAlert('error', "WARNING : Please select the stock check type!");
+						document.getElementById("submitDiv").style.display = "none";
+					}
+				} else {
+					addAlert('error', "WARNING : Please select the warehouse!");
+				}
+			}else{
+				addAlert('warn','WARNING : Please select the query conditions!');
+			}
+			$scope.ifCanUpdate = false;
+		};
+		// *********************按location方式展示时****************************
+		//将数量和reaason设置为可编辑-update
+		$scope.editAble = function(stockCollectionVo){
+			if($scope.ifCanUpdate == true){
+				alert("Please save or cancle the edit data in the first place!");
+			}else{
+				stockCollectionVo.ifshow = false;
+				$scope.ifCanUpdate = true;
+				//用于暂存之前未改变值的值
+				$scope.quantity = stockCollectionVo.adjusterQuantity;
+				//用于暂存之前未改变的原因
+				$scope.reason = stockCollectionVo.reason;
+			}
+		};
+		//将数量和reaason设置为不可编辑-cancle
+		$scope.editDisable = function(stockCollectionVo){
+			if(typeof stockCollectionVo.quantityCol =='undefined'){
+				stockCollectionVo.quantityCol = {notNull:false,beNumber:false}
+			}
+			if(typeof stockCollectionVo.reasonCol == 'undefined'){
+				stockCollectionVo.reasonCol = {notNull:false,upto:false}
+			}
+			if(stockCollectionVo.quantityCol.notNull || stockCollectionVo.quantityCol.beNumber){
+				stockCollectionVo.adjusterQuantity = $scope.quantity;
+			} else {
+				stockCollectionVo.adjusterQuantity = $scope.quantity;
+			}
+			if(stockCollectionVo.reasonCol.notNull || stockCollectionVo.reasonCol.upto){
+				stockCollectionVo.reason = $scope.reason;
+			} else {
+				stockCollectionVo.reason = $scope.reason;
+			}
+			stockCollectionVo.quantityCol = {notNull:false,beNumber:false}
+			stockCollectionVo.reasonCol = {notNull:false,upto:false}
+			stockCollectionVo.ifshow = true;
+			$scope.ifCanUpdate = false;
+		};
+		//点击保存修正后数量和原因
+		$scope.saveReason = function(stockCollectionVo){
+			var c = true;
+			var d = true;
+			if(typeof stockCollectionVo.quantityCol == 'undefined'){
+				if(stockCollectionVo.adjusterQuantity == null){
+					stockCollectionVo.quantityCol = {notNull : true}
+				} else {
+					stockCollectionVo.quantityCol = {notNull : false, beNumber : false}
+				}
+			}
+			if(stockCollectionVo.adjusterQuantity == null || stockCollectionVo.adjusterQuantity == ''){
+				stockCollectionVo.quantityCol = {notNull : true}
+				c = false;
+			}
+			if(typeof stockCollectionVo.reasonCol == 'undefined'){
+				if(stockCollectionVo.reason == null){
+					stockCollectionVo.reasonCol = {notNull : true, upto : false}
+				}else if(stockCollectionVo.reason.length > 300){
+					stockCollectionVo.reasonCol = {upto : true}
+				}else{
+					stockCollectionVo.reasonCol = {notNull : false, upto : false}
+				}
+			}
+			if(stockCollectionVo.reason == null || stockCollectionVo.reason == ''){
+				stockCollectionVo.reasonCol = {notNull : true};
+				d = false;
+			}
+			if(!stockCollectionVo.quantityCol.notNull && !stockCollectionVo.quantityCol.beNumber &&
+					!stockCollectionVo.reasonCol.upto && !stockCollectionVo.reasonCol.notNull && c && d){
+				$scope.alerts.push({type:'success',msg: "Update successfully!"});
+				var s = Number(stockCollectionVo.adjusterQuantity);
+				stockCollectionVo.adjusterQuantity = s.toFixed(2);
+				$timeout($scope.clearAlerts, 3000);
+				stockCollectionVo.ifshow = true;
+			}
+			$scope.ifCanUpdate = false;
+		};
+		//点击进入调整stock页面
+		$scope.startAdjust = function(stockCollectionVo){
+			$scope.currentStockCollectVo = stockCollectionVo;
+			if(stockCollectionVo.adjusterQuantity == null||stockCollectionVo.adjusterQuantity ==''){
+				alert("Please fill the adjusted Quantity!");
+			}else if(stockCollectionVo.reason == null || stockCollectionVo.reason ==''){
+				alert("Please fill the reason!");
+			}else{
+				document.getElementById("submitDiv").style.display = "inline";
+				$http.post('/adjustment/stockadjust/getStockList', JSON.stringify(stockCollectionVo)).success(
+						function(data, status, headers, config){
+							if(data.Type == 'success'){
+								$scope.stockListLoc = data.Data;
+								$scope.currentQty = stockCollectionVo.adjusterQuantity;
+								$scope.currentAllSKU = $scope.currentQty;
+								for(var i = 0,len = $scope.stockListLoc.length; i<len; i++){
+									$scope.stockListLoc[i].reason = stockCollectionVo.reason;
+									$scope.stockListLoc[i].adjustQty = $scope.stockListLoc[i].adjustQty.toFixed(2);
+								}
+								$scope.sumSKU($scope.stockListLoc);
+								$scope.showAllStockDlg = true;
+							} else {
+								alert(data.Message);
+							}
+							document.getElementById("submitDiv").style.display = "none";
+					}).error(
+						function(data, status, headers, config){
+							document.getElementById("submitDiv").style.display = "none";
+							alert(status);
+				});
+			}
+		};
+		//将stock页面为可编辑-update
+		$scope.editStockAble = function(stockLoc){
+			if($scope.ifStockCanUpdate == true){
+				alert("Please save or cancle the edit data in the first place!");
+			}else{
+				//将之前的数值暂时先保存，防止后面出错得不到原来的值
+				$scope.stockqty = stockLoc.adjustQty;
+				stockLoc.ngshow = false;
+				$scope.ifStockCanUpdate = true;
+			}
+		};
+		//保存修改后的stock数量
+		$scope.saveStock = function(stockLoc){
+			if(typeof stockLoc.adjustQtyLoc == 'undefined' || 
+					(stockLoc.adjustQtyLoc.notNull == false && stockLoc.adjustQtyLoc.beNumber == false)){
+				stockLoc.ngshow = true;
+				$scope.ifStockCanUpdate = false;
+				var s = Number(stockLoc.adjustQty);
+				stockLoc.adjustQty = s.toFixed(2);
+				$scope.sumSKU($scope.stockListLoc);
+			}
+		};
+		//将stock数量设置为不可编辑-cancle
+		$scope.editStockDisable = function(stockLoc){
+			if(typeof stockLoc.adjustQtyLoc == 'undefined'){
+				stockLoc.adjustQtyLoc = {notNull : false, beNumber : false}
+			}
+			stockLoc.adjustQty = $scope.stockqty;
+			stockLoc.adjustQtyLoc = {notNull : false, beNumber : false}
+			stockLoc.ngshow = true;
+			$scope.ifStockCanUpdate = false;
+		};
+		//关闭stock调整页面
+		$scope.closeAdjust = function(){
+			$scope.showAllStockDlg = false;
+		};
+		//按location调整时执行调整
+		$scope.execution = function(stockListLoc){
+			var amount = 0;
+			var num = 0;
+			if($scope.ifStockCanUpdate == true){
+				alert("Please save or cancle the edit data in the first place!");
+			} else {
+				for(var i = 0,len = $scope.stockListLoc.length; i<len; i++){
+					amount = Number(amount) + Number($scope.stockListLoc[i].adjustQty);
+				}
+				if(amount != $scope.currentQty){
+					alert("Error :  the sum of the stock's adjusted quantity doesn't match the need adjusted quantity!");
+				} else {
+					document.getElementById("submitDiv").style.display = "inline";
+					$http.post('/adjustment/stockadjust/execution', JSON.stringify(stockListLoc)).success(
+							function(data, status, headers, config){
+								if(data.Type == 'success'){
+									$scope.alerts.push({type:'success',msg: "Congratulations : Stocks adjust successfully!"});
+									$timeout($scope.clearAlerts, 3000);
+									$scope.showAllStockDlg = false;
+								} else {
+									alert(data.Message);
+								}
+								document.getElementById("submitDiv").style.display = "none";
+						}).error(
+							function(data, status, headers, config){
+								document.getElementById("submitDiv").style.display = "none";
+								alert(status);
+					});
+				}
+			}
+		}
+		// *************************按batch方式展示时*****************************
+		//将数量和reaason设置为可编辑-update
+		$scope.editAbleBt = function(stockCollectionVoBt){
+			if($scope.ifCanUpdateBt == true){
+				alert("Please save or cancle the edit data in the first place!");
+			}else{
+				stockCollectionVoBt.ifshow = false;
+				$scope.ifCanUpdateBt = true;
+				//用于暂存之前未改变值的值
+				$scope.quantityBt = stockCollectionVoBt.adjusterQuantity;
+				//用于暂存之前未改变的原因
+				$scope.reasonBt = stockCollectionVoBt.reason;
+			}
+		};
+		//将数量和reaason设置为不可编辑-cancle
+		$scope.editDisableBt = function(stockCollectionVoBt){
+			if(typeof stockCollectionVoBt.quantityCol == 'undefined'){
+				stockCollectionVoBt.quantityCol = {notNull:false,beNumber:false};
+			}
+			if(typeof stockCollectionVoBt.reasonCol == 'undefined'){
+				stockCollectionVoBt.reasonCol = {notNull:false,upto:false};
+			}
+			if(stockCollectionVoBt.quantityCol.notNull || stockCollectionVoBt.quantityCol.beNumber){
+				stockCollectionVoBt.adjusterQuantity = $scope.quantityBt;
+			} else {
+				stockCollectionVoBt.adjusterQuantity = $scope.quantityBt;
+			}
+			if(stockCollectionVoBt.reasonCol.notNull || stockCollectionVoBt.reasonCol.upto){
+				stockCollectionVoBt.reason = $scope.reasonBt;
+			} else {
+				stockCollectionVoBt.reason = $scope.reasonBt;
+			}
+			stockCollectionVoBt.quantityCol = {notNull:false,beNumber:false}
+			stockCollectionVoBt.reasonCol = {notNull:false,upto:false}
+			stockCollectionVoBt.ifshow = true;
+			$scope.ifCanUpdateBt = false;
+		};
+		//点击保存修正后数量和原因
+		$scope.saveReasonBt = function(stockCollectionVoBt){
+			var c = true;
+			var d = true;
+			if(typeof stockCollectionVoBt.quantityCol == 'undefined'){
+				if(stockCollectionVoBt.adjusterQuantity == null){
+					stockCollectionVoBt.quantityCol = {notNull : true}
+				} else {
+					stockCollectionVoBt.quantityCol = {notNull : false, beNumber : false}
+				}
+			}
+			if(stockCollectionVoBt.adjusterQuantity == null || stockCollectionVoBt.adjusterQuantity == ''){
+				stockCollectionVoBt.quantityCol = {notNull : true}
+				c = false;
+			}
+			if(typeof stockCollectionVoBt.reasonCol == 'undefined'){
+				if(stockCollectionVoBt.reason == null){
+					stockCollectionVoBt.reasonCol = {notNull : true, upto : false}
+				}else if(stockCollectionVoBt.reason.length > 300){
+					stockCollectionVoBt.reasonCol = {upto : true}
+				}else{
+					stockCollectionVoBt.reasonCol = {notNull : false, upto : false}
+				}
+			}
+			if(stockCollectionVoBt.reason == null || stockCollectionVoBt.reason == ''){
+				stockCollectionVoBt.reasonCol = {notNull : true};
+				d = false;
+			}
+			if(!stockCollectionVoBt.quantityCol.notNull && !stockCollectionVoBt.quantityCol.beNumber &&
+					!stockCollectionVoBt.reasonCol.upto && !stockCollectionVoBt.reasonCol.notNull && c && d){
+				$scope.alerts.push({type:'success',msg: "Update successfully!"});
+				var s = Number(stockCollectionVoBt.adjusterQuantity);
+				stockCollectionVoBt.adjusterQuantity = s.toFixed(2);
+				$timeout($scope.clearAlerts, 3000);
+				stockCollectionVoBt.ifshow = true;
+			}
+			$scope.ifCanUpdateBt = false;
+		};
+		//点击进入调整stock页面
+		$scope.startAdjustBt = function(stockCollectionVoBt){
+			$scope.currentStockCollectVoBt = stockCollectionVoBt;
+			if(stockCollectionVoBt.adjusterQuantity == null||stockCollectionVoBt.adjusterQuantity ==''){
+				alert("Please fill the adjusted Quantity!");
+			}else if(stockCollectionVoBt.reason == null || stockCollectionVoBt.reason ==''){
+				alert("Please fill the reason!");
+			}else{
+				document.getElementById("submitDiv").style.display = "inline";
+				$http.post('/adjustment/stockadjust/getStockListBt', JSON.stringify(stockCollectionVoBt)).success(
+						function(data, status, headers, config){
+							if(data.Type == 'success'){
+								$scope.stockListBt = data.Data;
+								$scope.currentQtyBt = stockCollectionVoBt.adjusterQuantity;
+								$scope.currentAllSKU = $scope.currentQtyBt;
+								for(var i = 0,len = $scope.stockListBt.length; i<len; i++){
+									$scope.stockListBt[i].reason = stockCollectionVoBt.reason;
+									$scope.stockListBt[i].adjustQty = $scope.stockListBt[i].adjustQty.toFixed(2);
+								}
+								$scope.sumSKU($scope.stockListBt);
+								$scope.showAllStockDlgBt = true;
+							} else {
+								alert(data.Message);
+							}
+							document.getElementById("submitDiv").style.display = "none";
+					}).error(
+						function(data, status, headers, config){
+							document.getElementById("submitDiv").style.display = "none";
+							alert(status);
+				});
+			}
+		};
+		//将stock页面为可编辑-update
+		$scope.editStockAbleBt = function(stockBt){
+			if($scope.ifStockCanUpdateBt == true){
+				alert("Please save or cancle the edit data in the first place!");
+			}else{
+				$scope.stockqtyBt = stockBt.adjustQty;
+				stockBt.ngshow = false;
+				$scope.ifStockCanUpdateBt = true;
+			}
+		};
+		//保存修改后的stock数量
+		$scope.saveStockBt = function(stockBt){
+			if(typeof stockBt.adjustQtyLoc =='undefined' ||
+					(stockBt.adjustQtyLoc.notNull == false && stockBt.adjustQtyLoc.beNumber == false)){
+				stockBt.ngshow = true;
+				$scope.ifStockCanUpdateBt = false;
+				var s = Number(stockBt.adjustQty);
+				stockBt.adjustQty = s.toFixed(2);
+				$scope.sumSKU($scope.stockListBt);
+			} 
+		};
+		//将stock数量设置为不可编辑-cancle
+		$scope.editStockDisableBt = function(stockBt){
+			if(typeof stockBt.adjustQtyLoc == 'undefined'){
+				stockBt.adjustQtyLoc = {notNull : false, beNumber : false}
+			}
+			stockBt.adjustQty = $scope.stockqtyBt;
+			stockBt.adjustQtyLoc = {notNull : false, beNumber : false}
+			stockBt.ngshow = true;
+			$scope.ifStockCanUpdateBt = false;
+		};
+		//关闭stock调整页面
+		$scope.closeAdjustBt = function(){
+			$scope.showAllStockDlgBt = false;
+		};
+		//执行调整
+		$scope.executionBt = function(stockListBt){
+			var amount = 0;
+			var num = 0;
+			if($scope.ifStockCanUpdateBt == true){
+				alert("Please save or cancle the edit data in the first place!");
+			} else {
+				for(var i = 0,len = $scope.stockListBt.length; i<len; i++){
+					amount = Number(amount) + Number($scope.stockListBt[i].adjustQty);
+				}
+				if(amount != $scope.currentQtyBt){
+					alert("Error :  the sum of the stock's adjusted quantity doesn't match the need adjusted quantity!");
+				} else {
+					document.getElementById("submitDiv").style.display = "inline";
+					$http.post('/adjustment/stockadjust/execution', JSON.stringify(stockListBt)).success(
+							function(data, status, headers, config){
+								if(data.Type == 'success'){
+									$scope.alerts.push({type:'success',msg: "Congratulations : Stocks adjust successfully!"});
+									$timeout($scope.clearAlerts, 3000);
+									$scope.showAllStockDlgBt = false;
+								} else {
+									alert(data.Message);
+								}
+								document.getElementById("submitDiv").style.display = "none";
+						}).error(
+							function(data, status, headers, config){
+								document.getElementById("submitDiv").style.display = "none";
+								alert(status);
+					});
+				}
+			}
+		};
+	});
+</script>
+}

@@ -1,0 +1,317 @@
+@(name: String)
+@main("WarehouseQuery"){
+<div ng-controller="warehouseCtrl">
+	<!--head-->
+	<div class="breadcrumb">
+		<li style="">Current Location: Warehouse Query</li>
+<!-- 		<li style="margin-right: 0px"><div class="span2 offset3">Plant:XXXXXXX</div> </li> -->
+		<li ><div class="span2 offset1"><div id="time" align="right"></div></div></li>
+	</div>
+	<!--search -->
+	<form class="form-horizontal">
+		<table >
+			<tr>
+				<td>
+				
+					 <div class="control-group">
+						<label class="control-label">Warehouse</label>
+						<div class="controls"> 
+							<select name="warehouse" class="span1" ng-model="binVo.areaVo.storageTypeVo.warehouseVo.id" ng-options="warehouse.id as warehouse.nameKey for warehouse in warehouses" ng-change="setwarehouse(binVo.areaVo.storageTypeVo.warehouseVo)">
+							<option value="">All</option>
+							</select>
+					 	</div>
+					</div> 
+				</td>
+				<td>
+					<div class="control-group">
+						<label class="control-label">Storage Type</label>
+						<div class="controls">
+							<select name="storage_type" class="span1" ng-model="binVo.areaVo.storageTypeVo.id" ng-options="storageType.id as storageType.nameKey for storageType in storageTypes" ng-change="setstorageType(binVo.areaVo.storageTypeVo)">
+							<option value="">All</option>
+							</select>
+						</div>
+					</div>
+				</td>
+				<td>
+					<div class="control-group">
+						<label id="piStatus" class="control-label">Storage Area</label>
+						<div class="controls">
+							<select name="storage_area" class="span1" ng-model="binVo.areaVo.id" ng-options="area.id as area.nameKey for area in areas" ng-change="setarea(binVo.areaVo)">
+								<option value="">All</option>
+							</select>
+						</div>
+					</div>
+				</td>
+				<td>
+					<div class="control-group">
+						<label class="control-label" for="date01">Storage Bin</label>
+						<div class="controls">
+							<select name="storage_bin" class="span1" ng-model="binVo.id" ng-options="bin.id as bin.nameKey for bin in bins" ng-change="setbin(binVo)">
+								<option value="">All</option>
+							</select>
+						</div>
+					</div>
+				</td>
+				</tr>
+				<tr>
+				<td colspan="4">
+					<div class="control-group">
+						<label class="control-label"></label>
+						<div class="controls" align="right">
+							<input  type="submit" value="Search" class="btn btn-primary btn-small" ng-click="searchList(binVo)">
+						</div>
+					</div>
+				</td>
+			</tr>
+		</table>
+	</form>	
+	<!-- table -->
+ 	<table cellpadding="0" cellspacing="0" border="0"
+		class="table table-striped table-bordered table-hover table-condensed" id="example" width="100%">
+			<thead>
+				<tr>
+					<th>Warehouse</th>
+					<th>Storage Type</th>
+					<th>Storage Area</th>
+					<th>Storage Bin</th>
+					<th>Total Capacity</th>
+					<th>Used(%)</th>
+					<th>Free(%)</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="warehouseQueryVo in warehouseQueryVos">
+					<td>{{warehouseQueryVo.warehouse}}</td>
+					<td>{{warehouseQueryVo.storageType}}</td>
+					<td>{{warehouseQueryVo.storageArea}}</td>
+					<td>{{warehouseQueryVo.storageBin}}</td>
+					<td>{{warehouseQueryVo.totalCapacity|number:0}}</td>
+					<td>{{warehouseQueryVo.used|number:2}}</td>
+					<td>{{warehouseQueryVo.free|number:2}}</td>
+				</tr>
+			</tbody>
+		</table>
+</div>
+}{
+  <script type="text/javascript" charset="utf-8">
+  //var CloudWMS = angular.module('CloudWMS', ['ui.bootstrap']);
+  CloudWMS.controller('warehouseCtrl', function($scope, $http) {
+    $scope.warehouseQueryVos=[];
+    $scope.binVo={id:'',nameKey:'',areaVo:{id:'',nameKey:'',storageTypeVo:{id:'',nameKey:'',warehouseVo:{id:'',nameKey:''}}}};
+   /*  $http.post('/query/WarehouseQuery/list').success(
+  	    function(data, status, headers, config) {
+  	    	//alert(JSON.stringify(data))
+  	    	  $scope.warehouseQueryVos = data;
+  	    	for(var i = 0, len = $scope.warehouseQueryVos.length; i < len; ++i) {
+  	    		//alert(Number.MAX_VALUE);
+  	    		 if($scope.warehouseQueryVos[i].totalCapacity>=Number.MAX_VALUE){
+  	    			$scope.warehouseQueryVos[i].totalCapacity='-';
+  	    		 }
+  	    	}
+  	    	  $scope.status=status
+  	        //$scope.alerts.push({type:'success',msg: "success!"});
+  	    }).error(
+  	    function(data, status, headers, config) {
+  	    	//alert(data)
+  	        $scope.status = status
+  	    });  */
+     $http.get('/query/WarehouseQuery/initBin').success(
+    	function(data, status, headers, config) {
+    		 $scope.tempbins=JSON.parse(JSON.stringify(data));
+     	     $scope.bins = JSON.parse(JSON.stringify(data));
+     	        //$scope.alerts.push({type:'success',msg: "success!"});
+     	}).error(
+     	function(data, status, headers, config) {
+     	     $scope.status = status
+     	}); 
+     $http.get('/query/WarehouseQuery/initArea').success(
+    	    	function(data, status, headers, config) {
+    	    		$scope.tempareas=JSON.parse(JSON.stringify(data));
+    	     	     $scope.areas = JSON.parse(JSON.stringify(data));
+    	     	        //$scope.alerts.push({type:'success',msg: "success!"});
+    	     	}).error(
+    	     	function(data, status, headers, config) {
+    	     	     $scope.status = status
+    	     	}); 
+     $http.get('/query/WarehouseQuery/initStorageType').success(
+    	    	function(data, status, headers, config) {
+    	    		$scope.tempstorageTypes=JSON.parse(JSON.stringify(data));
+    	     	     $scope.storageTypes = JSON.parse(JSON.stringify(data));
+    	     	        //$scope.alerts.push({type:'success',msg: "success!"});
+    	     	}).error(
+    	     	function(data, status, headers, config) {
+    	     	     $scope.status = status
+    	     	}); 
+     $http.get('/query/WarehouseQuery/initWarehouse').success(
+    	    	function(data, status, headers, config) {
+    	    		$scope.tempwarehouses=JSON.parse(JSON.stringify(data));
+    	     	     $scope.warehouses = JSON.parse(JSON.stringify(data));
+    	     	        //$scope.alerts.push({type:'success',msg: "success!"});
+    	     	}).error(
+    	     	function(data, status, headers, config) {
+    	     	     $scope.status = status
+    	     	}); 
+    $scope.setbin=function(binVo){
+    	if(binVo.id!=null){
+    	for(var i = 0, len = $scope.bins.length; i < len; ++i) {
+    		if($scope.bins[i].id==binVo.id){
+    			binVo.nameKey=$scope.bins[i].nameKey;
+    			binVo.areaVo=JSON.parse(JSON.stringify($scope.bins[i].areaVo));
+    		}
+    	}
+    	}else{
+    		$scope.binVo.nameKey='';
+    		$scope.binVo.id='';
+    	}
+    }
+    $scope.setarea=function(area){
+    	//$scope.binVo.id='';
+    	//$scope.binVo.nameKey='';
+    	//alert(area.id)
+    	if(area.id!=null){
+    	for(var i = 0, len = $scope.areas.length; i < len; ++i) {
+    		if($scope.areas[i].id==area.id){
+    			//area=JSON.parse(JSON.stringify($scope.areas[i]))
+    			area.nameKey=$scope.areas[i].nameKey;
+    			area.storageTypeVo=JSON.parse(JSON.stringify($scope.areas[i].storageTypeVo));
+    		}
+    	}
+    	var tempbin=[];
+    	for(var i=0,len=$scope.tempbins.length;i<len;++i){
+    		if($scope.tempbins[i].areaVo.id==area.id){
+    			//alert($scope.tempbins[i].areaVo.id)
+    			//alert($scope.tempbins[i].nameKey)
+    			tempbin.push(JSON.parse(JSON.stringify($scope.tempbins[i])));
+    		}
+    	}
+    	$scope.bins=tempbin;
+        var isbin=true;
+       	for(var i=0,len=$scope.bins.length;i<len;++i){
+       		if($scope.bins[i].id==$scope.binVo.id)
+       			isbin=false;
+       	}
+       	if(isbin){
+       		$scope.binVo.nameKey='';
+       		$scope.binVo.id='';
+       	}
+    	}else{
+    		//alert(area.storageTypeVo.id)
+    		var tempbin=[];
+        	for(var i=0,len=$scope.tempbins.length;i<len;++i){
+        		if($scope.tempbins[i].areaVo.storageTypeVo.id==area.storageTypeVo.id){
+        			//alert($scope.tempbins[i].areaVo.id)
+        			//alert($scope.tempbins[i].nameKey)
+        			tempbin.push(JSON.parse(JSON.stringify($scope.tempbins[i])));
+        		}
+        	}
+        	$scope.bins=tempbin;
+        	var temparea=[];
+        	for(var i=0,len=$scope.tempareas.length;i<len;++i){
+        		//alert(area.storageTypeVo.id)
+        		if($scope.tempareas[i].storageTypeVo.id==area.storageTypeVo.id){
+        			//alert($scope.tempstorageTypes[i].nameKey)
+        			temparea.push(JSON.parse(JSON.stringify($scope.tempareas[i])));
+        		}
+        	}
+        	
+        	//temparea.splice($scope.binVo.areaVo,1);
+        	$scope.areas=temparea;
+        	$scope.binVo.areaVo.id='';
+        	$scope.binVo.areaVo.nameKey='';
+    		//$scope.bins=$scope.tempbins;
+    	}
+    }
+    $scope.setstorageType=function(storageType){
+    	if(storageType.id!=null){
+    	for(var i = 0, len = $scope.storageTypes.length; i < len; ++i) {
+    		if($scope.storageTypes[i].id==storageType.id){
+    			storageType.nameKey=$scope.storageTypes[i].nameKey;
+    			storageType.warehouseVo=JSON.parse(JSON.stringify($scope.storageTypes[i].warehouseVo));
+    		}
+    	}
+    	var temparea=[];
+    	for(var i=0,len=$scope.tempareas.length;i<len;++i){
+    		if($scope.tempareas[i].storageTypeVo.id==storageType.id){
+    			//alert($scope.tempstorageTypes[i].nameKey)
+    			temparea.push(JSON.parse(JSON.stringify($scope.tempareas[i])));
+    		}
+    	}
+    	//temparea.splice($scope.binVo.areaVo,1);
+    	$scope.areas=temparea;
+    	var isarea=true;
+    	for(var i=0,len=$scope.areas.length;i<len;++i){
+    		if($scope.areas[i].id==$scope.binVo.areaVo.id)
+    			isarea=false;
+    	}
+    	if(isarea){
+    	$scope.binVo.areaVo.id='';
+    	$scope.binVo.areaVo.nameKey='';
+    	}
+    	var tempbin=[];
+        for(var i=0,len=$scope.tempbins.length;i<len;++i){
+        	if($scope.tempbins[i].areaVo.storageTypeVo.id==storageType.id){
+        		//alert($scope.tempstorageTypes[i].nameKey)
+        		tempbin.push(JSON.parse(JSON.stringify($scope.tempbins[i])));
+        	}
+        }
+        //tempbin.splice($scope.binVo,1)
+        $scope.bins=tempbin;
+        var isbin=true;
+    	for(var i=0,len=$scope.bins.length;i<len;++i){
+    		if($scope.bins[i].id==$scope.binVo.id)
+    			isbin=false;
+    	}
+    	if(isbin){
+    		$scope.binVo.nameKey='';
+    		$scope.binVo.id='';
+    	}
+    	}else{
+    		$scope.binVo.areaVo.storageTypeVo.id='';
+    		$scope.binVo.areaVo.storageTypeVo.nameKey='';
+    		$scope.areas=$scope.tempareas;
+    	}
+    }
+    $scope.setwarehouse=function(warehouse){
+    	if(warehouse.id!=null){
+    	for(var i = 0, len = $scope.warehouses.length; i < len; ++i) {
+    		if($scope.warehouses[i].id==warehouse.id){
+    			warehouse.nameKey=$scope.warehouses[i].nameKey;
+    		}
+    	}
+    	var tempstorageType=[];
+    	for(var i = 0, len = $scope.tempstorageTypes.length; i < len; ++i){
+    		if($scope.tempstorageTypes[i].warehouseVo.id==warehouse.id){
+    			//alert($scope.tempstorageTypes[i].nameKey)
+    			tempstorageType.push(JSON.parse(JSON.stringify($scope.tempstorageTypes[i])));
+    		}
+    	}
+    	$scope.storageTypes=tempstorageType;
+    	}else{
+    		$scope.binVo.areaVo.storageTypeVo.warehouseVo.id='';
+    		$scope.binVo.areaVo.storageTypeVo.warehouseVo.nameKey='';
+    		$scope.storageTypes=$scope.tempstorageTypes;
+    	}
+    }
+    $scope.searchList=function(binVo){
+    	 document.getElementById("submitDiv").style.display = "inline";
+    $http.post('/query/WarehouseQuery/list', JSON.stringify(binVo)).success(
+  	    function(data, status, headers, config) {
+  	        	  // alert(112324145)
+  	        $scope.warehouseQueryVos=data;
+  	      for(var i = 0, len = $scope.warehouseQueryVos.length; i < len; ++i) {
+	    		//alert(Number.MAX_VALUE);
+	    		 if($scope.warehouseQueryVos[i].totalCapacity>=Number.MAX_VALUE){
+	    			$scope.warehouseQueryVos[i].totalCapacity='-';
+	    		 }
+	    	}
+  	        $scope.status=status;
+  	      document.getElementById("submitDiv").style.display = "none";
+  	    }).error(
+  	    function(data, status, headers, config) {
+  	        $scope.status = status
+  	      document.getElementById("submitDiv").style.display = "none";
+  	    });
+    };
+  });
+   </script>
+}

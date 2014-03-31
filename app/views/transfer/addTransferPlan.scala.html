@@ -1,0 +1,54 @@
+@(name:String)
+<div modal="addTransferPlanDlg" close="cancelAddview()" options="dlgOpts">
+	<div class="modal-header">
+		<h4><span ng-show="saveOrUpdate">Add TransferPlan</span><span ng-show="!saveOrUpdate">Edit TransferPlan</span></h4>
+	</div>
+	<div class="modal-body">
+	<form name="addorEdit"  novalidate class="css-form">
+		<table  >
+			<tbody>   
+				<tr>
+					<td align="right"><label>PI No.:</label></td> 
+					<td>
+					<input class="input-small"  name="pino" type="text"  ng-model="currentTransferPlan.pino"    ng-change="getBatchsByPiNo(currentTransferPlan,true)"  required />
+				    <span style="color: red;">*</span>
+					</td>			 
+					<td align="right"><label>Batch No:</label></td>
+					<td>   
+					<select ui-select2 ng-model="currentTransferPlan.batchId" name="batchId"    multiple="true" size="3"
+					ng-options="batch.descripton as batch.descripton for batch in batchs" ng-change="changeBatchNo(currentTransferPlan,false)" class="input-small" required>
+					</select><span style="color: red;">*</span>
+					</td>
+			 
+				<tr>  
+				    <td align="right"><label>Material Code:</label></td> 
+					<td><input class="input-small" type="text" ng-model="currentTransferPlan.mat" disabled="true"></td>
+					<td align="right"><label>Prod Qty:</label></td>
+					<td><input class="input-small"   type="text" ng-model="currentTransferPlan.proQty" disabled="true"> <span>{{currentTransferPlan.matUom}}</span></td>
+				</tr>
+				<tr>
+					<td align="right"><label>Prod Date:</label></td>
+					<td><input class="input-small" type="text" ng-model="currentTransferPlan.proDate"   ng-disabled="true" > 
+					<td align="right"><label>Transfer Qty:</label></td>
+					<td><input class="input-small" type="text" ng-model="currentTransferPlan.transferQty" placeholder="Must be a number!" name="transferQty"   required float><span style="color: red;">*</span><span>{{currentTransferPlan.matUom}}</span>
+					
+					</td>
+					
+				</tr>
+				<tr>
+				</td>
+					<td align="right"><label>Transfer Date:</label></td>
+					<td><input style="width: 130px" type="date" name='transferDate'  class="input-medium" ng-model="currentTransferPlan.transferDate"     required><span style="color: red;">*</span>	
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		</form>
+		 
+	</div>
+	<div class="modal-footer">
+		<input class="btn btn-primary btn-small" type="submit"    ng-click="save(currentTransferPlan)" value="OK" /> 
+		<input  type="submit" class="btn btn-warning btn-small" ng-click="cancelAddview()" value="Cancel" />
+	</div>
+</div>
+

@@ -1,0 +1,201 @@
+@(name:String) @main("Stuffing For Planning Report"){
+<div ng-controller="StuffingPlanCtrl">
+	<div class="breadcrumb">
+		<li style="">Current Location: Stuffing Report For Planning And Realization</li>
+	</div>
+	<div alert ng-repeat="alert in alerts" type="alert.type"
+		close="closeAlert($index)" template-url="/template/alert/alert.html">{{alert.msg}}</div>
+	<!-- 鏌ヨ鏉′欢 -->
+	<form class="form-horizontal"  action="/report/stuffingForPlanning/print" method="post">
+		<table>
+			<tr>
+				<td>
+					<div class="control-group">
+						<label class="control-label">Date From</label>
+						<div class="controls">
+							<input type="date" ng-model="printDetial.dateFrom"
+								style="width: 130px" required>
+						</div>
+					</div>
+				</td>
+				<td>
+				<div class="control-group">
+						<label  class="control-label">Date To</label>
+						<div class="controls">
+							<input type="date" ng-model="printDetial.dateTo"
+								style="width: 130px" required>
+						</div>
+					</div>
+				</td>
+				<td>
+				<div class="control-group">
+						<label  class="control-label">Internal Production Number:</label>
+						<div class="controls">
+							<input type="text"  class="input-medium"  ng-model="printDetial.intProdNo"  ng-change="printDetial.column2=NullTest(printDetial.intProdNo)" required>
+							<span  style="color: red">*</span><span ng-show="printDetial.column1" style="color: red">Not null</span>
+						</div>
+					</div>
+				</td>
+				</tr>
+				<tr>
+				<td>
+				<div class="control-group">
+						<label class="control-label">Print Style:</label>
+						<div class="controls">
+								<select ng-model="printDetial.style"  class="input-medium" ng-change="printDetial.column3=NullTest(printDetial.style)" required> 
+								<option value="Product Exprot">Product Export</option>
+								<option value="Product LoKal">Product Local</option>
+							</select>
+								<span  style="color: red">*</span><span ng-show="printDetial.column3" style="color: red">Not null</span>
+						</div>
+					</div>
+					</td>
+					<td>
+					</td>
+				<td>
+					<div class="control-group">
+						<label class="control-label"></label>
+						<div class="controls">
+							<input type="hidden" name="printDetial" value="{{printDetial|json}}">
+							<input class="btn btn-primary btn-small" type="button" value="Search" ng-click="printDetialList(printDetial)"> 
+							<input class="btn btn-primary btn-small" type="submit" value="Report">
+						</div>
+					</div>
+				</td>
+			</tr>
+		</table>
+	</form>
+	
+
+	<!-- PItable -->
+	<table class="table   table-bordered   table-condensed">
+		<thead>
+			<tr>
+				<th>IPB Number</th>
+				<th>PI</th>
+				<th>Referency</th>
+				<th>Commodity</th>
+				<th>Kg</th>
+				<th>Qty/Fcl</th>
+				<th>Container Number</th>
+				<th>Seal Number</th>
+				<th>Fcl</th>
+				<th>Stuffing Quantity</th>
+				<th>Destination</th>
+				<th>Vessel</th>
+				<th>NO. Batch</th>
+				<th>Stuffing Date</th>
+				<th>Out</th>
+				<th>Closing</th>
+				<th>Transport</th>
+				<th>Remaks</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr ng-repeat="StuffingReport in StuffingReports">
+				<td>{{StuffingReport.IPBNUMBER}}</td>
+				<td>{{StuffingReport.PI}}</td>
+				<td>{{StuffingReport.Referency}}</td>
+				<td>{{StuffingReport.Commodity;}}</td>
+				<td>{{StuffingReport.Kg|number:2}}</td>
+				<td>{{StuffingReport.QtyperFcl|number:2}}</td>
+				<td>{{StuffingReport.ContainerNumber}}</td>
+				<td>{{StuffingReport.SealNumber}}</td>
+				<td>{{StuffingReport.Fcl|number:2}}</td>
+				<td>{{StuffingReport.StuffingQuantity|number:2}}</td>
+				<td>{{StuffingReport.Destination}}</td>
+				<td>{{StuffingReport.Vessel}}</td>
+				<td>{{StuffingReport.BatchNo}}</td>
+				<td>{{StuffingReport.StuffingDate|date:'dd/MM/yyyy'}}</td>
+				<td>{{StuffingReport.Out|date:'dd/MM/yyyy'}}</td>
+				<td>{{StuffingReport.Closing|date:'dd/MM/yyyy'}}</td>
+				<td>{{StuffingReport.Transport}}</td>
+				<td>{{StuffingReport.Remaks}}</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
+
+}{
+<script type="text/javascript" charset="utf-8">
+	//var CloudWMS = angular.module('CloudWMS', [ 'ui', 'ui.bootstrap' ]);
+	var NULL_REGEXP=/^\S|\s{1,40}$/;
+	CloudWMS.controller('StuffingPlanCtrl', function($scope, $http,
+		$timeout, $filter, $window) {
+		$scope.alerts = [];
+		$scope.NullTest=function(value){
+		     	//alert(value)
+		     	  if (NULL_REGEXP.test(value)) {
+		     		 return false;
+		     	  }else{
+		     		  return true;
+		     	  }
+		  }
+		$scope.printDetialList = function(printDetial) {
+			document.getElementById("submitDiv").style.display = "inline";
+				$http.post('/report/stuffingForPlanning/list',JSON.stringify(printDetial)).success(
+						function(data, status, headers, config) {
+							document.getElementById("submitDiv").style.display = "none";
+							if(data.Type=='success'){
+							$scope.StuffingReports = data.Data;
+							}else{
+								$scope.alerts.push({type : data.Type,msg : data.Message});
+								$timeout($scope.clearAlerts, 3000);
+							}
+						}).error(function(data, status, headers, config) {
+							document.getElementById("submitDiv").style.display = "none";
+				});
+		};
+		var addAlert = function(types, msgs) {
+			$scope.alerts.push({
+				type : types,
+				msg : msgs
+			});
+			$timeout($scope.clearAlerts, 5000);
+		};
+		$scope.closeAlert = function(index) {
+			$scope.alerts.splice(index, 1);
+		};
+		$scope.clearAlerts = function() {
+			$scope.alerts = [];
+		};
+		$timeout($scope.clearAlerts, 5000);
+	      
+	    $scope.printDiloagshow=function(){
+	    	  $scope.printDlg=true;
+	      }
+	     $scope.closeprintDlg=function(){
+	    	  $scope.printDlg=false;
+	      }
+		$scope.dlgOpts = {
+			backdropFade : true,
+			dialogFade : false,
+		};
+	    $scope.print=function(printDital){
+		    	 // alert(angular.toJson(printDital))
+		    	  if(typeof printDital=='undefined'){
+		    		  $scope.printDetial={column1:true,column2:true,column3:true};
+		    	  }
+		    	 // alert("/outbound/goodsStuffing/print/"+printDital.intProdNo+"/"+printDital.reportDate+"/"+printDital.style);
+		    	  if(typeof printDital.column1=='undefined'){
+					//	alert(22243)
+						$scope.printDetial.column1=$scope.NullTest(printDital.reportDate)
+		    		}
+		    		if(typeof printDital.column2=='undefined'){
+		    		//	alert(3333);
+		    			$scope.printDetial.column2=$scope.NullTest(printDital.intProdNo)
+		    		} 
+		    		if(typeof printDital.column3=='undefined'){
+		    		//	alert(3333);
+		    			$scope.printDetial.column3=$scope.NullTest(printDital.style)
+		    		} 
+		    	//	alert(11111)
+		    	  if((printDital.column1||printDital.column2||printDital.column3)==false){
+		    	  $window.location.href="/report/stuffingFroPlanning/print/"+printDital.intProdNo+"/"+printDital.reportDate+"/"+printDital.style;
+		    	  $timeout($scope.closeprintDlg, 20000);
+		    	  }
+		      }
+	});
+</script>
+
+}

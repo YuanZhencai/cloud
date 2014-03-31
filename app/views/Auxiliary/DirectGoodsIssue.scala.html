@@ -1,0 +1,414 @@
+@(name: String)
+@main("Direct Goods Issue"){
+<div ng-controller="stockCountCtrl">
+	<!--head-->
+	<div class="breadcrumb">
+		<li style="">Current Location: Direct Goods Issue</li>
+<!-- 		<li style="margin-right: 0px"><div class="span2 offset3">Plant:XXXXXXX</div> </li> -->
+		<li ><div class="span2 offset1"><div id="time" align="right"></div></div></li>
+	</div>
+	<!--search -->
+	<form class="form-horizontal" >
+		<table >
+                <tr >
+                    <td>
+                        <div class="control-group">
+                             <label class="control-label">PI No</label>
+                             <div class="controls">
+                                <input type="text" name="piNo" class="span2" ng-model="search.piNo" />
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="control-group">
+                             <label class="control-label">Storage Area</label>
+                          <div class="controls">
+							<input type="text" ng-model="search.area" class="span2"  />
+						</div>
+                        </div>
+                    </td>
+                     <td>
+                      <div class="control-group">
+                             <label class="control-label">Storage Bin</label>
+                             <div class="controls">
+                                <input type="text" class="span2" ng-model="search.bin" />
+                            </div>
+                        </div> 
+                    </td>
+                </tr>
+				<tr>
+				  <td>
+                        <!-- <div class="control-group">
+                             <label class="control-label">Product Date From</label>
+                             <div class="controls">
+                                <input type="date" class="span2" name="prodDateFrom" ng-model="batch.prodDateFrom" />
+                            </div>
+                        </div> -->
+                    </td>
+				  <td>
+                       <!--  <div class="control-group">
+                             <label class="control-label">Product Date To</label>
+                             <div class="controls">
+                                <input type="date" class="span2" name="prodDateTo" ng-model="batch.prodDateTo" />
+                            </div>
+                        </div> -->
+                    </td>
+				<td>
+					<div class="control-group">
+						<label class="control-label"></label>
+						<div class="controls" align="right">
+                            <input  type="submit" value="Search" class="btn btn-primary btn-small" ng-click="searchList( search)"/>
+						</div>
+					</div>
+				</td>
+			</tr>
+		</table>
+	</form>	
+	<!-- table -->
+	<table cellpadding="0" cellspacing="0" border="0" class="table  table-bordered "
+			id="example" width="100%">
+			<thead>
+				<tr>
+					<th></th>
+					<th>PI Number</th>
+					<th>Batch No.</th>
+					<th>Material Description</th>
+					<th>Total Quantity</th>
+					<th>UOM</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="stockCountVo in stockCountVos|orderBy:['piNo','batchNo']" ng-class="getClass($index)">
+					<td> <input type="radio" name="select" ng-click="getstuffingList(stockCountVo.id,$index)" ><br/> {{getClass(stockCountVo)}}</td>
+					<td>{{stockCountVo.piNo}}</td>
+					<td>{{stockCountVo.batchNo}}</td>
+					<td>{{stockCountVo.materialDescription}}</td>
+					<td>{{stockCountVo.systemQty}}</td>
+					<td>{{stockCountVo.QtyUom}}</td>
+				</tr>
+			</tbody>
+		</table>
+		
+		<table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered"
+			width="100%">
+	<thead>
+		<tr>
+		<th><input type="checkbox" ng-model="checked" ng-change="setAllSelected(stocks,checked)" ></th>
+			<th>#</th>
+			<th>Warehouse</th>
+			<th>Storage Area</th>
+			<th>Storage Bin</th>
+			<th>Quantity/ Pallet</th>
+			<th>Operation <button class="btn btn-primary btn-small" ng-click="ExecutionDilagShow(0,'')"   ng-disabled="{{index!=-1}}">ExecuteAll</button></th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr  ng-repeat="stock in stocks|orderBy:getNumber">
+		<td><input type="checkbox" ng-model="stock.selected" ng-change="changeSelect(stocks)" ></td>
+			<td>{{stock.No}}</td>
+			<td>{{stock.warehouse}}</td>
+			<td>{{stock.storageArea}}</td>
+			<td>{{stock.storageBin}}</td>
+			<td>
+			<span ng-bind="stock.quantityPallet" ></span>
+			</td>
+			<td><a href="" class="btn btn-primary btn-small" ng-click="ExecutionDilagShow(1,stock)" >Execute</a></td>
+		</tr>
+	</tbody>
+	</table>
+	
+	 <div modal="executionAll" close="closeExecutionDlg()" options="opts">
+	 <div class="modal-header" >
+      <h4 ng-show="type==0">Execution All</h4>
+      <h4 ng-show="type==1">Execution</h4>
+ 		</div>
+  <div class="modal-body">
+			<form > 
+			<table>
+				<tr align="right">
+				<td>
+				Issue Type:
+				</td>
+				<td>
+				<select   class="input-medium" ng-model="defaul.issueType" ng-change="defaul.column1=TypeTest(defaul.issueType)">
+				<option value="T301">Issue</option>
+				<option value="T303">Blend</option>
+				<option value="T304">Sample</option>
+				<option value="T399">Others</option>
+				</select>
+				</td>
+				<td>
+ 					<span ng-show="defaul.column1" style="color: red">Not null or Too Long</span> 
+				</td>
+				</tr>
+				<tr align="right">
+				<td >
+				Total Quantity(SKU):
+					</td>
+					<td>
+					<input ng-show="type==1" type="number"  class="input-medium"  ng-model="defaul.Qty"  ng-change="defaul.column2=defaul.Qty!=''&&FloatTest(defaul.Qty)">
+					<span ng-show="type==0">{{getPalletNo()}} Pallet {{totalSku}} SKU</span>
+				</td>
+				<td>
+					<span ng-show="defaul.column2" style="color: red">Not a Number</span>
+				</td>
+				</tr>
+				<tr align="right">
+				<td>
+				Remarks:
+				</td>
+				<td>
+				<textarea rows="3" cols="4"  class="input-medium" ng-model="defaul.remarks" ng-change="defaul.column3=RemarkTest(defaul.remarks)"></textarea> 
+				</td>
+				<td>
+ 				<span ng-show="defaul.column3" style="color: red">Not null or Too Long</span> 
+				</td>
+				</tr>
+				</table>
+			</form>
+			</div>
+	 	<div class="modal-footer">
+		<input type="submit" value="ok" class="btn btn-primary btn-small"ng-click="exection(defaul)">
+		<input type="submit" value="Cancel" class="btn btn-warning btn-small" ng-click="closeExecutionDlg()">
+		</div>
+	</div>
+</div>
+<style type="text/css">
+.selected{color:red;background:GreenYellow;}
+</style>
+}{
+  <script type="text/javascript" charset="utf-8">
+  //var CloudWMS = angular.module('CloudWMS', ['ui.bootstrap']);
+  var DATE_REGEXP =/((^((1[8-9]\d{2})|([2-9]\d{3}))([-\/\._])(10|12|0?[13578])([-\/\._])(3[01]|[12][0-9]|0?[1-9])$)|(^((1[8-9]\d{2})|([2-9]\d{3}))([-\/\._])(11|0?[469])([-\/\._])(30|[12][0-9]|0?[1-9])$)|(^((1[8-9]\d{2})|([2-9]\d{3}))([-\/\._])(0?2)([-\/\._])(2[0-8]|1[0-9]|0?[1-9])$)|(^([2468][048]00)([-\/\._])(0?2)([-\/\._])(29)$)|(^([3579][26]00)([-\/\._])(0?2)([-\/\._])(29)$)|(^([1][89][0][48])([-\/\._])(0?2)([-\/\._])(29)$)|(^([2-9][0-9][0][48])([-\/\._])(0?2)([-\/\._])(29)$)|(^([1][89][2468][048])([-\/\._])(0?2)([-\/\._])(29)$)|(^([2-9][0-9][2468][048])([-\/\._])(0?2)([-\/\._])(29)$)|(^([1][89][13579][26])([-\/\._])(0?2)([-\/\._])(29)$)|(^([2-9][0-9][13579][26])([-\/\._])(0?2)([-\/\._])(29)$))/;
+  var FLOAT_REGEXP =/^[0-9]{1,38}\.{0,1}[0-9]{0,2}$/;
+  var INT_REGEXP=/^[1-9]*[1-9][0-9]*$/;
+  var ISNULL_REGEXP =/^$/;
+  var NULL_REGEXP=/^\S|\s{1,40}$/;
+  	CloudWMS.controller('stockCountCtrl', function($scope, $http,$window,$filter) {
+    //$scope.stockCountVos=[];
+    $scope.index=-1;
+    $scope.show=true;
+    $scope.checked=false;
+	$scope.search={id:'',piNo:'',area:'',bin:''};
+    $scope.stockCountVos=[];
+    $scope.stocks=[];
+    $scope.must=false;
+    $scope.totalSku=0;
+    
+    $scope.DateTest=function(value){
+     	//alert(0000)
+     	  if (DATE_REGEXP.test(value)) {
+     		  return false;
+     	  }else{
+     		  return true;
+     	  }
+     }
+     $scope.FloatTest=function(value){
+     	//alert(0000)
+     	  if (FLOAT_REGEXP.test(value)) {
+     		  return false;
+     	  }else{
+     		  return true;
+     	  }
+     }
+     $scope.IntTest=function(value){
+     	//alert(0000)
+     	  if (INT_REGEXP.test(value)) {
+     		  return false;
+     	  }else{
+     		  return true;
+     	  }
+     }
+     $scope.NullTest=function(value){
+     	//alert(value)
+     	  if (NULL_REGEXP.test(value)) {
+     		 return false;
+     	  }else{
+     		  return true;
+     	  }
+     }
+     $scope.RemarkTest=function(value){
+    	 if($scope.must){
+    		 return $scope.NullTest(value)
+    	 }else{
+    		 return false
+    	 }
+     }
+     $scope.TypeTest=function(value){
+    	 if($scope.NullTest(value))
+    		 return true;
+    	 else{
+    		 if(value=='T399'){
+    			 $scope.must=true;
+    			 $scope.defaul.column3=$scope.NullTest($scope.defaul.remarks)
+    		 }else{
+    			 $scope.must=false;
+    			 $scope.defaul.column3=false;
+    		 }
+    		 return false;
+    	 }
+     }
+     
+    
+    $scope.getNumber=function(stock){
+    	return parseInt(stock.No);
+    }
+    $scope.setAllSelected=function(date,value){
+ 	   //alert(value)
+ 	   if(date!=''){
+ 	   	for(var i = 0, len = date.length; i < len; ++i){
+ 	   		date[i].selected=value;
+ 	   	}
+ 	   }
+    }
+    $scope.changeSelect = function(List){
+		var s = true;
+		for(var i = 0, len =List.length; i < len; i++){
+			if(List[i].selected == false){
+				s = false;
+			}
+		}
+	    $scope.checked=s;
+	};
+	$scope.getPalletNo=function(){
+		try{
+		var palletNo=0;
+		$scope.totalSku=0;
+		for(var i = 0, len = $scope.stocks.length; i < len; ++i){
+  	  	  	if($scope.stocks[i].selected==true){
+  	  	  		palletNo=palletNo+1;
+				$scope.totalSku=$scope.totalSku+$scope.stocks[i].quantityPallet;
+  	  	  	}
+  	  	 }
+		//alert(palletNo)
+		return palletNo;
+		}catch(arr){
+			alert(arr)
+		}
+	}
+    $scope.setType=function(){
+    	//alert(123)
+    	if($scope.type==0){
+    		$scope.show=true;
+    	}else{
+    		$scope.show=false;
+    	}
+    	$scope.stockCountVos='';
+    }
+   	$scope.getClass=function($index){
+   		if( $scope.index==$index)
+   			return 'selected';
+   		else
+   			return '';
+   	}
+   	
+    $scope.searchList=function(search){
+    	 document.getElementById("submitDiv").style.display = "inline";
+    $http.post('/auxilliary/DirectGoodsIssue/list', JSON.stringify(search)).success(
+  	    function(data, status, headers, config) {
+  	    	document.getElementById("submitDiv").style.display = "none";
+  	    	$scope.index=-1;
+  	        $scope.stockCountVos=data;
+  	  	for(var i = 0, len = $scope.stockCountVos.length; i < len; ++i){
+  	  		$scope.stockCountVos[i].No=parseInt($scope.stockCountVos[i].No);
+  	  		}
+  	      $scope.stocks=[];
+  	        $scope.status=status;
+  	    }).error(
+  	    function(data, status, headers, config) {
+  	        $scope.status = status
+  	      document.getElementById("submitDiv").style.display = "none";
+  	    });
+    };
+    
+        $scope.getstuffingList=function(id,index){
+      	//  alert( $scope.area+"/"+$scope.bin);
+      	  $scope.index=index;
+      	  $scope.search.id=id;
+      	// document.getElementById("submitDiv").style.display = "inline";
+           $http.post('/auxilliary/DirectGoodsIssue/getStocks',JSON.stringify($scope.search)).success(
+          	    function(data, status, headers, config) {
+          	    	 document.getElementById("submitDiv").style.display = "none";
+          	    	$scope.stocks=data;
+          	    	for(var i = 0, len = $scope.stocks.length; i < len; ++i){
+          	  	  		$scope.stocks[i].selected=false;
+          	  	  		}
+          	    	$scope.checked=false;
+          	    }).error(
+          	    function(data, status, headers, config) {
+          	        //$scope.AlertTip(12324145)
+          	         document.getElementById("submitDiv").style.display = "none";
+          	        $scope.status = status
+          	    }); 
+       };
+       $scope.getIssueType=function(){
+    	   $http.get('/auxilliary/DirectGoodsIssue/getIssueType').success(
+             	    function(data, status, headers, config) {
+             	    	 document.getElementById("submitDiv").style.display = "none";
+             	    	$scope.IssueTypes=data;
+             	    }).error(
+             	    function(data, status, headers, config) {
+             	        $scope.status = status
+             	    }); 
+       }
+       $scope.exection=function(defaul){
+    	   try{
+    	    var vilat=false;
+    	   if($scope.type==1){
+    		    if(parseFloat(defaul.stocks[0].quantityPallet)<parseFloat(defaul.Qty)){
+    			   vilat=true;
+    			   alert('Issue \'Qty  greater than Stock\'Qty');
+    		   } 
+    	   }
+    	  
+    	   if(defaul.column1==null||defaul.column1==''||defaul.column1=='undefined'){
+    		   defaul.column1=$scope.TypeTest(defaul.issueType);
+    	   }
+    	   if(defaul.column2==null||defaul.column2==''||defaul.column2=='undefined'){
+    		   defaul.column2==defaul.Qty!=''&&$scope.FloatTest(defaul.Qty);
+    	   }
+    	   if(defaul.column3==null||defaul.column3==''||defaul.column3=='undefined'){
+    		   defaul.column3=$scope.RemarkTest(defaul.remarks);
+    	   }
+    	   }catch(arr){
+    		   alert(arr)
+    	   }
+ 		   if(defaul.stocks.length==0) alert('Please select some Detial')
+ 		   else{
+    	   if((vilat||defaul.column1||defaul.column2||defaul.column3)==false){
+    	   document.getElementById("submitDiv").style.display = "inline";
+    	   $http.post('/auxilliary/DirectGoodsIssue/execution',JSON.stringify(defaul)).success(
+             	    function(data, status, headers, config) {
+             	    	 document.getElementById("submitDiv").style.display = "none";
+             	    	 alert(data);
+             	    	 $scope.getstuffingList($scope.search.id,$scope.index);
+             	    	 $scope.closeExecutionDlg();
+             	    }).error(
+             	    function(data, status, headers, config) {
+             	        $scope.status = status
+             	    }); 
+    	   }
+ 		   }
+       }
+       $scope.ExecutionDilagShow=function(type,stock){
+    	   $scope.type=type;
+    	   $scope.must=false;
+    	   var tempStocks=[];
+    	   if(type==0){
+    		for(var i = 0, len = $scope.stocks.length; i < len; ++i){
+  	  	  		if($scope.stocks[i].selected==true){
+  	  	  		tempStocks.push($scope.stocks[i]);
+  	  	  		}
+  	  	  	} 
+    	   }else{
+    		   tempStocks.push(stock);
+    	   }
+    	   $scope.defaul={issueType:'T303',Qty:0,remarks:'',type:type,stocks:tempStocks}
+    	   $scope.executionAll=true;
+       }
+       $scope.closeExecutionDlg=function(){
+    	   $scope.executionAll=false;
+       }
+  });
+   </script>
+}
