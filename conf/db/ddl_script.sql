@@ -1495,3 +1495,8 @@ create index ix_t_warehouse_policy_bin_143 on t_warehouse_policy (bin_id);
 alter table t_warehouse_sequence add constraint fk_t_warehouse_sequence_ware_144 foreign key (warehouse_id) references t_warehouse (id);
 create index ix_t_warehouse_sequence_ware_144 on t_warehouse_sequence (warehouse_id);
 
+
+ALTER TABLE t_role_menu ADD COLUMN summary text;
+ALTER TABLE t_menu ADD COLUMN index bigint;
+ALTER TABLE t_material_uom ADD COLUMN uom_name varchar(40);
+
